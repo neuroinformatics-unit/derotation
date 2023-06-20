@@ -58,16 +58,28 @@ ax.axhline(-threshold, 0, len(diffs), color="red", label="threshold")
 # ax.plot(diffs, label="frame clock", color="black", alpha=0.5)
 
 #  find the peaks of the rot_tick2 signal
-rot_tick2_peaks = find_peaks(rotation_ticks, height=4)[0]
+rot_tick2_peaks = find_peaks(
+    rotation_ticks, 
+    height=4,
+    distance=20,
+    )[0]
 
 
+# sanity check for the number of rotation ticks
+number_of_rotations = len(dir)
+expected_tiks_per_rotation = rot_deg / dt
+ratio = len(rot_tick2_peaks) / expected_tiks_per_rotation
+if ratio > number_of_rotations:
+    print(f"There are more rotation ticks than expected, {len(rot_tick2_peaks)}")
+elif ratio < number_of_rotations:
+    print(f"There are less rotation ticks than expected, {len(rot_tick2_peaks)}")
 
+
+# identify the rotation ticks that correspond to clockwise and counter clockwise rotations
 threshold = 0.5  # Threshold to consider "on" or rotation occurring
 rotation_on = np.zeros_like(full_rotation)
 rotation_on[full_rotation > threshold] = 1
 
-
-# make a for loop to assign the values in dir to the rest of the groups
 rotation_signal_copy = copy.deepcopy(rotation_on)
 latest_rotation_on_end = 0
 for i in range(len(dir)):
@@ -80,9 +92,20 @@ for i in range(len(dir)):
 
     rotation_signal_copy = rotation_signal_copy[first_rotation_on + len_first_group:]
 
+    
 
+# every tick is an increment of 0.2 deg
+rotation_degrees = np.empty_like(frame_clock)  # Initialize the rotation degree array with the initial value
+rotation_degrees[0] = 0
+current_rotation = 0
+tick_peaks_corrected = np.insert(rot_tick2_peaks, 0, 0, axis=0)
 
-
+for i in range(0, len(tick_peaks_corrected)):
+    time_interval = tick_peaks_corrected[i] - tick_peaks_corrected[i-1] 
+    if time_interval > 10000:
+        current_rotation = 0
+    current_rotation += dt
+    rotation_degrees[tick_peaks_corrected[i]] = current_rotation
 
 
 fig, ax = plt.subplots(4, 1, sharex=True)

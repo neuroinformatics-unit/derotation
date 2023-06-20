@@ -1,3 +1,4 @@
+import copy
 from pathlib import Path
 
 import numpy as np
@@ -41,30 +42,47 @@ missing_frames = np.where(diffs > 0.1)[0]
 # Calculate the threshold using a percentile of the total signal
 best_k = find_best_k(frame_clock, image)
 threshold = np.mean(frame_clock) + best_k * np.std(frame_clock)
+print(f"Best threshold: {threshold}")
 frames_start = np.where(np.diff(frame_clock) > threshold)[0]
 frames_end = np.where(np.diff(frame_clock) < -threshold)[0]
 
 fig, ax = plt.subplots(1, 1, sharex=True)
 ax.boxplot(diffs)
-ax.set_title("Boxplot of the frame clock signal")
+ax.set_title("Threshold to identify frames start and end")
 ax.set_ylabel("Difference between frames")
 
 ax.axhline(threshold, 0, len(diffs), color="red", label="threshold")
 ax.axhline(-threshold, 0, len(diffs), color="red", label="threshold")
 
-
 # fig, ax = plt.subplots(1, 1, sharex=True)
 # ax.plot(diffs, label="frame clock", color="black", alpha=0.5)
 
-
 #  find the peaks of the rot_tick2 signal
 rot_tick2_peaks = find_peaks(rotation_ticks, height=4)[0]
-#  exclude external ticks
 
-#  identify rotation blocks
-rotation_blocks = np.where(full_rotation > 4)
 
-#  assign to each block a number in order to identify the direction
+
+threshold = 0.5  # Threshold to consider "on" or rotation occurring
+rotation_on = np.zeros_like(full_rotation)
+rotation_on[full_rotation > threshold] = 1
+
+
+# make a for loop to assign the values in dir to the rest of the groups
+rotation_signal_copy = copy.deepcopy(rotation_on)
+latest_rotation_on_end = 0
+for i in range(len(dir)):
+    # find the first rotation_on == 1
+    first_rotation_on = np.where(rotation_signal_copy == 1)[0][0]
+    # now assign the value in dir to all the first set of ones
+    len_first_group = np.where(rotation_signal_copy[first_rotation_on:] == 0)[0][0]
+    rotation_on[latest_rotation_on_end + first_rotation_on: latest_rotation_on_end + first_rotation_on + len_first_group] = dir[i]
+    latest_rotation_on_end = latest_rotation_on_end + first_rotation_on + len_first_group
+
+    rotation_signal_copy = rotation_signal_copy[first_rotation_on + len_first_group:]
+
+
+
+
 
 
 fig, ax = plt.subplots(4, 1, sharex=True)
@@ -110,6 +128,13 @@ ax[2].plot(
     alpha=0.5,
     rasterized=True,
 )
+ax[2].plot(
+    rotation_on,
+    label="rotation with direction, 1 = CW, -1 = CCW",
+    color="green",
+    alpha=0.5,
+    rasterized=True,
+)
 ax[3].plot(
     rotation_ticks,
     label="rot tick 2",
@@ -133,7 +158,7 @@ ax[3].plot(
 # set the initial x axis limits
 for axis in ax:
     # axis.set_xlim(1610000, 1800000)
-    axis.set_xlim(1680000, 1710000)
+    # axis.set_xlim(1680000, 1710000)
     axis.spines["top"].set_visible(False)
     axis.spines["right"].set_visible(False)
 
@@ -148,4 +173,4 @@ fig.suptitle("Frame clock and rotation ticks")
 
 plt.show()
 
-print("test")
+

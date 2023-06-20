@@ -6,6 +6,7 @@ from matplotlib import pyplot as plt
 from read_binary import read_rc2_bin
 from scipy.io import loadmat
 from scipy.signal import find_peaks
+from optimizers import find_best_k
 
 # Set aux and imaging locations and initialize dip image software
 rot_deg = 360
@@ -33,11 +34,28 @@ full_rotation = data_dict["PI_rotCW"]
 rotation_ticks = data_dict["Vistim_ttl"]
 #  0.2 deg for 1 tick
 
-#  find the starting/ending points of the frame_clock signal
-frames_start = np.where(np.diff(frame_clock) > 4)[0]
-frames_end = np.where(np.diff(frame_clock) < -4)[0]
-#  compare if the number of frames is the same as the length of tif file
-#  maybe take a percentile as threshold instead of 4
+# check if there is a missing frame
+diffs = np.diff(frame_clock)
+missing_frames = np.where(diffs > 0.1)[0]
+
+# Calculate the threshold using a percentile of the total signal
+best_k = find_best_k(frame_clock, image)
+threshold = np.mean(frame_clock) + best_k * np.std(frame_clock)
+frames_start = np.where(np.diff(frame_clock) > threshold)[0]
+frames_end = np.where(np.diff(frame_clock) < -threshold)[0]
+
+fig, ax = plt.subplots(1, 1, sharex=True)
+ax.boxplot(diffs)
+ax.set_title("Boxplot of the frame clock signal")
+ax.set_ylabel("Difference between frames")
+
+ax.axhline(threshold, 0, len(diffs), color="red", label="threshold")
+ax.axhline(-threshold, 0, len(diffs), color="red", label="threshold")
+
+
+# fig, ax = plt.subplots(1, 1, sharex=True)
+# ax.plot(diffs, label="frame clock", color="black", alpha=0.5)
+
 
 #  find the peaks of the rot_tick2 signal
 rot_tick2_peaks = find_peaks(rotation_ticks, height=4)[0]
@@ -55,6 +73,7 @@ ax[0].plot(
     label="frame clock",
     color="black",
     alpha=0.5,
+    rasterized=True,
 )
 # plot dots for starting and ending points of the frame_clock signal
 ax[0].plot(
@@ -64,6 +83,8 @@ ax[0].plot(
     marker="o",
     color="red",
     alpha=0.5,
+    rasterized=True,
+
 )
 ax[0].plot(
     frames_end,
@@ -72,18 +93,22 @@ ax[0].plot(
     marker="o",
     color="green",
     alpha=0.5,
+    rasterized=True,
+
 )
 ax[1].plot(
     line_clock,
     label="line clock",
     color="red",
     alpha=0.5,
+    rasterized=True,
 )
 ax[2].plot(
     full_rotation,
     label="rot tick",
     color="blue",
     alpha=0.5,
+    rasterized=True,
 )
 ax[3].plot(
     rotation_ticks,
@@ -91,6 +116,7 @@ ax[3].plot(
     color="green",
     alpha=0.5,
     marker="o",
+    rasterized=True,
 )
 ax[3].plot(
     rot_tick2_peaks,
@@ -100,13 +126,14 @@ ax[3].plot(
     marker="*",
     color="red",
     alpha=0.5,
+    rasterized=True,
 )
 
 
 # set the initial x axis limits
 for axis in ax:
     # axis.set_xlim(1610000, 1800000)
-    # axis.set_xlim(1680000, 1710000)
+    axis.set_xlim(1680000, 1710000)
     axis.spines["top"].set_visible(False)
     axis.spines["right"].set_visible(False)
 

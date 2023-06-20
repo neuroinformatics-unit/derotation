@@ -4,11 +4,11 @@ from pathlib import Path
 import numpy as np
 import tifffile as tiff
 from matplotlib import pyplot as plt
+from optimizers import find_best_k
 from read_binary import read_rc2_bin
 from scipy.io import loadmat
 from scipy.signal import find_peaks
-from optimizers import find_best_k
-import scipy.optimize as opt
+
 # Set aux and imaging locations and initialize dip image software
 rot_deg = 360
 
@@ -59,10 +59,10 @@ frames_end = np.where(np.diff(frame_clock) < -threshold)[0]
 
 #  find the peaks of the rot_tick2 signal
 rot_tick2_peaks = find_peaks(
-    rotation_ticks, 
+    rotation_ticks,
     height=4,
     distance=20,
-    )[0]
+)[0]
 
 
 # sanity check for the number of rotation ticks
@@ -70,9 +70,13 @@ number_of_rotations = len(dir)
 expected_tiks_per_rotation = rot_deg / dt
 ratio = len(rot_tick2_peaks) / expected_tiks_per_rotation
 if ratio > number_of_rotations:
-    print(f"There are more rotation ticks than expected, {len(rot_tick2_peaks)}")
+    print(
+        f"There are more rotation ticks than expected, {len(rot_tick2_peaks)}"
+    )
 elif ratio < number_of_rotations:
-    print(f"There are less rotation ticks than expected, {len(rot_tick2_peaks)}")
+    print(
+        f"There are less rotation ticks than expected, {len(rot_tick2_peaks)}"
+    )
 
 
 # identify the rotation ticks that correspond to clockwise and counter clockwise rotations
@@ -86,29 +90,43 @@ for i in range(len(dir)):
     # find the first rotation_on == 1
     first_rotation_on = np.where(rotation_signal_copy == 1)[0][0]
     # now assign the value in dir to all the first set of ones
-    len_first_group = np.where(rotation_signal_copy[first_rotation_on:] == 0)[0][0]
-    rotation_on[latest_rotation_on_end + first_rotation_on: latest_rotation_on_end + first_rotation_on + len_first_group] = dir[i]
-    latest_rotation_on_end = latest_rotation_on_end + first_rotation_on + len_first_group
+    len_first_group = np.where(rotation_signal_copy[first_rotation_on:] == 0)[
+        0
+    ][0]
+    rotation_on[
+        latest_rotation_on_end
+        + first_rotation_on : latest_rotation_on_end
+        + first_rotation_on
+        + len_first_group
+    ] = dir[i]
+    latest_rotation_on_end = (
+        latest_rotation_on_end + first_rotation_on + len_first_group
+    )
 
-    rotation_signal_copy = rotation_signal_copy[first_rotation_on + len_first_group:]
+    rotation_signal_copy = rotation_signal_copy[
+        first_rotation_on + len_first_group :
+    ]
 
-    
 
 # every tick is an increment of 0.2 deg
-rotation_degrees = np.empty_like(frame_clock)  # Initialize the rotation degree array with the initial value
+rotation_degrees = np.empty_like(
+    frame_clock
+)  # Initialize the rotation degree array with the initial value
 rotation_degrees[0] = 0
 current_rotation = 0
 tick_peaks_corrected = np.insert(rot_tick2_peaks, 0, 0, axis=0)
 
 for i in range(0, len(tick_peaks_corrected)):
-    time_interval = tick_peaks_corrected[i] - tick_peaks_corrected[i-1] 
+    time_interval = tick_peaks_corrected[i] - tick_peaks_corrected[i - 1]
     if time_interval > 10000 and i != 0:
         current_rotation = 0
     current_rotation += dt
     rotation_degrees[tick_peaks_corrected[i]] = current_rotation
 
 only_rotations = rotation_degrees[rotation_degrees != 0]
-assert len(tick_peaks_corrected) == len(only_rotations), f"{len(tick_peaks_corrected)} != {len(only_rotations)}"
+assert len(tick_peaks_corrected) == len(
+    only_rotations
+), f"{len(tick_peaks_corrected)} != {len(only_rotations)}"
 
 signed_rotation_degrees = rotation_degrees * rotation_on
 # signed_only_rotations = signed_rotation_degrees[signed_rotation_degrees != 0]
@@ -121,18 +139,18 @@ xvals = np.arange(0, len(rotation_ticks))
 yinterp = np.interp(xvals, rotation_ticks, signed_rotation_degrees)
 
 
-
-
 #  we can consider the frames as indexes of the rotation_degrees array
 rotation_degrees_frames = np.empty_like(frame_clock)
 rotation_degrees_frames[frames_start] = rotation_degrees[frames_start]
 
 
-
-
 fig, ax = plt.subplots(1, 1, sharex=True)
-ax.plot(rotation_degrees_frames, label="rotation degrees", color="black", alpha=0.5)
-ax.plot(signed_rotation_degrees, label="rotation degrees", color="red", alpha=0.5)
+ax.plot(
+    rotation_degrees_frames, label="rotation degrees", color="black", alpha=0.5
+)
+ax.plot(
+    signed_rotation_degrees, label="rotation degrees", color="red", alpha=0.5
+)
 
 fig, ax = plt.subplots(4, 1, sharex=True)
 ax[0].plot(
@@ -151,7 +169,6 @@ ax[0].plot(
     color="red",
     alpha=0.5,
     rasterized=True,
-
 )
 ax[0].plot(
     frames_end,
@@ -161,7 +178,6 @@ ax[0].plot(
     color="green",
     alpha=0.5,
     rasterized=True,
-
 )
 ax[1].plot(
     line_clock,
@@ -221,5 +237,3 @@ ax[3].set_title("Rotation ticks, 0.2 deg for 1 tick (green), peaks (red)")
 fig.suptitle("Frame clock and rotation ticks")
 
 plt.show()
-
-

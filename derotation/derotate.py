@@ -46,16 +46,6 @@ print(f"Best threshold: {threshold}")
 frames_start = np.where(np.diff(frame_clock) > threshold)[0]
 frames_end = np.where(np.diff(frame_clock) < -threshold)[0]
 
-# fig, ax = plt.subplots(1, 1, sharex=True)
-# ax.boxplot(diffs)
-# ax.set_title("Threshold to identify frames start and end")
-# ax.set_ylabel("Difference between frames")
-
-# ax.axhline(threshold, 0, len(diffs), color="red", label="threshold")
-# ax.axhline(-threshold, 0, len(diffs), color="red", label="threshold")
-
-# fig, ax = plt.subplots(1, 1, sharex=True)
-# ax.plot(diffs, label="frame clock", color="black", alpha=0.5)
 
 #  find the peaks of the rot_tick2 signal
 rot_tick2_peaks = find_peaks(
@@ -79,7 +69,8 @@ elif ratio < number_of_rotations:
     )
 
 
-# identify the rotation ticks that correspond to clockwise and counter clockwise rotations
+# identify the rotation ticks that correspond to
+# clockwise and counter clockwise rotations
 threshold = 0.5  # Threshold to consider "on" or rotation occurring
 rotation_on = np.zeros_like(full_rotation)
 rotation_on[full_rotation > threshold] = 1
@@ -107,50 +98,38 @@ for i in range(len(dir)):
         first_rotation_on + len_first_group :
     ]
 
-
-# every tick is an increment of 0.2 deg
-rotation_degrees = np.empty_like(
-    frame_clock
-)  # Initialize the rotation degree array with the initial value
+#  calculate the rotation degrees for each frame
+rotation_degrees = np.empty_like(frame_clock)
 rotation_degrees[0] = 0
 current_rotation = 0
 tick_peaks_corrected = np.insert(rot_tick2_peaks, 0, 0, axis=0)
-
 for i in range(0, len(tick_peaks_corrected)):
     time_interval = tick_peaks_corrected[i] - tick_peaks_corrected[i - 1]
     if time_interval > 10000 and i != 0:
         current_rotation = 0
     current_rotation += dt
-    rotation_degrees[tick_peaks_corrected[i]] = current_rotation
-
-only_rotations = rotation_degrees[rotation_degrees != 0]
-assert len(tick_peaks_corrected) == len(
-    only_rotations
-), f"{len(tick_peaks_corrected)} != {len(only_rotations)}"
-
+    rotation_degrees[
+        tick_peaks_corrected[i - 1] : tick_peaks_corrected[i]
+    ] = current_rotation
 signed_rotation_degrees = rotation_degrees * rotation_on
-# signed_only_rotations = signed_rotation_degrees[signed_rotation_degrees != 0]
-# assert len(tick_peaks_corrected) == len(signed_only_rotations), f"{len(tick_peaks_corrected)} != {len(signed_only_rotations)}"
-#  if this fails it means that there are some rotation ticks outside of the rotation blocks
-
-signed_rotation_degrees[np.isclose(signed_rotation_degrees, 0)] = np.nan
-
-xvals = np.arange(0, len(rotation_ticks))
-yinterp = np.interp(xvals, rotation_ticks, signed_rotation_degrees)
+frame_degrees = signed_rotation_degrees[frames_start]
 
 
-#  we can consider the frames as indexes of the rotation_degrees array
-rotation_degrees_frames = np.empty_like(frame_clock)
-rotation_degrees_frames[frames_start] = rotation_degrees[frames_start]
+# ==============================================================================
+# PLOT
+# ==============================================================================
 
 
-fig, ax = plt.subplots(1, 1, sharex=True)
-ax.plot(
-    rotation_degrees_frames, label="rotation degrees", color="black", alpha=0.5
-)
-ax.plot(
-    signed_rotation_degrees, label="rotation degrees", color="red", alpha=0.5
-)
+# fig, ax = plt.subplots(1, 1, sharex=True)
+# ax.boxplot(diffs)
+# ax.set_title("Threshold to identify frames start and end")
+# ax.set_ylabel("Difference between frames")
+
+# ax.axhline(threshold, 0, len(diffs), color="red", label="threshold")
+# ax.axhline(-threshold, 0, len(diffs), color="red", label="threshold")
+
+# fig, ax = plt.subplots(1, 1, sharex=True)
+# ax.plot(diffs, label="frame clock", color="black", alpha=0.5)
 
 fig, ax = plt.subplots(4, 1, sharex=True)
 ax[0].plot(
@@ -237,3 +216,18 @@ ax[3].set_title("Rotation ticks, 0.2 deg for 1 tick (green), peaks (red)")
 fig.suptitle("Frame clock and rotation ticks")
 
 plt.show()
+
+
+fig, ax = plt.subplots(1, 1, sharex=True)
+
+ax.plot(signed_rotation_degrees, label="rotation degrees")
+ax.plot(
+    frames_start,
+    frame_degrees,
+    linestyle="none",
+    marker="o",
+    color="red",
+)
+
+
+fig.suptitle("Rotation degrees")

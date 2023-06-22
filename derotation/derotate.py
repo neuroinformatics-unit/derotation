@@ -7,6 +7,7 @@ from matplotlib import pyplot as plt
 from optimizers import find_best_k
 from read_binary import read_rc2_bin
 from scipy.io import loadmat
+from scipy.ndimage import rotate
 from scipy.signal import find_peaks
 
 # Set aux and imaging locations and initialize dip image software
@@ -23,8 +24,8 @@ image = tiff.imread(path_tif)
 
 pseudo_random = loadmat(path_randperm)
 full_rotation_blocks_direction = pseudo_random["stimulus_random"][:, 2] > 0
-dir = np.ones(4)
-dir[full_rotation_blocks_direction[0:4]] = -1
+dir = np.ones(5)
+dir[full_rotation_blocks_direction[0:5]] = -1
 
 data, dt, chan_names, config = read_rc2_bin(path_aux, path_config)
 data_dict = {chan: data[:, i] for i, chan in enumerate(chan_names)}
@@ -75,15 +76,29 @@ threshold = 0.5  # Threshold to consider "on" or rotation occurring
 rotation_on = np.zeros_like(full_rotation)
 rotation_on[full_rotation > threshold] = 1
 
+#  delete intervals shorter than
 rotation_signal_copy = copy.deepcopy(rotation_on)
 latest_rotation_on_end = 0
-for i in range(len(dir)):
+
+i = 0
+while i < len(dir):
     # find the first rotation_on == 1
     first_rotation_on = np.where(rotation_signal_copy == 1)[0][0]
     # now assign the value in dir to all the first set of ones
     len_first_group = np.where(rotation_signal_copy[first_rotation_on:] == 0)[
         0
     ][0]
+    if len_first_group < 1000:
+        #  skip this short rotation because it is a false one
+        #  done one additional time to clean up the trace at the end
+        rotation_signal_copy = rotation_signal_copy[
+            first_rotation_on + len_first_group :
+        ]
+        latest_rotation_on_end = (
+            latest_rotation_on_end + first_rotation_on + len_first_group
+        )
+        continue
+
     rotation_on[
         latest_rotation_on_end
         + first_rotation_on : latest_rotation_on_end
@@ -93,43 +108,84 @@ for i in range(len(dir)):
     latest_rotation_on_end = (
         latest_rotation_on_end + first_rotation_on + len_first_group
     )
-
     rotation_signal_copy = rotation_signal_copy[
         first_rotation_on + len_first_group :
     ]
+    i += 1  # Increment the loop counter
+
 
 #  calculate the rotation degrees for each frame
 rotation_degrees = np.empty_like(frame_clock)
 rotation_degrees[0] = 0
-current_rotation = 0
+current_rotation: float = 0
 tick_peaks_corrected = np.insert(rot_tick2_peaks, 0, 0, axis=0)
 for i in range(0, len(tick_peaks_corrected)):
     time_interval = tick_peaks_corrected[i] - tick_peaks_corrected[i - 1]
-    if time_interval > 10000 and i != 0:
+    if time_interval > 2000 and i != 0:
         current_rotation = 0
-    current_rotation += dt
+    current_rotation += 0.2
     rotation_degrees[
         tick_peaks_corrected[i - 1] : tick_peaks_corrected[i]
     ] = current_rotation
 signed_rotation_degrees = rotation_degrees * rotation_on
-frame_degrees = signed_rotation_degrees[frames_start]
+image_rotation_degree_per_frame = signed_rotation_degrees[frames_start]
+image_rotation_degree_per_frame *= -1
 
+#  rotate the image to the correct position according to the frame_degrees
+
+
+image = tiff.imread(path_tif)
+rotated_image = np.empty_like(image)
+for i in range(len(image)):
+    rotated_image[i] = rotate(
+        image[i], image_rotation_degree_per_frame[i], reshape=False
+    )
+
+
+# Create a figure and axis for displaying the images
+fig, ax = plt.subplots(1, 3)
+
+
+ax[2].set_title("Rotation degrees per frame")
+
+# Iterate through each image
+for i, (image_rotated, image_original) in enumerate(zip(rotated_image, image)):
+    ax[0].imshow(image_original, cmap="gist_ncar")
+    ax[1].imshow(image_rotated, cmap="gist_ncar")
+
+    #  add a vertical line on the plot on ax 2
+    ax[2].axvline(frames_start[i], color="black", linestyle="--")
+    ax[2].plot(signed_rotation_degrees, label="rotation degrees")
+    ax[2].plot(
+        frames_start,
+        image_rotation_degree_per_frame,
+        linestyle="none",
+        marker="o",
+        color="red",
+    )
+    plt.pause(0.001)
+    ax[0].clear()
+    ax[1].clear()
+
+    ax[2].clear()
+# Close the figure
+plt.close(fig)
 
 # ==============================================================================
 # PLOT
 # ==============================================================================
 
 
-# fig, ax = plt.subplots(1, 1, sharex=True)
-# ax.boxplot(diffs)
-# ax.set_title("Threshold to identify frames start and end")
-# ax.set_ylabel("Difference between frames")
+fig, ax = plt.subplots(1, 1, sharex=True)
+ax.boxplot(diffs)
+ax.set_title("Threshold to identify frames start and end")
+ax.set_ylabel("Difference between frames")
 
-# ax.axhline(threshold, 0, len(diffs), color="red", label="threshold")
-# ax.axhline(-threshold, 0, len(diffs), color="red", label="threshold")
+ax.axhline(threshold, 0, len(diffs), color="red", label="threshold")
+ax.axhline(-threshold, 0, len(diffs), color="red", label="threshold")
 
-# fig, ax = plt.subplots(1, 1, sharex=True)
-# ax.plot(diffs, label="frame clock", color="black", alpha=0.5)
+fig, ax = plt.subplots(1, 1, sharex=True)
+ax.plot(diffs, label="frame clock", color="black", alpha=0.5)
 
 fig, ax = plt.subplots(4, 1, sharex=True)
 ax[0].plot(
@@ -216,18 +272,3 @@ ax[3].set_title("Rotation ticks, 0.2 deg for 1 tick (green), peaks (red)")
 fig.suptitle("Frame clock and rotation ticks")
 
 plt.show()
-
-
-fig, ax = plt.subplots(1, 1, sharex=True)
-
-ax.plot(signed_rotation_degrees, label="rotation degrees")
-ax.plot(
-    frames_start,
-    frame_degrees,
-    linestyle="none",
-    marker="o",
-    color="red",
-)
-
-
-fig.suptitle("Rotation degrees")

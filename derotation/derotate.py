@@ -3,6 +3,7 @@ from pathlib import Path
 
 import numpy as np
 import tifffile as tiff
+from find_centroid import detect_blobs, extract_blob_centers, preprocess_image
 from matplotlib import pyplot as plt
 from optimizers import find_best_k
 from read_binary import read_rc2_bin
@@ -132,15 +133,19 @@ image_rotation_degree_per_frame = signed_rotation_degrees[frames_start]
 image_rotation_degree_per_frame *= -1
 
 #  rotate the image to the correct position according to the frame_degrees
-
-
 image = tiff.imread(path_tif)
 rotated_image = np.empty_like(image)
+centers = []
 for i in range(len(image)):
     rotated_image[i] = rotate(
         image[i], image_rotation_degree_per_frame[i], reshape=False
     )
 
+    img = preprocess_image(image[i])
+    labels, properties = detect_blobs(img)
+    centroids = extract_blob_centers(properties)
+
+    centers.append(centroids)
 
 # Create a figure and axis for displaying the images
 fig, ax = plt.subplots(1, 3)
@@ -151,6 +156,13 @@ ax[2].set_title("Rotation degrees per frame")
 # Iterate through each image
 for i, (image_rotated, image_original) in enumerate(zip(rotated_image, image)):
     ax[0].imshow(image_original, cmap="gist_ncar")
+    if len(centers[i]) > 0:
+        ax[0].plot(
+            centers[i][0][0], centers[i][0][1], marker="*", color="white"
+        )
+    if len(centers[i]) > 1:
+        ax[0].plot(centers[i][1][0], centers[i][1][1], marker="*", color="red")
+
     ax[1].imshow(image_rotated, cmap="gist_ncar")
 
     #  add a vertical line on the plot on ax 2

@@ -5,7 +5,7 @@ from skimage import measure
 
 def preprocess_image(image):
     lower_threshold = -2700
-    higher_threshold = -2400
+    higher_threshold = -2200
     image = np.where(
         (image >= lower_threshold) & (image <= higher_threshold), 255, 0
     ).astype(np.uint8)
@@ -14,12 +14,9 @@ def preprocess_image(image):
 
 
 def detect_blobs(image):
-    # Convert the image to grayscale
-    # gray = image.mean().astype(np.uint8)
-
     # Apply the Laplacian of Gaussian (LoG) filter
     # filtered_image = gaussian_laplace(image, sigma=8)
-    filtered_image = gaussian_filter(image, sigma=8)
+    filtered_image = gaussian_filter(image, sigma=5)
 
     # Apply thresholding to obtain a binary image
     threshold_value = 32  # Adjust this value according to your image

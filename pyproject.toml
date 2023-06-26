@@ -45,6 +45,12 @@ requires = [
     "setuptools>=45",
     "wheel",
     "setuptools_scm[toml]>=6.2",
+    "numpy",
+    "tiffile",
+    "matplotlib",
+    "scipy",
+    "scikit-learn",
+    "yaml",
 ]
 build-backend = "setuptools.build_meta"
 

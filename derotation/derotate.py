@@ -3,6 +3,7 @@ from pathlib import Path
 
 import numpy as np
 import tifffile as tiff
+from adjust_rotation_degrees import optimize_image_rotation_degrees
 from find_centroid import detect_blobs, extract_blob_centers, preprocess_image
 from matplotlib import pyplot as plt
 from optimizers import find_best_k
@@ -14,7 +15,7 @@ from scipy.signal import find_peaks
 # Set aux and imaging locations and initialize dip image software
 rot_deg = 360
 
-path = Path("/Users/lauraporta/local_data/230327_pollen")
+path = Path("/Users/laura/data/230327_pollen")
 
 path_tif = path / "imaging/runtest_00001.tif"
 path_aux = path / "aux_stim/202303271657_21_005.bin"
@@ -136,6 +137,7 @@ image_rotation_degree_per_frame *= -1
 image = tiff.imread(path_tif)
 rotated_image = np.empty_like(image)
 centers = []
+centers_rotated = []
 for i in range(len(image)):
     rotated_image[i] = rotate(
         image[i], image_rotation_degree_per_frame[i], reshape=False
@@ -144,8 +146,36 @@ for i in range(len(image)):
     img = preprocess_image(image[i])
     labels, properties = detect_blobs(img)
     centroids = extract_blob_centers(properties)
-
     centers.append(centroids)
+
+    img_rotated = preprocess_image(rotated_image[i])
+    labels_rotated, properties_rotated = detect_blobs(img_rotated)
+    centroids_rotated = extract_blob_centers(properties_rotated)
+    centers_rotated.append(centroids_rotated)
+
+
+opt_result = optimize_image_rotation_degrees(
+    image, image_rotation_degree_per_frame
+)
+
+
+#  plot drift of centers
+fig, ax = plt.subplots(2, 1)
+for k, c in enumerate(centers):
+    try:
+        ax[0].plot(k, c[1][1], marker="o", color="red")
+        ax[0].plot(k, c[1][0], marker="o", color="blue")
+        ax[0].set_ylim(80, 180)
+    except IndexError:
+        pass
+for k, c in enumerate(centers_rotated):
+    try:
+        ax[1].plot(k, c[1][1], marker="o", color="red")
+        ax[1].plot(k, c[1][0], marker="o", color="blue")
+        ax[1].set_ylim(80, 180)
+    except IndexError:
+        pass
+
 
 # Create a figure and axis for displaying the images
 fig, ax = plt.subplots(1, 3)
@@ -158,12 +188,26 @@ for i, (image_rotated, image_original) in enumerate(zip(rotated_image, image)):
     ax[0].imshow(image_original, cmap="gist_ncar")
     if len(centers[i]) > 0:
         ax[0].plot(
-            centers[i][0][0], centers[i][0][1], marker="*", color="white"
+            centers[i][0][1], centers[i][0][0], marker="*", color="white"
         )
     if len(centers[i]) > 1:
-        ax[0].plot(centers[i][1][0], centers[i][1][1], marker="*", color="red")
+        ax[0].plot(centers[i][1][1], centers[i][1][0], marker="*", color="red")
 
     ax[1].imshow(image_rotated, cmap="gist_ncar")
+    if len(centers_rotated[i]) > 0:
+        ax[1].plot(
+            centers_rotated[i][0][1],
+            centers_rotated[i][0][0],
+            marker="*",
+            color="white",
+        )
+    if len(centers_rotated[i]) > 1:
+        ax[1].plot(
+            centers_rotated[i][1][1],
+            centers_rotated[i][1][0],
+            marker="*",
+            color="red",
+        )
 
     #  add a vertical line on the plot on ax 2
     ax[2].axvline(frames_start[i], color="black", linestyle="--")
@@ -175,6 +219,7 @@ for i, (image_rotated, image_original) in enumerate(zip(rotated_image, image)):
         marker="o",
         color="red",
     )
+
     plt.pause(0.001)
     ax[0].clear()
     ax[1].clear()

@@ -125,7 +125,8 @@ for i in range(0, len(tick_peaks_corrected)):
     time_interval = tick_peaks_corrected[i] - tick_peaks_corrected[i - 1]
     if time_interval > 2000 and i != 0:
         current_rotation = 0
-    current_rotation += 0.2
+    else:
+        current_rotation += 0.2
     rotation_degrees[
         tick_peaks_corrected[i - 1] : tick_peaks_corrected[i]
     ] = current_rotation

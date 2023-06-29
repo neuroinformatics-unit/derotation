@@ -2,7 +2,15 @@ from pathlib import Path
 
 import numpy as np
 import scipy.optimize as opt
-from find_centroid import detect_blobs, extract_blob_centers, preprocess_image
+from find_centroid import (
+    detect_blobs,
+    extract_blob_centers,
+    get_optimized_centroid_location,
+    in_region,
+    not_center_of_image,
+    pipeline,
+    preprocess_image,
+)
 from matplotlib import pyplot as plt
 from scipy.ndimage import rotate
 
@@ -67,23 +75,29 @@ def get_rotation_degrees_from_a_curve(parametric_curve, frame_number):
     )
 
 
-def rotate_image(
+def rotate_all_images(
     image,
     image_rotation_degree_per_frame,
 ):
-    rotated_image = np.empty_like(image)
+    rotated_images = np.empty_like(image)
     for i in range(len(image)):
-        rotated_image[i] = rotate(
+        rotated_images[i] = rotate(
             image[i], image_rotation_degree_per_frame[i], reshape=False
         )
 
-    return rotated_image
+    return rotated_images
 
 
 def get_centers(image):
     img = preprocess_image(image)
     labels, properties = detect_blobs(img)
     centroids = extract_blob_centers(properties)
+
+    if (len(centroids) == 1) and (
+        (not not_center_of_image(centroids[0]))
+        or (not in_region(centroids[0]))
+    ):
+        print("only one blob found")
 
     return centroids
 
@@ -106,14 +120,6 @@ def get_mean_centroid(centroids):
     return mean_x, mean_y
 
 
-def not_center_of_image(c):
-    return not (115 <= c[0] <= 135 and 115 <= c[1] <= 135)
-
-
-def in_region(c):
-    return 50 <= c[0] <= 200 and 50 <= c[1] <= 200
-
-
 def optimize_image_rotation_degrees(
     _image, _image_rotation_degree_per_frame, use_curve_fit=False
 ):
@@ -127,16 +133,24 @@ def optimize_image_rotation_degrees(
         images = _image[frames_to_consider]
 
         centers = []
+        optimized_parameters = []
         for img in images:
-            centers.append(get_centers(img))
+            c, x = get_optimized_centroid_location(img)
+            centers.append(c)
+            optimized_parameters.append(x)
+
+        assert len(optimized_parameters) == len(images)
+
         mean_x, mean_y = 150, 160  # get_mean_centroid(centers)
 
         iteration = [0]  # use mutable object to hold the iteration number
 
-        def callback(xk):
+        def cb(xk):
             iteration[0] += 1
             print(
-                "Iteration: {0} - Function value: {1}".format(
+                "============================================"
+                + "\n"
+                + "Iteration: {0} - Function value: {1}".format(
                     iteration[0], f(xk)
                 )
             )
@@ -154,17 +168,21 @@ def optimize_image_rotation_degrees(
                 rots = parameters
             ax[1].plot(rots, marker=".", color="black")
 
-            rotated_image = rotate_image(images, rots)
+            rotated_images = rotate_all_images(images, rots)
             diff_x = []
             diff_y = []
-            for img in rotated_image:
+            for k, img in enumerate(rotated_images):
                 try:
-                    centers_rotated_image = get_centers(img)
+                    centers_rotated_image = pipeline(
+                        img, optimized_parameters[k]
+                    )
                     center_dim_blob = mean_x, mean_y
                     for c in centers_rotated_image:
                         if not_center_of_image(c) and in_region(c):
                             center_dim_blob = c
-
+                    # if center_dim_blob == (mean_x, mean_y):
+                    #     # in this rotation, the blob is not found very well
+                    #     print("no blob found")
                     ax[0].plot(
                         center_dim_blob[1],
                         center_dim_blob[0],
@@ -181,21 +199,26 @@ def optimize_image_rotation_degrees(
             path.mkdir(parents=True, exist_ok=True)
 
             fig.savefig(f"{path}/iteration_{iteration[0]}.png")
-            plt.close(fig)
-            return np.mean(diff_x) + np.mean(diff_y)
+            plt.close()
+
+            # almost like arc length for small angles
+            hypothenuse = [
+                np.sqrt(x**2 + y**2) for x, y in zip(diff_x, diff_y)
+            ]
+            return np.sum(hypothenuse)
 
         result = opt.minimize(
             f,
             parametric_curves[i] if use_curve_fit else blocks[i],
             method="Nelder-Mead",
             options={
-                "xatol": 1e-2,
-                "fatol": 1e-2,
-                "maxiter": 500,
+                "xatol": 1e-5,
+                "fatol": 1e-5,
+                "maxiter": 140,
                 "maxfev": 1000,
             },
-            callback=callback,
+            # callback=cb,
         )
         results.append(result.x)
 
-    return results
+    return results, indexes, optimized_parameters

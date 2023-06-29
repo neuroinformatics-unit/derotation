@@ -1,10 +1,13 @@
 import copy
+import pickle
 from pathlib import Path
 
 import numpy as np
 import tifffile as tiff
 from adjust_rotation_degrees import optimize_image_rotation_degrees
-from find_centroid import detect_blobs, extract_blob_centers, preprocess_image
+from find_centroid import (
+    pipeline,
+)
 from matplotlib import pyplot as plt
 from optimizers import find_best_k
 from read_binary import read_rc2_bin
@@ -134,34 +137,56 @@ signed_rotation_degrees = rotation_degrees * rotation_on
 image_rotation_degree_per_frame = signed_rotation_degrees[frames_start]
 image_rotation_degree_per_frame *= -1
 
+try:
+    with open("derotation/optimized_parameters.pkl", "rb") as f:
+        optimized_parameters = pickle.load(f)
+    with open("derotation/indexes.pkl", "rb") as f:
+        indexes = pickle.load(f)
+    with open("derotation/opt_result.pkl", "rb") as f:
+        opt_result = pickle.load(f)
+except FileNotFoundError:
+    (
+        opt_result,
+        indexes,
+        optimized_parameters,
+    ) = optimize_image_rotation_degrees(image, image_rotation_degree_per_frame)
+    with open("derotation/optimized_parameters.pkl", "wb") as f:
+        pickle.dump(optimized_parameters, f)
+    with open("derotation/indexes.pkl", "wb") as f:
+        pickle.dump(indexes, f)
+    with open("derotation/opt_result.pkl", "wb") as f:
+        pickle.dump(opt_result, f)
+
+new_image_rotation_degree_per_frame = copy.deepcopy(
+    image_rotation_degree_per_frame
+)
+for i, block in enumerate(opt_result):
+    new_image_rotation_degree_per_frame[indexes[i]] = block
+
+
 #  rotate the image to the correct position according to the frame_degrees
 image = tiff.imread(path_tif)
 rotated_image = np.empty_like(image)
+rotated_image_corrected = np.empty_like(image)
 centers = []
 centers_rotated = []
+centers_rotated_corrected = []
 for i in range(len(image)):
     rotated_image[i] = rotate(
         image[i], image_rotation_degree_per_frame[i], reshape=False
     )
+    rotated_image_corrected[i] = rotate(
+        image[i], new_image_rotation_degree_per_frame[i], reshape=False
+    )
 
-    img = preprocess_image(image[i])
-    labels, properties = detect_blobs(img)
-    centroids = extract_blob_centers(properties)
-    centers.append(centroids)
-
-    img_rotated = preprocess_image(rotated_image[i])
-    labels_rotated, properties_rotated = detect_blobs(img_rotated)
-    centroids_rotated = extract_blob_centers(properties_rotated)
-    centers_rotated.append(centroids_rotated)
-
-
-opt_result = optimize_image_rotation_degrees(
-    image, image_rotation_degree_per_frame
-)
-
+    centers.append(pipeline(image[i], optimized_parameters[i]))
+    centers_rotated.append(pipeline(rotated_image[i], optimized_parameters[i]))
+    centers_rotated_corrected.append(
+        pipeline(rotated_image_corrected[i], optimized_parameters[i])
+    )
 
 #  plot drift of centers
-fig, ax = plt.subplots(2, 1)
+fig, ax = plt.subplots(3, 1)
 for k, c in enumerate(centers):
     try:
         ax[0].plot(k, c[1][1], marker="o", color="red")
@@ -174,6 +199,13 @@ for k, c in enumerate(centers_rotated):
         ax[1].plot(k, c[1][1], marker="o", color="red")
         ax[1].plot(k, c[1][0], marker="o", color="blue")
         ax[1].set_ylim(80, 180)
+    except IndexError:
+        pass
+for k, c in enumerate(centers_rotated_corrected):
+    try:
+        ax[2].plot(k, c[1][1], marker="o", color="red")
+        ax[2].plot(k, c[1][0], marker="o", color="blue")
+        ax[2].set_ylim(80, 180)
     except IndexError:
         pass
 
@@ -226,6 +258,16 @@ for i, (image_rotated, image_original) in enumerate(zip(rotated_image, image)):
     ax[1].clear()
 
     ax[2].clear()
+
+
+ax[0].set_title("Original image")
+ax[1].set_title("Rotated image")
+ax[2].set_title("Rotation degrees per frame")
+
+# axis off for the first two plots
+ax[0].axis("off")
+ax[1].axis("off")
+
 # Close the figure
 plt.close(fig)
 

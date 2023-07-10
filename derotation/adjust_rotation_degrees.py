@@ -4,17 +4,18 @@ from pathlib import Path
 
 import numpy as np
 import scipy.optimize as opt
-from find_centroid import (
+from matplotlib import pyplot as plt
+from scipy.ndimage import rotate
+
+from derotation.find_centroid import (
     detect_blobs,
     extract_blob_centers,
+    find_centroid_pipeline,
     get_optimized_centroid_location,
     in_region,
     not_center_of_image,
-    pipeline,
     preprocess_image,
 )
-from matplotlib import pyplot as plt
-from scipy.ndimage import rotate
 
 
 def find_rotation_blocks(image_rotation_degree_per_frame):
@@ -175,7 +176,7 @@ def optimize_image_rotation_degrees(
             diff_y = []
             for k, img in enumerate(rotated_images):
                 try:
-                    centers_rotated_image = pipeline(
+                    centers_rotated_image = find_centroid_pipeline(
                         img, optimized_parameters[k]
                     )
                     center_dim_blob = mean_x, mean_y

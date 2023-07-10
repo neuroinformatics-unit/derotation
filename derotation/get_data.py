@@ -1,7 +1,8 @@
 import numpy as np
 import tifffile as tiff
-from read_binary import read_rc2_bin
 from scipy.io import loadmat
+
+from derotation.read_binary import read_rc2_bin
 
 
 def get_paths(path):

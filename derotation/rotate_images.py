@@ -1,6 +1,7 @@
 import numpy as np
-from find_centroid import pipeline
 from scipy.ndimage import rotate
+
+from derotation.find_centroid import find_centroid_pipeline
 
 
 def rotate_images(
@@ -37,12 +38,14 @@ def rotate_images(
         # params = optimized_parameters[i]
         # if i in indexes else defoulting_parameters
 
-        centers.append(pipeline(image[i], defoulting_parameters))
+        centers.append(find_centroid_pipeline(image[i], defoulting_parameters))
         centers_rotated.append(
-            pipeline(rotated_image[i], defoulting_parameters)
+            find_centroid_pipeline(rotated_image[i], defoulting_parameters)
         )
         centers_rotated_corrected.append(
-            pipeline(rotated_image_corrected[i], defoulting_parameters)
+            find_centroid_pipeline(
+                rotated_image_corrected[i], defoulting_parameters
+            )
         )
 
     return (

@@ -40,7 +40,7 @@ def extract_blob_centers(properties):
     return centroids
 
 
-def pipeline(image, x):
+def find_centroid_pipeline(image, x):
     lower_threshold, higher_threshold, binary_threshold, sigma = x
     img = preprocess_image(image, lower_threshold, higher_threshold)
     labels, properties = detect_blobs(img, sigma, binary_threshold)
@@ -66,7 +66,7 @@ def get_optimized_centroid_location(image):
         )
 
     def f(x):
-        centroids = pipeline(image, x)
+        centroids = find_centroid_pipeline(image, x)
         count_valid_centroids = 0
         for c in centroids:
             if not_center_of_image(c) and in_region(c):
@@ -86,6 +86,6 @@ def get_optimized_centroid_location(image):
     )
 
     # now find the centroid
-    centroids = pipeline(image, res.x)
+    centroids = find_centroid_pipeline(image, res.x)
 
     return centroids, res.x

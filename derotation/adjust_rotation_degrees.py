@@ -1,3 +1,5 @@
+import copy
+import pickle
 from pathlib import Path
 
 import numpy as np
@@ -222,3 +224,39 @@ def optimize_image_rotation_degrees(
         results.append(result.x)
 
     return results, indexes, optimized_parameters
+
+
+def get_optimal_rotation_degs(image, image_rotation_degree_per_frame):
+    try:
+        with open("derotation/optimized_parameters.pkl", "rb") as f:
+            optimized_parameters = pickle.load(f)
+        with open("derotation/indexes.pkl", "rb") as f:
+            indexes = pickle.load(f)
+        with open("derotation/opt_result.pkl", "rb") as f:
+            opt_result = pickle.load(f)
+    except FileNotFoundError:
+        (
+            opt_result,
+            indexes,
+            optimized_parameters,
+        ) = optimize_image_rotation_degrees(
+            image, image_rotation_degree_per_frame
+        )
+        with open("derotation/optimized_parameters.pkl", "wb") as f:
+            pickle.dump(optimized_parameters, f)
+        with open("derotation/indexes.pkl", "wb") as f:
+            pickle.dump(indexes, f)
+        with open("derotation/opt_result.pkl", "wb") as f:
+            pickle.dump(opt_result, f)
+
+    return opt_result, indexes, optimized_parameters
+
+
+def apply_new_rotations(opt_result, image_rotation_degree_per_frame, indexes):
+    new_image_rotation_degree_per_frame = copy.deepcopy(
+        image_rotation_degree_per_frame
+    )
+    for i, block in enumerate(opt_result):
+        new_image_rotation_degree_per_frame[indexes[i]] = block
+
+    return new_image_rotation_degree_per_frame

@@ -6,6 +6,8 @@ import numpy as np
 import tifffile as tiff
 from adjust_rotation_degrees import optimize_image_rotation_degrees
 from find_centroid import (
+    in_region,
+    not_center_of_image,
     pipeline,
 )
 from matplotlib import pyplot as plt
@@ -163,6 +165,9 @@ new_image_rotation_degree_per_frame = copy.deepcopy(
 for i, block in enumerate(opt_result):
     new_image_rotation_degree_per_frame[indexes[i]] = block
 
+#  make of indexes an unque flat array
+indexes = np.unique(np.concatenate(indexes))
+
 
 #  rotate the image to the correct position according to the frame_degrees
 image = tiff.imread(path_tif)
@@ -172,6 +177,18 @@ centers = []
 centers_rotated = []
 centers_rotated_corrected = []
 for i in range(len(image)):
+    lower_threshold = -2700
+    higher_threshold = -2600
+    binary_threshold = 32
+    sigma = 2.5
+
+    defoulting_parameters = [
+        lower_threshold,
+        higher_threshold,
+        binary_threshold,
+        sigma,
+    ]
+
     rotated_image[i] = rotate(
         image[i], image_rotation_degree_per_frame[i], reshape=False
     )
@@ -179,73 +196,104 @@ for i in range(len(image)):
         image[i], new_image_rotation_degree_per_frame[i], reshape=False
     )
 
-    centers.append(pipeline(image[i], optimized_parameters[i]))
-    centers_rotated.append(pipeline(rotated_image[i], optimized_parameters[i]))
+    # params = optimized_parameters[i]
+    # if i in indexes else defoulting_parameters
+
+    centers.append(pipeline(image[i], defoulting_parameters))
+    centers_rotated.append(pipeline(rotated_image[i], defoulting_parameters))
     centers_rotated_corrected.append(
-        pipeline(rotated_image_corrected[i], optimized_parameters[i])
+        pipeline(rotated_image_corrected[i], defoulting_parameters)
     )
 
 #  plot drift of centers
 fig, ax = plt.subplots(3, 1)
-for k, c in enumerate(centers):
-    try:
-        ax[0].plot(k, c[1][1], marker="o", color="red")
-        ax[0].plot(k, c[1][0], marker="o", color="blue")
-        ax[0].set_ylim(80, 180)
-    except IndexError:
-        pass
-for k, c in enumerate(centers_rotated):
-    try:
-        ax[1].plot(k, c[1][1], marker="o", color="red")
-        ax[1].plot(k, c[1][0], marker="o", color="blue")
-        ax[1].set_ylim(80, 180)
-    except IndexError:
-        pass
-for k, c in enumerate(centers_rotated_corrected):
-    try:
-        ax[2].plot(k, c[1][1], marker="o", color="red")
-        ax[2].plot(k, c[1][0], marker="o", color="blue")
-        ax[2].set_ylim(80, 180)
-    except IndexError:
-        pass
-
+for k, centroid in enumerate(centers):
+    for c in centroid:
+        if not_center_of_image(c) and in_region(c):
+            ax[0].plot(k, c[1], marker="o", color="red")
+            ax[0].plot(k, c[0], marker="o", color="blue")
+            # ax[0].set_ylim(80, 180)
+for k, centroid in enumerate(centers_rotated):
+    for c in centroid:
+        if not_center_of_image(c) and in_region(c):
+            ax[1].plot(k, c[1], marker="o", color="red")
+            ax[1].plot(k, c[0], marker="o", color="blue")
+            # ax[0].set_ylim(80, 180)
+for k, centroid in enumerate(centers_rotated_corrected):
+    for c in centroid:
+        if not_center_of_image(c) and in_region(c):
+            ax[2].plot(k, c[1], marker="o", color="red")
+            ax[2].plot(k, c[0], marker="o", color="blue")
+            # ax[0].set_ylim(80, 180)
 
 # Create a figure and axis for displaying the images
-fig, ax = plt.subplots(1, 3)
+fig, ax = plt.subplots(1, 4)
 
 
 ax[2].set_title("Rotation degrees per frame")
 
 # Iterate through each image
-for i, (image_rotated, image_original) in enumerate(zip(rotated_image, image)):
+for i, (image_rotated, image_original, image_corrected) in enumerate(
+    zip(rotated_image, image, rotated_image_corrected)
+):
     ax[0].imshow(image_original, cmap="gist_ncar")
-    if len(centers[i]) > 0:
-        ax[0].plot(
-            centers[i][0][1], centers[i][0][0], marker="*", color="white"
-        )
-    if len(centers[i]) > 1:
-        ax[0].plot(centers[i][1][1], centers[i][1][0], marker="*", color="red")
-
     ax[1].imshow(image_rotated, cmap="gist_ncar")
-    if len(centers_rotated[i]) > 0:
-        ax[1].plot(
-            centers_rotated[i][0][1],
-            centers_rotated[i][0][0],
-            marker="*",
-            color="white",
-        )
-    if len(centers_rotated[i]) > 1:
-        ax[1].plot(
-            centers_rotated[i][1][1],
-            centers_rotated[i][1][0],
-            marker="*",
-            color="red",
-        )
+    ax[2].imshow(image_corrected, cmap="gist_ncar")
+
+    for c in centers[i]:
+        if not_center_of_image(c) and in_region(c):
+            # dim blob
+            ax[0].plot(c[1], c[0], marker="*", color="red")
+        if not not_center_of_image(c):
+            # bright blob
+            ax[0].plot(c[1], c[0], marker="*", color="white")
+    for c in centers_rotated[i]:
+        if not_center_of_image(c) and in_region(c):
+            # dim blob
+            ax[1].plot(c[1], c[0], marker="*", color="red")
+        if not not_center_of_image(c):
+            # bright blob
+            ax[1].plot(c[1], c[0], marker="*", color="white")
+    for c in centers_rotated_corrected[i]:
+        if not_center_of_image(c) and in_region(c):
+            # dim blob
+            ax[2].plot(c[1], c[0], marker="*", color="red")
+        if not not_center_of_image(c):
+            # bright blob
+            ax[2].plot(c[1], c[0], marker="*", color="white")
+
+    ax[0].axis("off")
+    ax[1].axis("off")
+    ax[2].axis("off")
+
+    # if len(centers[i]) > 0:
+    #     ax[0].plot(
+    #         centers[i][0][1], centers[i][0][0], marker="*", color="white"
+    #     )
+    # if len(centers[i]) > 1:
+    #     ax[0].plot(centers[i][1][1],
+    #               centers[i][1][0], marker="*", color="red")
+
+    # ax[1].imshow(image_rotated, cmap="gist_ncar")
+    # if len(centers_rotated[i]) > 0:
+    #     ax[1].plot(
+    #         centers_rotated[i][0][1],
+    #         centers_rotated[i][0][0],
+    #         marker="*",
+    #         color="white",
+    #     )
+    # if len(centers_rotated[i]) > 1:
+    #     ax[1].plot(
+    #         centers_rotated[i][1][1],
+    #         centers_rotated[i][1][0],
+    #         marker="*",
+    #         color="red",
+    #     )
 
     #  add a vertical line on the plot on ax 2
-    ax[2].axvline(frames_start[i], color="black", linestyle="--")
-    ax[2].plot(signed_rotation_degrees, label="rotation degrees")
-    ax[2].plot(
+    ax[3].axvline(frames_start[i], color="black", linestyle="--")
+    ax[3].plot(signed_rotation_degrees, label="rotation degrees")
+    ax[3].plot(
         frames_start,
         image_rotation_degree_per_frame,
         linestyle="none",
@@ -256,13 +304,14 @@ for i, (image_rotated, image_original) in enumerate(zip(rotated_image, image)):
     plt.pause(0.001)
     ax[0].clear()
     ax[1].clear()
-
     ax[2].clear()
+    ax[3].clear()
 
 
 ax[0].set_title("Original image")
 ax[1].set_title("Rotated image")
-ax[2].set_title("Rotation degrees per frame")
+ax[2].set_title("Corrected image")
+ax[3].set_title("Rotation degrees per frame")
 
 # axis off for the first two plots
 ax[0].axis("off")

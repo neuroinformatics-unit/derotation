@@ -7,7 +7,26 @@ from qtpy.QtWidgets import (
 )
 
 from napari.viewer import Viewer
+from typing import Optional
 
+from napari_matplotlib.base import SingleAxesWidget
+import numpy as np
+
+class DerotationCanvas(SingleAxesWidget):
+    def __init__(
+        self,
+        napari_viewer: Viewer,
+        parent: Optional[QWidget] = None,
+    ):
+        super().__init__(napari_viewer, parent=parent)
+        self.angles_over_time = np.sin(np.linspace(0,10,100))
+        self._update_layers(None)
+
+    
+    def draw(self):
+        self.axes.plot(self.angles_over_time, color="red")
+        self.axes.set_title(f"z={self.current_z}")
+        self.axes.axvline(self.current_z)
 
 
 class Plotting(QWidget):
@@ -18,23 +37,7 @@ class Plotting(QWidget):
         self.setLayout(QVBoxLayout())
         self.button = QPushButton()
         self.button.setText("Make plot")
-        self.button.clicked.connect(
-            self._make_plot
-        )
         self.layout().addWidget(self.button)
 
-        self._viewer.dims.events.connect(self._print_z)
-
-    def _make_plot(self):
-        plt.plot([1,2,3], [5,6,7])
-        plt.show()
-
-    def _print_z(self):
-        z = self._viewer.dims.current_step[0]
-        print(z)
-
-        plt.clear()
-        plt.axvline(z)
-        plt.show()
-
-     
+        self.mpl_widget = DerotationCanvas(self._viewer)
+        self.layout().addWidget(self.mpl_widget)     

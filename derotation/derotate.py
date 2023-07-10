@@ -3,141 +3,62 @@ import pickle
 from pathlib import Path
 
 import numpy as np
-import tifffile as tiff
 from adjust_rotation_degrees import optimize_image_rotation_degrees
+from analog_preprocessing import (
+    apply_rotation_direction,
+    check_number_of_rotations,
+    find_rotation_for_each_frame_from_motor,
+    get_missing_frames,
+    get_starting_and_ending_frames,
+    when_is_rotation_on,
+)
 from find_centroid import (
     in_region,
     not_center_of_image,
     pipeline,
 )
+from get_data import get_data
 from matplotlib import pyplot as plt
-from optimizers import find_best_k
-from read_binary import read_rc2_bin
-from scipy.io import loadmat
 from scipy.ndimage import rotate
 from scipy.signal import find_peaks
 
-# Set aux and imaging locations and initialize dip image software
+(
+    image,
+    frame_clock,
+    line_clock,
+    full_rotation,
+    rotation_ticks,
+    dt,
+    config,
+    direction,
+) = get_data(Path("/Users/laura/data/230327_pollen"))
 rot_deg = 360
 
-path = Path("/Users/laura/data/230327_pollen")
+missing_frames, diffs = get_missing_frames(frame_clock)
 
-path_tif = path / "imaging/runtest_00001.tif"
-path_aux = path / "aux_stim/202303271657_21_005.bin"
-path_config = "derotation/config.yml"
-path_randperm = path / "stimlus_randperm.mat"
-
-image = tiff.imread(path_tif)
-
-pseudo_random = loadmat(path_randperm)
-full_rotation_blocks_direction = pseudo_random["stimulus_random"][:, 2] > 0
-dir = np.ones(5)
-dir[full_rotation_blocks_direction[0:5]] = -1
-
-data, dt, chan_names, config = read_rc2_bin(path_aux, path_config)
-data_dict = {chan: data[:, i] for i, chan in enumerate(chan_names)}
-
-frame_clock = data_dict["scanimage_frameclock"]
-line_clock = data_dict["camera"]
-full_rotation = data_dict["PI_rotCW"]
-rotation_ticks = data_dict["Vistim_ttl"]
-#  0.2 deg for 1 tick
-
-# check if there is a missing frame
-diffs = np.diff(frame_clock)
-missing_frames = np.where(diffs > 0.1)[0]
-
-# Calculate the threshold using a percentile of the total signal
-best_k = find_best_k(frame_clock, image)
-threshold = np.mean(frame_clock) + best_k * np.std(frame_clock)
-print(f"Best threshold: {threshold}")
-frames_start = np.where(np.diff(frame_clock) > threshold)[0]
-frames_end = np.where(np.diff(frame_clock) < -threshold)[0]
-
+frames_start, frames_end, threshold = get_starting_and_ending_frames(
+    frame_clock, image
+)
 
 #  find the peaks of the rot_tick2 signal
-rot_tick2_peaks = find_peaks(
+rotation_ticks_peaks = find_peaks(
     rotation_ticks,
     height=4,
     distance=20,
 )[0]
 
+check_number_of_rotations(rotation_ticks_peaks, direction, rot_deg, dt)
 
-# sanity check for the number of rotation ticks
-number_of_rotations = len(dir)
-expected_tiks_per_rotation = rot_deg / dt
-ratio = len(rot_tick2_peaks) / expected_tiks_per_rotation
-if ratio > number_of_rotations:
-    print(
-        f"There are more rotation ticks than expected, {len(rot_tick2_peaks)}"
-    )
-elif ratio < number_of_rotations:
-    print(
-        f"There are less rotation ticks than expected, {len(rot_tick2_peaks)}"
-    )
+rotation_on = when_is_rotation_on(full_rotation)
+rotation_on = apply_rotation_direction(rotation_on, direction)
 
+(
+    image_rotation_degree_per_frame,
+    signed_rotation_degrees,
+) = find_rotation_for_each_frame_from_motor(
+    frame_clock, rotation_ticks_peaks, rotation_on, frames_start
+)
 
-# identify the rotation ticks that correspond to
-# clockwise and counter clockwise rotations
-threshold = 0.5  # Threshold to consider "on" or rotation occurring
-rotation_on = np.zeros_like(full_rotation)
-rotation_on[full_rotation > threshold] = 1
-
-#  delete intervals shorter than
-rotation_signal_copy = copy.deepcopy(rotation_on)
-latest_rotation_on_end = 0
-
-i = 0
-while i < len(dir):
-    # find the first rotation_on == 1
-    first_rotation_on = np.where(rotation_signal_copy == 1)[0][0]
-    # now assign the value in dir to all the first set of ones
-    len_first_group = np.where(rotation_signal_copy[first_rotation_on:] == 0)[
-        0
-    ][0]
-    if len_first_group < 1000:
-        #  skip this short rotation because it is a false one
-        #  done one additional time to clean up the trace at the end
-        rotation_signal_copy = rotation_signal_copy[
-            first_rotation_on + len_first_group :
-        ]
-        latest_rotation_on_end = (
-            latest_rotation_on_end + first_rotation_on + len_first_group
-        )
-        continue
-
-    rotation_on[
-        latest_rotation_on_end
-        + first_rotation_on : latest_rotation_on_end
-        + first_rotation_on
-        + len_first_group
-    ] = dir[i]
-    latest_rotation_on_end = (
-        latest_rotation_on_end + first_rotation_on + len_first_group
-    )
-    rotation_signal_copy = rotation_signal_copy[
-        first_rotation_on + len_first_group :
-    ]
-    i += 1  # Increment the loop counter
-
-
-#  calculate the rotation degrees for each frame
-rotation_degrees = np.empty_like(frame_clock)
-rotation_degrees[0] = 0
-current_rotation: float = 0
-tick_peaks_corrected = np.insert(rot_tick2_peaks, 0, 0, axis=0)
-for i in range(0, len(tick_peaks_corrected)):
-    time_interval = tick_peaks_corrected[i] - tick_peaks_corrected[i - 1]
-    if time_interval > 2000 and i != 0:
-        current_rotation = 0
-    else:
-        current_rotation += 0.2
-    rotation_degrees[
-        tick_peaks_corrected[i - 1] : tick_peaks_corrected[i]
-    ] = current_rotation
-signed_rotation_degrees = rotation_degrees * rotation_on
-image_rotation_degree_per_frame = signed_rotation_degrees[frames_start]
-image_rotation_degree_per_frame *= -1
 
 try:
     with open("derotation/optimized_parameters.pkl", "rb") as f:
@@ -170,7 +91,6 @@ indexes = np.unique(np.concatenate(indexes))
 
 
 #  rotate the image to the correct position according to the frame_degrees
-image = tiff.imread(path_tif)
 rotated_image = np.empty_like(image)
 rotated_image_corrected = np.empty_like(image)
 centers = []
@@ -393,9 +313,9 @@ ax[3].plot(
     rasterized=True,
 )
 ax[3].plot(
-    rot_tick2_peaks,
+    rotation_ticks_peaks,
     # np.ones(len(rot_tick2_peaks)) * 5.2,
-    rotation_ticks[rot_tick2_peaks],
+    rotation_ticks[rotation_ticks_peaks],
     linestyle="none",
     marker="*",
     color="red",

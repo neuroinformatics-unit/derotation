@@ -49,8 +49,8 @@ requires = [
     "tiffile",
     "matplotlib",
     "scipy",
-    "scikit-learn",
-    "yaml",
+    "PyYAML",
+    "scikit-image",
 ]
 build-backend = "setuptools.build_meta"
 

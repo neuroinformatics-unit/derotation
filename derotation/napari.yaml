@@ -1,0 +1,10 @@
+name: derotation
+display_name: Neuroinformatics derotation tools
+contributions:
+  commands:
+    - id: derotation.make_plotting_widget
+      python_name: derotation.plotting:Plotting
+      title: Make Plotting Widget
+  widgets:
+    - command: derotation.make_plotting_widget
+      display_name: NIU derotation plotting 

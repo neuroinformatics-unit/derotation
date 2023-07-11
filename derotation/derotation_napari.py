@@ -10,6 +10,8 @@ from qtpy.QtWidgets import (
 )
 
 from derotation.analysis.derotation_pipeline import DerotationPipeline
+from derotation.analysis.rigid_registration import refine_derotation
+from derotation.analysis.rotate_images import image_stack_rotation
 
 
 class DerotationCanvas(SingleAxesWidget):
@@ -43,13 +45,30 @@ class Plotting(QWidget):
 
         self.analyze_button = QPushButton()
         self.analyze_button.setText("Run analysis")
-        self.analyze_button.clicked.connect(self.analysis)
+        self.analyze_button.clicked.connect(self.analog_data_analysis)
         self.layout().addWidget(self.analyze_button)
+
+        self.find_centroids_button = QPushButton()
+        self.find_centroids_button.setText("Find centroids")
+        self.find_centroids_button.clicked.connect(self.find_centroids)
+        self.layout().addWidget(self.find_centroids_button)
+
+        self.rotate_images_button = QPushButton()
+        self.rotate_images_button.setText("Rotate images")
+        self.rotate_images_button.clicked.connect(
+            self.rotate_images_using_motor_feedback
+        )
+        self.layout().addWidget(self.rotate_images_button)
+
+        self.refine_derotation_button = QPushButton()
+        self.refine_derotation_button.setText("Refine derotation")
+        self.refine_derotation_button.clicked.connect(self.refine_derotation)
+        self.layout().addWidget(self.refine_derotation_button)
 
         self.mpl_widget = DerotationCanvas(self._viewer)
         self.layout().addWidget(self.mpl_widget)
 
-    def analysis(self):
+    def analog_data_analysis(self):
         self.pipeline.process_analog_signals()
 
         self.mpl_widget.angles_over_time = (
@@ -57,7 +76,9 @@ class Plotting(QWidget):
         )
 
         self.mpl_widget.draw()
+        print("Data analysis done")
 
+    def find_centroids(self):
         self.pipeline.get_clean_centroids()
 
         centers = [
@@ -68,3 +89,41 @@ class Plotting(QWidget):
         self._viewer.add_points(
             centers,
         )
+        print("Centroids found")
+
+    def rotate_images_using_motor_feedback(self):
+        self.rotated_images = image_stack_rotation(
+            self.pipeline.image, self.pipeline.image_rotation_degree_per_frame
+        )
+        self._viewer.add_image(
+            np.array(self.rotated_images),
+            name="rotated_images",
+            colormap="turbo",
+        )
+        print("Images rotated")
+
+    def refine_derotation(self):
+        #  exclude borders of 50 pixels, make smaller array
+        length = len(self.rotated_images[0]) - 100
+        self.rotated_images_masked = np.zeros(
+            (len(self.rotated_images), length, length)
+        )
+        for i, image in enumerate(self.rotated_images):
+            self.rotated_images_masked[i] = image[50:-50, 50:-50]
+        self.rotated_images_masked = [o for o in self.rotated_images_masked]
+
+        self._viewer.add_image(
+            np.array(self.rotated_images_masked),
+            name="rotated_images_masked",
+            colormap="turbo",
+        )
+
+        output = refine_derotation(self.rotated_images_masked)
+        refined_rotated_images = [o["timg"] for o in output]
+
+        self._viewer.add_image(
+            np.array(refined_rotated_images),
+            name="refined_rotated_images",
+            colormap="turbo",
+        )
+        print("Image rotation refined")

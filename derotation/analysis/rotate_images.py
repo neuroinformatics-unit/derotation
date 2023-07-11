@@ -4,6 +4,15 @@ from scipy.ndimage import rotate
 from derotation.analysis.find_centroid import find_centroid_pipeline
 
 
+def image_stack_rotation(image_stack, rotation_degrees):
+    rotated_image_stack = np.empty_like(image_stack)
+    for i in range(len(image_stack)):
+        rotated_image_stack[i] = rotate(
+            image_stack[i], rotation_degrees[i], reshape=False
+        )
+    return rotated_image_stack
+
+
 def rotate_images(
     image,
     image_rotation_degree_per_frame,

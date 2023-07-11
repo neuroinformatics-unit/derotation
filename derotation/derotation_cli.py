@@ -1,19 +1,10 @@
-from scipy.signal import find_peaks
+from derotation_pipeline import DerotationPipeline
 
 from derotation.analysis.adjust_rotation_degrees import (
     apply_new_rotations,
     get_optimal_rotation_degs,
 )
-from derotation.analysis.analog_preprocessing import (
-    apply_rotation_direction,
-    check_number_of_rotations,
-    find_rotation_for_each_frame_from_motor,
-    get_missing_frames,
-    get_starting_and_ending_frames,
-    when_is_rotation_on,
-)
 from derotation.analysis.rotate_images import rotate_images
-from derotation.load_data.get_data import get_data
 from derotation.plots.plots import (
     analog_signals_overview_plots,
     derotation_video_with_rotation_plot,
@@ -24,49 +15,19 @@ from derotation.plots.plots import (
 # ==============================================================================
 # PREPROCESSING PIPELINE FOR DEROTATION
 # ==============================================================================
-(
-    image,
-    frame_clock,
-    line_clock,
-    full_rotation,
-    rotation_ticks,
-    dt,
-    config,
-    direction,
-) = get_data()
-rot_deg = 360
-missing_frames, diffs = get_missing_frames(frame_clock)
-frames_start, frames_end, threshold = get_starting_and_ending_frames(
-    frame_clock, image
-)
-#  find the peaks of the rot_tick2 signal
-rotation_ticks_peaks = find_peaks(
-    rotation_ticks,
-    height=4,
-    distance=20,
-)[0]
-
-check_number_of_rotations(rotation_ticks_peaks, direction, rot_deg, dt)
-rotation_on = when_is_rotation_on(full_rotation)
-rotation_on = apply_rotation_direction(rotation_on, direction)
-(
-    image_rotation_degree_per_frame,
-    signed_rotation_degrees,
-) = find_rotation_for_each_frame_from_motor(
-    frame_clock, rotation_ticks_peaks, rotation_on, frames_start
-)
+pipeline = DerotationPipeline()
+pipeline.process_analog_signals()
 
 
 # ==============================================================================
 # TRY TO OPTIMIZE THE ROTATION DEGREES
 # ==============================================================================
 opt_result, indexes, optimized_parameters = get_optimal_rotation_degs(
-    image, image_rotation_degree_per_frame
+    pipeline.image, pipeline.image_rotation_degree_per_frame
 )
 new_image_rotation_degree_per_frame = apply_new_rotations(
-    opt_result, image_rotation_degree_per_frame, indexes
+    opt_result, pipeline.image_rotation_degree_per_frame, indexes
 )
-
 
 # ==============================================================================
 # ROTATE THE IMAGE TO THE CORRECT POSITION
@@ -78,8 +39,8 @@ new_image_rotation_degree_per_frame = apply_new_rotations(
     centers_rotated,
     centers_rotated_corrected,
 ) = rotate_images(
-    image,
-    image_rotation_degree_per_frame,
+    pipeline.image,
+    pipeline.image_rotation_degree_per_frame,
     new_image_rotation_degree_per_frame,
 )
 
@@ -92,26 +53,26 @@ centroid_fig = plot_drift_of_centroids(
 )
 rotation_video_with_plot = derotation_video_with_rotation_plot(
     rotated_image,
-    image,
+    pipeline.image,
     rotated_image_corrected,
     centers,
     centers_rotated,
     centers_rotated_corrected,
-    frames_start,
-    signed_rotation_degrees,
-    image_rotation_degree_per_frame,
+    pipeline.frames_start,
+    pipeline.signed_rotation_degrees,
+    pipeline.image_rotation_degree_per_frame,
 )
 
-boxplot = threshold_boxplot(diffs, threshold)
+boxplot = threshold_boxplot(pipeline.diffs, pipeline.threshold)
 
 analog_overview = analog_signals_overview_plots(
-    diffs,
-    frame_clock,
-    frames_start,
-    frames_end,
-    line_clock,
-    full_rotation,
-    rotation_on,
-    rotation_ticks,
-    rotation_ticks_peaks,
+    pipeline.diffs,
+    pipeline.frame_clock,
+    pipeline.frames_start,
+    pipeline.frames_end,
+    pipeline.line_clock,
+    pipeline.full_rotation,
+    pipeline.rotation_on,
+    pipeline.rotation_ticks,
+    pipeline.rotation_ticks_peaks,
 )

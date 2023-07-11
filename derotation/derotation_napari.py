@@ -10,7 +10,6 @@ from qtpy.QtWidgets import (
 )
 
 from derotation.analysis.derotation_pipeline import DerotationPipeline
-from derotation.analysis.find_centroid import in_region, not_center_of_image
 
 
 class DerotationCanvas(SingleAxesWidget):
@@ -59,18 +58,11 @@ class Plotting(QWidget):
 
         self.mpl_widget.draw()
 
-        correct_centers = []
-
-        for i in range(len(self.pipeline.image)):
-            centers = self.pipeline.calculate_centers(self.pipeline.image[i])
-            # print(centers)
-            for c in centers:
-                if not_center_of_image(c) and in_region(c):
-                    correct_centers.append(c)
-                    continue
+        self.pipeline.get_clean_centroids()
 
         centers = [
-            [t, coord[0], coord[1]] for t, coord in enumerate(correct_centers)
+            [t, coord[0], coord[1]]
+            for t, coord in enumerate(self.pipeline.correct_centers)
         ]
 
         self._viewer.add_points(

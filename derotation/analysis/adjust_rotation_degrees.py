@@ -78,7 +78,9 @@ def get_centers(image):
     return centroids
 
 
-def optimize_image_rotation_degrees(_image, _image_rotation_degree_per_frame):
+def optimize_image_rotation_degrees_with_centroids(
+    _image, _image_rotation_degree_per_frame
+):
     blocks, indexes = find_rotation_blocks(_image_rotation_degree_per_frame)
 
     results = []
@@ -184,7 +186,7 @@ def get_optimal_rotation_degs(image, image_rotation_degree_per_frame):
             opt_result,
             indexes,
             optimized_parameters,
-        ) = optimize_image_rotation_degrees(
+        ) = optimize_image_rotation_degrees_with_centroids(
             image, image_rotation_degree_per_frame
         )
         with open("derotation/optimized_parameters.pkl", "wb") as f:

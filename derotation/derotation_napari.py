@@ -9,8 +9,8 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from derotation.derotation_pipeline import DerotationPipeline
-from derotation.find_centroid import in_region, not_center_of_image
+from derotation.analysis.derotation_pipeline import DerotationPipeline
+from derotation.analysis.find_centroid import in_region, not_center_of_image
 
 
 class DerotationCanvas(SingleAxesWidget):

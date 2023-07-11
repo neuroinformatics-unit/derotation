@@ -7,7 +7,7 @@ import scipy.optimize as opt
 from matplotlib import pyplot as plt
 from scipy.ndimage import rotate
 
-from derotation.find_centroid import (
+from derotation.analysis.find_centroid import (
     detect_blobs,
     extract_blob_centers,
     find_centroid_pipeline,

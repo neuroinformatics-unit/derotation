@@ -1,6 +1,6 @@
 from scipy.signal import find_peaks
 
-from derotation.analog_preprocessing import (
+from derotation.analysis.analog_preprocessing import (
     apply_rotation_direction,
     check_number_of_rotations,
     find_rotation_for_each_frame_from_motor,
@@ -8,8 +8,8 @@ from derotation.analog_preprocessing import (
     get_starting_and_ending_frames,
     when_is_rotation_on,
 )
-from derotation.find_centroid import find_centroid_pipeline
-from derotation.get_data import get_data
+from derotation.analysis.find_centroid import find_centroid_pipeline
+from derotation.load_data.get_data import get_data
 
 
 class DerotationPipeline:

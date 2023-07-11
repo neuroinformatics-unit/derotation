@@ -5,7 +5,7 @@ import tifffile as tiff
 import yaml
 from scipy.io import loadmat
 
-from derotation.read_binary import read_rc2_bin
+from derotation.load_data.read_binary import read_rc2_bin
 
 
 def get_paths():

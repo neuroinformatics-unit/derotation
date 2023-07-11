@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.ndimage import rotate
 
-from derotation.find_centroid import find_centroid_pipeline
+from derotation.analysis.find_centroid import find_centroid_pipeline
 
 
 def rotate_images(

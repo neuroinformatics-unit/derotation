@@ -1,10 +1,10 @@
-from pathlib import Path
+from scipy.signal import find_peaks
 
-from adjust_rotation_degrees import (
+from derotation.analysis.adjust_rotation_degrees import (
     apply_new_rotations,
     get_optimal_rotation_degs,
 )
-from analog_preprocessing import (
+from derotation.analysis.analog_preprocessing import (
     apply_rotation_direction,
     check_number_of_rotations,
     find_rotation_for_each_frame_from_motor,
@@ -12,16 +12,14 @@ from analog_preprocessing import (
     get_starting_and_ending_frames,
     when_is_rotation_on,
 )
-from get_data import get_data
-from scipy.signal import find_peaks
-
-from derotation.plots import (
+from derotation.analysis.rotate_images import rotate_images
+from derotation.load_data.get_data import get_data
+from derotation.plots.plots import (
     analog_signals_overview_plots,
     derotation_video_with_rotation_plot,
     plot_drift_of_centroids,
     threshold_boxplot,
 )
-from derotation.rotate_images import rotate_images
 
 # ==============================================================================
 # PREPROCESSING PIPELINE FOR DEROTATION
@@ -35,7 +33,7 @@ from derotation.rotate_images import rotate_images
     dt,
     config,
     direction,
-) = get_data(Path("/Users/laura/data/230327_pollen"))
+) = get_data()
 rot_deg = 360
 missing_frames, diffs = get_missing_frames(frame_clock)
 frames_start, frames_end, threshold = get_starting_and_ending_frames(

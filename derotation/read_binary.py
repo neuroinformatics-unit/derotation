@@ -1,12 +1,7 @@
 import numpy as np
-import yaml
 
 
-def read_rc2_bin(path_aux, path_config):
-    # Parse the .cfg
-    with open(path_config, "r") as f:
-        config = yaml.load(f, Loader=yaml.FullLoader)
-
+def read_rc2_bin(path_aux, config):
     # Number of channels
     chan_names = config["nidaq"]["ai"]["channel_names"]
     n_channels = len(chan_names)

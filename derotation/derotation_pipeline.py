@@ -13,7 +13,7 @@ from derotation.get_data import get_data
 
 
 class DerotationPipeline:
-    def __init__(self, path):
+    def __init__(self):
         (
             self.image,
             self.frame_clock,
@@ -23,7 +23,7 @@ class DerotationPipeline:
             self.dt,
             self.config,
             self.direction,
-        ) = get_data(path)
+        ) = get_data()
         self.rot_deg = 360
 
         print("Data loaded")

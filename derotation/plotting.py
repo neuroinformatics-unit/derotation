@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import Optional
 
 import numpy as np
@@ -37,8 +36,7 @@ class Plotting(QWidget):
 
         self._viewer = napari_viewer
 
-        my_path = Path("/Users/laura/data/230327_pollen")
-        self.pipeline = DerotationPipeline(my_path)
+        self.pipeline = DerotationPipeline()
         self._viewer.add_image(
             self.pipeline.image, name="image", colormap="turbo"
         )

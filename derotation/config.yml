@@ -1,3 +1,18 @@
+name: derotation
+display_name: Neuroinformatics derotation tools
+
+path: "/Users/lauraporta/local_data/230327_pollen"
+
+contributions:
+  commands:
+    - id: derotation.make_plotting_widget
+      python_name: derotation.plotting:Plotting
+      title: Make Plotting Widget
+  widgets:
+    - command: derotation.make_plotting_widget
+      display_name: NIU derotation plotting
+
+
 git_version: f10323ac598209d9130983420a93506f2f6c8894
 saving:
   save_to: E:\Chryssanthi\test\rot_gfap\2023_rotgfap3

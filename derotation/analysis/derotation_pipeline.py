@@ -83,7 +83,7 @@ class DerotationPipeline:
     def get_clean_centroids(self):
         self.correct_centers = []
         for img in self.image:
-            centers = self._calculate_centers(img)
+            centers = self._calculate_centers()
             this_center_found = False
             for c in centers:
                 if (

@@ -166,7 +166,6 @@ def optimize_image_rotation_degrees_with_centroids(
                 "maxiter": 140,
                 "maxfev": 1000,
             },
-            # callback=cb,
         )
         results.append(result.x)
 

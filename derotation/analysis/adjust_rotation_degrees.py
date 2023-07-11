@@ -51,33 +51,6 @@ def find_rotation_blocks(image_rotation_degree_per_frame):
     return blocks, indexes
 
 
-def find_parametric_curves(blocks):
-    parametric_curves = []
-    for block in blocks:
-        x = np.arange(len(block))
-        y = block
-        # fit a 4th order polynomial
-        popt = np.polyfit(x, y, 4)
-        parametric_curves.append(popt)
-
-    return parametric_curves
-
-
-def make_parametric_curve(x, a, b, c, d, e):
-    return a * x**4 + b * x**3 + c * x**2 + d * x + e
-
-
-def get_rotation_degrees_from_a_curve(parametric_curve, frame_number):
-    a, b, c, d, e = parametric_curve
-    return (
-        a * frame_number**4
-        + b * frame_number**3
-        + c * frame_number**2
-        + d * frame_number
-        + e
-    )
-
-
 def rotate_all_images(
     image,
     image_rotation_degree_per_frame,
@@ -105,30 +78,8 @@ def get_centers(image):
     return centroids
 
 
-def get_mean_centroid(centroids):
-    if len(centroids) > 0:
-        x = []
-        y = []
-        for img_centroids in centroids[:10]:
-            if len(img_centroids) >= 3:
-                pass
-            for c in img_centroids:
-                if not_center_of_image(c) and in_region(c):
-                    x.append(c[1])
-                    y.append(c[0])
-
-        mean_x = np.mean(x)
-        mean_y = np.mean(y)
-
-    return mean_x, mean_y
-
-
-def optimize_image_rotation_degrees(
-    _image, _image_rotation_degree_per_frame, use_curve_fit=False
-):
+def optimize_image_rotation_degrees(_image, _image_rotation_degree_per_frame):
     blocks, indexes = find_rotation_blocks(_image_rotation_degree_per_frame)
-    if use_curve_fit:
-        parametric_curves = find_parametric_curves(blocks)
 
     results = []
     for i in range(len(blocks)):
@@ -163,12 +114,7 @@ def optimize_image_rotation_degrees(
             ax[0].imshow(images[0], cmap="gist_ncar")
             ax[1].plot(blocks[i], marker=".", color="red")
 
-            if use_curve_fit:
-                rots = make_parametric_curve(
-                    np.arange(len(images)), *parameters
-                )
-            else:
-                rots = parameters
+            rots = parameters
             ax[1].plot(rots, marker=".", color="black")
 
             rotated_images = rotate_all_images(images, rots)
@@ -183,9 +129,7 @@ def optimize_image_rotation_degrees(
                     for c in centers_rotated_image:
                         if not_center_of_image(c) and in_region(c):
                             center_dim_blob = c
-                    # if center_dim_blob == (mean_x, mean_y):
-                    #     # in this rotation, the blob is not found very well
-                    #     print("no blob found")
+                            break
                     ax[0].plot(
                         center_dim_blob[1],
                         center_dim_blob[0],
@@ -212,7 +156,7 @@ def optimize_image_rotation_degrees(
 
         result = opt.minimize(
             f,
-            parametric_curves[i] if use_curve_fit else blocks[i],
+            blocks[i],
             method="Nelder-Mead",
             options={
                 "xatol": 1e-5,

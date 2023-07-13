@@ -10,6 +10,7 @@ from qtpy.QtWidgets import (
 )
 
 from derotation.analysis.derotation_pipeline import DerotationPipeline
+from derotation.analysis.find_centroid import detect_blobs, preprocess_image
 from derotation.analysis.rigid_registration import refine_derotation
 from derotation.analysis.rotate_images import image_stack_rotation
 
@@ -65,6 +66,11 @@ class Plotting(QWidget):
         self.refine_derotation_button.clicked.connect(self.refine_derotation)
         self.layout().addWidget(self.refine_derotation_button)
 
+        self.labeled_rotated_button = QPushButton()
+        self.labeled_rotated_button.setText("Labeled rotated")
+        self.labeled_rotated_button.clicked.connect(self.label_derotated)
+        self.layout().addWidget(self.labeled_rotated_button)
+
         self.mpl_widget = DerotationCanvas(self._viewer)
         self.layout().addWidget(self.mpl_widget)
 
@@ -102,7 +108,7 @@ class Plotting(QWidget):
         )
         print("Images rotated")
 
-    def refine_derotation(self):
+    def mask_images(self):
         #  exclude borders of 50 pixels, make smaller array
         length = len(self.rotated_images[0]) - 100
         self.rotated_images_masked = np.zeros(
@@ -118,6 +124,9 @@ class Plotting(QWidget):
             colormap="turbo",
         )
 
+    def refine_derotation(self):
+        self.mask_images()
+
         output = refine_derotation(self.rotated_images_masked)
         refined_rotated_images = [o["timg"] for o in output]
 
@@ -127,3 +136,20 @@ class Plotting(QWidget):
             colormap="turbo",
         )
         print("Image rotation refined")
+
+    def label_derotated(self):
+        labels = self.label_derotated_images(self.rotated_images_masked)
+        self._viewer.add_image(
+            np.array(labels),
+            name="derotated_labels",
+            colormap="turbo",
+        )
+
+    @staticmethod
+    def label_derotated_images(image_stack):
+        labels = []
+        for img in image_stack:
+            img = preprocess_image(img)
+            label, _ = detect_blobs(img)
+            labels.append(label)
+        return labels

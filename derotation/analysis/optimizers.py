@@ -13,7 +13,7 @@ def count_frames(k, frame_clock, image):
 
 
 def find_best_k(frame_clock, image):
-    result = bisect(count_frames, -1, 1, args=(frame_clock, image))
+    result = bisect(count_frames, -4, 4, args=(frame_clock, image))  # -1, 1,
     best_k = result
 
     # Check if the best value of k satisfies the assertions

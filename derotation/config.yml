@@ -1,7 +1,7 @@
 name: derotation
 display_name: Neuroinformatics derotation tools
 
-path: "/Users/lauraporta/local_data/230327_pollen"
+path: "/Users/lauraporta/local_data"
 
 contributions:
   commands:

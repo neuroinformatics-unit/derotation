@@ -40,14 +40,14 @@ class DerotationPipeline:
             self.threshold,
         ) = get_starting_and_ending_frames(self.frame_clock, self.image)
         #  find the peaks of the rot_tick2 signal
-        rotation_ticks_peaks = find_peaks(
+        self.rotation_ticks_peaks = find_peaks(
             self.rotation_ticks,
             height=4,
             distance=20,
         )[0]
 
         check_number_of_rotations(
-            rotation_ticks_peaks, self.direction, self.rot_deg, self.dt
+            self.rotation_ticks_peaks, self.direction, self.rot_deg, self.dt
         )
         self.rotation_on = when_is_rotation_on(self.full_rotation)
         self.rotation_on = apply_rotation_direction(
@@ -58,7 +58,7 @@ class DerotationPipeline:
             self.signed_rotation_degrees,
         ) = find_rotation_for_each_frame_from_motor(
             self.frame_clock,
-            rotation_ticks_peaks,
+            self.rotation_ticks_peaks,
             self.rotation_on,
             self.frames_start,
         )

@@ -1,9 +1,8 @@
-from derotation_pipeline import DerotationPipeline
-
 from derotation.analysis.adjust_rotation_degrees import (
     apply_new_rotations,
     get_optimal_rotation_degs,
 )
+from derotation.analysis.derotation_pipeline import DerotationPipeline
 from derotation.analysis.rotate_images import rotate_images
 from derotation.plots.plots import (
     analog_signals_overview_plots,

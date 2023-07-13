@@ -1,8 +1,9 @@
-from find_centroid import (
+from matplotlib import pyplot as plt
+
+from derotation.analysis.find_centroid import (
     in_region,
     not_center_of_image,
 )
-from matplotlib import pyplot as plt
 
 
 def plot_drift_of_centroids(

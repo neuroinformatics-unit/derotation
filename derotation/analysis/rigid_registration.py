@@ -14,7 +14,7 @@ def refine_derotation(images):
                 reference_image,
                 images[i],
                 constraints={
-                    # 'angle': [0, 10],
+                    "angle": [0, 3],
                     "scale": [1, 0],
                     "tx": [0, 0],
                     "ty": [0, 0],

@@ -1,8 +1,7 @@
 import copy
 
 import numpy as np
-
-from derotation.analysis.optimizers import find_best_k
+from opt_frame_number import find_best_k
 
 
 def get_missing_frames(frame_clock):

@@ -1,7 +1,8 @@
 import copy
 
 import numpy as np
-from opt_frame_number import find_best_k
+
+from derotation.analysis.opt_frame_number import find_best_k
 
 
 def get_missing_frames(frame_clock):
@@ -56,7 +57,11 @@ def apply_rotation_direction(rotation_on, direction):
     i = 0
     while i < len(direction):
         # find the first rotation_on == 1
-        first_rotation_on = np.where(rotation_signal_copy == 1)[0][0]
+        try:
+            first_rotation_on = np.where(rotation_signal_copy == 1)[0][0]
+        except IndexError:
+            #  no more rotations, data is over
+            break
         # now assign the value in dir to all the first set of ones
         len_first_group = np.where(
             rotation_signal_copy[first_rotation_on:] == 0

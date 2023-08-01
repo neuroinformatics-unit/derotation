@@ -3,7 +3,15 @@ import numpy as np
 
 def read_rc2_bin(path_aux, config):
     # Number of channels
-    chan_names = config["nidaq"]["ai"]["channel_names"]
+    # chan_names = config["nidaq"]["ai"]["channel_names"]
+    chan_names = [
+        "camera",
+        "scanimage_frameclock",
+        "scanimage_lineclock",
+        "photodiode2",
+        "PI_rotON",
+        "PI_rotticks",
+    ]
     n_channels = len(chan_names)
 
     # Read binary data saved by rc2 (int16)

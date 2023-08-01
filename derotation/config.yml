@@ -1,7 +1,7 @@
 name: derotation
 display_name: Neuroinformatics derotation tools
 
-path: "/Users/lauraporta/local_data"
+path: "/Users/lauraporta/local_data/rotation"
 
 contributions:
   commands:
@@ -26,8 +26,8 @@ nidaq:
     rate: 50000.0
     channel_names: [camera,scanimage_frameclock,photodiode1,photodiode2,PI_rotCW,filtered_teensy,stage,solenoid,multiplexer_output,Vistim_ttl]
     channel_ids: [ai0,ai1,ai2,ai3,ai4,ai5,ai6,ai7,ai16,ai17]
-    offset: [0.0,0.0,0.0,0.0,0.0,0.5,0.0,0.0,0.0,0.0]
-    scale: [1.0,1.0,1.0,1.0,1.0,40.0,-40.0,1.0,40.0,1.0]
+    offset: [ 0.0000000000,0.0000000000,0.0000000000,0.0000000000,0.0000000000,0.0000000000] # [0.0,0.0,0.0,0.0,0.0,0.5,0.0,0.0,0.0,0.0]
+    scale: [1.0000000000,1.0000000000,1.0000000000,1.0000000000,1.0000000000,1.0000000000] #[1.0,1.0,1.0,1.0,1.0,40.0,-40.0,1.0,40.0,1.0]
   ao:
     rate: 50000.0
     channel_names: [velocity]

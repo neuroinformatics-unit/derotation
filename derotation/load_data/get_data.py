@@ -53,9 +53,9 @@ def get_data():
     data_dict = {chan: data[:, i] for i, chan in enumerate(chan_names)}
 
     frame_clock = data_dict["scanimage_frameclock"]
-    line_clock = data_dict["camera"]
-    full_rotation = data_dict["PI_rotCW"]
-    rotation_ticks = data_dict["Vistim_ttl"]
+    line_clock = data_dict["scanimage_lineclock"]
+    full_rotation = data_dict["PI_rotON"]
+    rotation_ticks = data_dict["PI_rotticks"]
 
     return (
         image,

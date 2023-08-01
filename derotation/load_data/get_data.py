@@ -9,7 +9,7 @@ from derotation.load_data.read_binary import read_rc2_bin
 
 
 def get_paths(
-    test_data=True,
+    dataset_name="pollen",
 ):
     path_config = "derotation/config.yml"
 
@@ -17,22 +17,29 @@ def get_paths(
         config = yaml.load(f, Loader=yaml.FullLoader)
     path = Path(config["path"])
 
-    if test_data:
+    if dataset_name == "pollen":
         path = path / "230327_pollen"
         path_tif = path / "imaging/runtest_00001.tif"
         path_aux = path / "aux_stim/202303271657_21_005.bin"
         path_randperm = path / "stimlus_randperm.mat"
-    else:
+    elif dataset_name == "far_focus_cells":
         path_randperm = path / "230327_pollen" / "stimlus_randperm.mat"
         path = path / "AK_1119329_hR_RSPd_mid_rotation"
         path_tif = path / "rotation_00001.tif"
         path_aux = path / "aux_files/rotation/rotation_1_001.bin"
+    elif dataset_name == "grid":
+        path_randperm = path / "230327_pollen" / "stimlus_randperm.mat"
+        path = path / "230731_25_micron_grid"
+        path_tif = (
+            path / "imaging" / "rotation_zf2_all_speeds_00002_enhanced.tif"
+        )
+        path_aux = path / "aux_stim" / "230731_grid_1_001.bin"
 
     return path_tif, path_aux, config, path_randperm
 
 
 def get_data():
-    path_tif, path_aux, config, path_randperm = get_paths(test_data=False)
+    path_tif, path_aux, config, path_randperm = get_paths(dataset_name="grid")
 
     image = tiff.imread(path_tif)
 

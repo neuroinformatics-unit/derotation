@@ -3,9 +3,9 @@ from scipy.signal import find_peaks
 from derotation.analysis.analog_preprocessing import (
     apply_rotation_direction,
     check_number_of_rotations,
-    find_rotation_for_each_frame_from_motor,
+    find_rotation_for_each_line_from_motor,
     get_missing_frames,
-    get_starting_and_ending_frames,
+    get_starting_and_ending_times,
     when_is_rotation_on,
 )
 from derotation.analysis.find_centroid import (
@@ -19,7 +19,7 @@ from derotation.load_data.get_data import get_data
 class DerotationPipeline:
     def __init__(self):
         (
-            self.image,
+            self.images_stack,
             self.frame_clock,
             self.line_clock,
             self.full_rotation,
@@ -32,13 +32,26 @@ class DerotationPipeline:
 
         print("Data loaded")
 
-    def process_analog_signals(self):
+    def process_analog_signals(self, which_clock="frame"):
         self.missing_frames, self.diffs = get_missing_frames(self.frame_clock)
-        (
-            self.frames_start,
-            self.frames_end,
-            self.threshold,
-        ) = get_starting_and_ending_frames(self.frame_clock, self.image)
+
+        if which_clock == "frame":
+            (
+                self.frames_start,
+                self.frames_end,
+                self.threshold,
+            ) = get_starting_and_ending_times(
+                self.frame_clock, self.images_stack
+            )
+        elif which_clock == "line":
+            (
+                self.lines_start,
+                self.lines_end,
+                self.threshold,
+            ) = get_starting_and_ending_times(
+                self.line_clock, self.images_stack
+            )
+
         #  find the peaks of the rot_tick2 signal
         self.rotation_ticks_peaks = find_peaks(
             self.rotation_ticks,
@@ -54,13 +67,13 @@ class DerotationPipeline:
             self.rotation_on, self.direction
         )
         (
-            self.image_rotation_degree_per_frame,
+            self.image_rotation_degrees,
             self.signed_rotation_degrees,
-        ) = find_rotation_for_each_frame_from_motor(
-            self.frame_clock,
+        ) = find_rotation_for_each_line_from_motor(
+            self.line_clock,
             self.rotation_ticks_peaks,
             self.rotation_on,
-            self.frames_start,
+            self.lines_start,
         )
 
         print("Analog signals processed")
@@ -78,11 +91,11 @@ class DerotationPipeline:
             sigma,
         ]
 
-        return find_centroid_pipeline(self.image, defoulting_parameters)
+        return find_centroid_pipeline(self.images_stack, defoulting_parameters)
 
     def get_clean_centroids(self):
         self.correct_centers = []
-        for img in self.image:
+        for img in self.images_stack:
             centers = self._calculate_centers()
             this_center_found = False
             for c in centers:
@@ -97,6 +110,6 @@ class DerotationPipeline:
                 self.correct_centers.append(self.correct_centers[-1])
 
         assert len(self.correct_centers) == len(
-            self.image
+            self.images_stack
         ), f"len(self.correct_centers) = {len(self.correct_centers)},\
-            len(self.image) = {len(self.image)}"
+            len(self.image) = {len(self.images_stack)}"

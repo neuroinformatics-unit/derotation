@@ -12,15 +12,15 @@ def get_missing_frames(frame_clock):
     return missing_frames, diffs
 
 
-def get_starting_and_ending_frames(frame_clock, image):
+def get_starting_and_ending_times(clock, image):
     # Calculate the threshold using a percentile of the total signal
-    best_k = find_best_k(frame_clock, image)
-    threshold = np.mean(frame_clock) + best_k * np.std(frame_clock)
+    best_k = find_best_k(clock, image, clock_type="line")
+    threshold = np.mean(clock) + best_k * np.std(clock)
     print(f"Best threshold: {threshold}")
-    frames_start = np.where(np.diff(frame_clock) > threshold)[0]
-    frames_end = np.where(np.diff(frame_clock) < -threshold)[0]
+    start = np.where(np.diff(clock) > threshold)[0]
+    end = np.where(np.diff(clock) < -threshold)[0]
 
-    return frames_start, frames_end, threshold
+    return start, end, threshold
 
 
 def check_number_of_rotations(rotation_ticks_peaks, direction, rot_deg, dt):
@@ -61,6 +61,7 @@ def apply_rotation_direction(rotation_on, direction):
             first_rotation_on = np.where(rotation_signal_copy == 1)[0][0]
         except IndexError:
             #  no more rotations, data is over
+            print(f"No more rotations, missing {len(direction) - i} rotations")
             break
         # now assign the value in dir to all the first set of ones
         len_first_group = np.where(
@@ -94,6 +95,38 @@ def apply_rotation_direction(rotation_on, direction):
     return rotation_on
 
 
+def interpolate_motor_ticks(
+    rotation_ticks_peaks,
+    rotation_on,
+    clock,
+    start,
+    time_threshold,
+    rotation_increment,
+):
+    rotation_degrees = np.empty_like(clock)
+    rotation_degrees[0] = 0
+    current_rotation: float = 0
+    tick_peaks_corrected = np.insert(rotation_ticks_peaks, 0, 0, axis=0)
+
+    for i in range(0, len(tick_peaks_corrected)):
+        time_interval = tick_peaks_corrected[i] - tick_peaks_corrected[i - 1]
+        if time_interval > time_threshold and i != 0:
+            current_rotation = 0
+        else:
+            current_rotation += rotation_increment
+        rotation_degrees[
+            tick_peaks_corrected[i - 1] : tick_peaks_corrected[i]
+        ] = current_rotation
+
+    signed_rotation_degrees = rotation_degrees * rotation_on
+
+    # rotation degrees per frame or per line
+    image_rotation_degree = signed_rotation_degrees[start]
+    image_rotation_degree *= -1
+
+    return image_rotation_degree, signed_rotation_degrees
+
+
 def find_rotation_for_each_frame_from_motor(
     frame_clock, rotation_ticks_peaks, rotation_on, frames_start
 ):
@@ -116,3 +149,43 @@ def find_rotation_for_each_frame_from_motor(
     image_rotation_degree_per_frame *= -1
 
     return image_rotation_degree_per_frame, signed_rotation_degrees
+
+
+def find_rotation_for_each_line_from_motor(
+    line_clock, rotation_ticks_peaks, rotation_on, lines_start
+):
+    #  calculate the rotation degrees for each line
+    rotation_degrees = np.empty_like(line_clock)
+    rotation_degrees[0] = 0
+    rotation_increment: float = 0
+    tick_peaks_corrected = np.insert(rotation_ticks_peaks, 0, 0, axis=0)
+    for i in range(1, len(tick_peaks_corrected)):
+        time_interval = tick_peaks_corrected[i] - tick_peaks_corrected[i - 1]
+        if time_interval > 2000 and i != 0:
+            rotation_increment = 0
+            rotation_array = np.zeros(time_interval)
+        else:
+            rotation_array = np.linspace(
+                rotation_increment,
+                rotation_increment + 0.2,
+                time_interval,
+                endpoint=True,
+            )
+            rotation_increment += 0.2
+        rotation_degrees[
+            tick_peaks_corrected[i - 1] : tick_peaks_corrected[i]
+        ] = rotation_array
+    signed_rotation_degrees = rotation_degrees * rotation_on
+    image_rotation_degree_per_line = signed_rotation_degrees[lines_start]
+    image_rotation_degree_per_line *= -1
+
+    # line clock is more frequent than the rotation ticks, therefore
+    # we need to interpolate the rotation degrees for each line
+    # t, c, k = splrep(
+    #     lines_start, image_rotation_degree_per_line, s=0
+    # )
+    # interpolated_image_rotation_degree_per_line = BSpline(t, c, k)(
+    #     line_clock
+    # )
+
+    return image_rotation_degree_per_line, signed_rotation_degrees

@@ -1,5 +1,7 @@
 import numpy as np
+import numpy.ma as ma
 from scipy.ndimage import rotate
+from tqdm import tqdm
 
 from derotation.analysis.find_centroid import find_centroid_pipeline
 
@@ -11,6 +13,56 @@ def image_stack_rotation(image_stack, rotation_degrees):
             image_stack[i], rotation_degrees[i], reshape=False
         )
     return rotated_image_stack
+
+
+def rotate_frames_line_by_line(image_stack, rotation_degrees):
+    #  fill new_rotated_image_stack with non-rotated images first
+    num_images, height, width = image_stack.shape
+
+    is_first_rotation = True
+    for i, rotation in tqdm(enumerate(rotation_degrees)):
+        line_counter = i % height
+        image_counter = i // height
+
+        if rotation > 0.00001:
+            #  we want to take the line from the row image collected
+            img_with_new_lines = image_stack[image_counter]
+            line = img_with_new_lines[line_counter]
+
+            image_with_only_line = np.zeros_like(img_with_new_lines)
+            image_with_only_line[line_counter] = line
+
+            empty_image_mask = np.ones_like(img_with_new_lines)
+            empty_image_mask[line_counter] = 0
+
+            rotated_line = rotate(
+                image_with_only_line, rotation, reshape=False
+            )
+            rotated_mask = rotate(empty_image_mask, rotation, reshape=False)
+
+            #  apply rotated mask to rotated line-image
+            masked = ma.masked_array(rotated_line, rotated_mask)
+
+            if is_first_rotation:
+                rotated_filled_image = img_with_new_lines
+
+            #  substitute the non masked values in the new image
+            rotated_filled_image = np.where(
+                masked.mask, rotated_filled_image, masked.data
+            )
+
+            is_first_rotation = False
+
+        if (
+            line_counter == (height - 1)
+            and locals().get("rotated_filled_image", None) is not None
+        ):
+            #  at the next cycle we have a new image picked
+            # so we can overwrite the previous one with the latest rotated one
+            image_stack[image_counter] = rotated_filled_image
+            is_first_rotation = True
+
+    return image_stack
 
 
 def rotate_images(

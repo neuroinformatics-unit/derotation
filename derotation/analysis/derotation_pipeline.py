@@ -3,8 +3,8 @@ from scipy.signal import find_peaks
 from derotation.analysis.analog_preprocessing import (
     apply_rotation_direction,
     check_number_of_rotations,
+    find_rotation_for_each_frame_from_motor,
     find_rotation_for_each_line_from_motor,
-    get_missing_frames,
     get_starting_and_ending_times,
     when_is_rotation_on,
 )
@@ -32,33 +32,14 @@ class DerotationPipeline:
 
         print("Data loaded")
 
-    def process_analog_signals(self, which_clock="frame"):
-        self.missing_frames, self.diffs = get_missing_frames(self.frame_clock)
-
-        if which_clock == "frame":
-            (
-                self.frames_start,
-                self.frames_end,
-                self.threshold,
-            ) = get_starting_and_ending_times(
-                self.frame_clock, self.images_stack
-            )
-        elif which_clock == "line":
-            (
-                self.lines_start,
-                self.lines_end,
-                self.threshold,
-            ) = get_starting_and_ending_times(
-                self.line_clock, self.images_stack
-            )
-
+    def process_analog_signals(self):
+        #  Rotation bit of the analysis
         #  find the peaks of the rot_tick2 signal
         self.rotation_ticks_peaks = find_peaks(
             self.rotation_ticks,
             height=4,
             distance=20,
         )[0]
-
         check_number_of_rotations(
             self.rotation_ticks_peaks, self.direction, self.rot_deg, self.dt
         )
@@ -66,14 +47,38 @@ class DerotationPipeline:
         self.rotation_on = apply_rotation_direction(
             self.rotation_on, self.direction
         )
+
         (
-            self.image_rotation_degrees,
-            self.signed_rotation_degrees,
+            self.frames_start,
+            self.frames_end,
+            self.threshold,
+        ) = get_starting_and_ending_times(
+            self.frame_clock, self.images_stack, clock_type="frame"
+        )
+        (
+            self.lines_start,
+            self.lines_end,
+            self.threshold,
+        ) = get_starting_and_ending_times(
+            self.line_clock, self.images_stack, clock_type="line"
+        )
+        (
+            self.image_rotation_degrees_line,
+            self.signed_rotation_degrees_line,
         ) = find_rotation_for_each_line_from_motor(
             self.line_clock,
             self.rotation_ticks_peaks,
             self.rotation_on,
             self.lines_start,
+        )
+        (
+            self.image_rotation_degrees_frame,
+            self.signed_rotation_degrees_frane,
+        ) = find_rotation_for_each_frame_from_motor(
+            self.frame_clock,
+            self.rotation_ticks_peaks,
+            self.rotation_on,
+            self.frames_start,
         )
 
         print("Analog signals processed")

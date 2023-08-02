@@ -12,7 +12,10 @@ from qtpy.QtWidgets import (
 from derotation.analysis.derotation_pipeline import DerotationPipeline
 from derotation.analysis.find_centroid import detect_blobs, preprocess_image
 from derotation.analysis.rigid_registration import refine_derotation
-from derotation.analysis.rotate_images import image_stack_rotation
+from derotation.analysis.rotate_images import (
+    image_stack_rotation,
+    rotate_frames_line_by_line,
+)
 
 
 class DerotationCanvas(SingleAxesWidget):
@@ -40,7 +43,7 @@ class Plotting(QWidget):
 
         self.pipeline = DerotationPipeline()
         self._viewer.add_image(
-            self.pipeline.image, name="image", colormap="turbo"
+            self.pipeline.images_stack, name="image", colormap="turbo"
         )
         self.setLayout(QVBoxLayout())
 
@@ -49,11 +52,6 @@ class Plotting(QWidget):
         self.analyze_button.clicked.connect(self.analog_data_analysis)
         self.layout().addWidget(self.analyze_button)
 
-        self.find_centroids_button = QPushButton()
-        self.find_centroids_button.setText("Find centroids")
-        self.find_centroids_button.clicked.connect(self.find_centroids)
-        self.layout().addWidget(self.find_centroids_button)
-
         self.rotate_images_button = QPushButton()
         self.rotate_images_button.setText("Rotate images")
         self.rotate_images_button.clicked.connect(
@@ -61,15 +59,12 @@ class Plotting(QWidget):
         )
         self.layout().addWidget(self.rotate_images_button)
 
-        self.refine_derotation_button = QPushButton()
-        self.refine_derotation_button.setText("Refine derotation")
-        self.refine_derotation_button.clicked.connect(self.refine_derotation)
-        self.layout().addWidget(self.refine_derotation_button)
-
-        self.labeled_rotated_button = QPushButton()
-        self.labeled_rotated_button.setText("Labeled rotated")
-        self.labeled_rotated_button.clicked.connect(self.label_derotated)
-        self.layout().addWidget(self.labeled_rotated_button)
+        self.rotate_by_line_button = QPushButton()
+        self.rotate_by_line_button.setText("Rotate by line")
+        self.rotate_by_line_button.clicked.connect(
+            self.rotate_images_using_line_clock
+        )
+        self.layout().addWidget(self.rotate_by_line_button)
 
         self.mpl_widget = DerotationCanvas(self._viewer)
         self.layout().addWidget(self.mpl_widget)
@@ -78,7 +73,7 @@ class Plotting(QWidget):
         self.pipeline.process_analog_signals()
 
         self.mpl_widget.angles_over_time = (
-            self.pipeline.image_rotation_degree_per_frame
+            self.pipeline.image_rotation_degrees_frame
         )
 
         self.mpl_widget.draw()
@@ -99,7 +94,20 @@ class Plotting(QWidget):
 
     def rotate_images_using_motor_feedback(self):
         self.rotated_images = image_stack_rotation(
-            self.pipeline.image, self.pipeline.image_rotation_degree_per_frame
+            self.pipeline.images_stack,
+            self.pipeline.image_rotation_degrees_frame,
+        )
+        self._viewer.add_image(
+            np.array(self.rotated_images),
+            name="rotated_images",
+            colormap="turbo",
+        )
+        print("Images rotated")
+
+    def rotate_images_using_line_clock(self):
+        self.rotated_images = rotate_frames_line_by_line(
+            self.pipeline.images_stack,
+            self.pipeline.image_rotation_degrees_line,
         )
         self._viewer.add_image(
             np.array(self.rotated_images),

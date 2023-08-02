@@ -12,9 +12,9 @@ def get_missing_frames(frame_clock):
     return missing_frames, diffs
 
 
-def get_starting_and_ending_times(clock, image):
+def get_starting_and_ending_times(clock, image, clock_type):
     # Calculate the threshold using a percentile of the total signal
-    best_k = find_best_k(clock, image, clock_type="line")
+    best_k = find_best_k(clock, image, clock_type=clock_type)
     threshold = np.mean(clock) + best_k * np.std(clock)
     print(f"Best threshold: {threshold}")
     start = np.where(np.diff(clock) > threshold)[0]
@@ -178,14 +178,5 @@ def find_rotation_for_each_line_from_motor(
     signed_rotation_degrees = rotation_degrees * rotation_on
     image_rotation_degree_per_line = signed_rotation_degrees[lines_start]
     image_rotation_degree_per_line *= -1
-
-    # line clock is more frequent than the rotation ticks, therefore
-    # we need to interpolate the rotation degrees for each line
-    # t, c, k = splrep(
-    #     lines_start, image_rotation_degree_per_line, s=0
-    # )
-    # interpolated_image_rotation_degree_per_line = BSpline(t, c, k)(
-    #     line_clock
-    # )
 
     return image_rotation_degree_per_line, signed_rotation_degrees

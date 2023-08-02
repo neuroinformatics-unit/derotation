@@ -12,7 +12,7 @@ def count_frames(k, frame_clock, target_len):
     return len(frames_start) - target_len
 
 
-def find_best_k(clock, image, clock_type="frame"):
+def find_best_k(clock, image, clock_type):
     target_len = len(image) if clock_type == "frame" else len(image) * 256
     result = bisect(count_frames, -4, 4, args=(clock, target_len))  # -1, 1,
     best_k = result

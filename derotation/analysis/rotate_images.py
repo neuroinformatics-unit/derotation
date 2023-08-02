@@ -1,7 +1,6 @@
 import numpy as np
 import numpy.ma as ma
 from scipy.ndimage import rotate
-from tqdm import tqdm
 
 from derotation.analysis.find_centroid import find_centroid_pipeline
 
@@ -19,8 +18,8 @@ def rotate_frames_line_by_line(image_stack, rotation_degrees):
     #  fill new_rotated_image_stack with non-rotated images first
     num_images, height, width = image_stack.shape
 
-    is_first_rotation = True
-    for i, rotation in tqdm(enumerate(rotation_degrees)):
+    previous_image_completed = True
+    for i, rotation in enumerate(rotation_degrees):
         line_counter = i % height
         image_counter = i // height
 
@@ -43,24 +42,28 @@ def rotate_frames_line_by_line(image_stack, rotation_degrees):
             #  apply rotated mask to rotated line-image
             masked = ma.masked_array(rotated_line, rotated_mask)
 
-            if is_first_rotation:
+            if previous_image_completed:
                 rotated_filled_image = img_with_new_lines
 
             #  substitute the non masked values in the new image
             rotated_filled_image = np.where(
                 masked.mask, rotated_filled_image, masked.data
             )
-
-            is_first_rotation = False
+            previous_image_completed = False
+            print("*", end="")
 
         if (
             line_counter == (height - 1)
             and locals().get("rotated_filled_image", None) is not None
-        ):
+        ) or (rotation < 0.000001 and rotation_degrees[i - 1] > 1):
             #  at the next cycle we have a new image picked
-            # so we can overwrite the previous one with the latest rotated one
+            #  so we can overwrite the previous one with the latest rotated one
+            #  or the rotation is starting again we just have an incomplete
+            #  rotated image
             image_stack[image_counter] = rotated_filled_image
-            is_first_rotation = True
+            previous_image_completed = True
+
+            print("Image {} rotated".format(image_counter))
 
     return image_stack
 

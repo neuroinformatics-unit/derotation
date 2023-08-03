@@ -19,11 +19,13 @@ def rotate_frames_line_by_line(image_stack, rotation_degrees):
     num_images, height, width = image_stack.shape
 
     previous_image_completed = True
+    rotation_completed = True
     for i, rotation in enumerate(rotation_degrees):
         line_counter = i % height
         image_counter = i // height
 
         if rotation > 0.00001:
+            rotation_completed = False
             #  we want to take the line from the row image collected
             img_with_new_lines = image_stack[image_counter]
             line = img_with_new_lines[line_counter]
@@ -55,7 +57,10 @@ def rotate_frames_line_by_line(image_stack, rotation_degrees):
         if (
             line_counter == (height - 1)
             and locals().get("rotated_filled_image", None) is not None
-        ) or (rotation < 0.000001 and rotation_degrees[i - 1] > 1):
+            and not rotation_completed
+        ) or ((rotation < 0.000001) and (rotation_degrees[i - 1] > 300)):
+            if (rotation < 0.000001) and (rotation_degrees[i - 1] > 300):
+                rotation_completed = True
             #  at the next cycle we have a new image picked
             #  so we can overwrite the previous one with the latest rotated one
             #  or the rotation is starting again we just have an incomplete

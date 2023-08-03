@@ -26,7 +26,7 @@ def rotate_frames_line_by_line(image_stack, rotation_degrees):
         is_rotating = np.absolute(rotation) > 0.00001
         image_scanning_completed = line_counter == (height - 1)
         rotation_just_finished = not is_rotating and (
-            rotation_degrees[i - 1] > 300
+            np.absolute(rotation_degrees[i - 1]) > np.absolute(rotation)
         )
 
         if is_rotating:
@@ -59,13 +59,9 @@ def rotate_frames_line_by_line(image_stack, rotation_degrees):
             previous_image_completed = False
             print("*", end="")
 
-        there_is_a_rotated_image_in_locals = (
-            locals().get("rotated_filled_image", None) is not None
-        )
-
         if (
             image_scanning_completed
-            and there_is_a_rotated_image_in_locals
+            # and there_is_a_rotated_image_in_locals
             and not rotation_completed
         ) or rotation_just_finished:
             image_stack[image_counter] = rotated_filled_image

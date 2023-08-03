@@ -40,12 +40,16 @@ class DerotationPipeline:
             height=4,
             distance=20,
         )[0]
-        check_number_of_rotations(
-            self.rotation_ticks_peaks, self.direction, self.rot_deg, self.dt
-        )
         self.rotation_on = when_is_rotation_on(self.full_rotation)
-        self.rotation_on = apply_rotation_direction(
+
+        self.rotation_on, self.rotation_blocks_idx = apply_rotation_direction(
             self.rotation_on, self.direction
+        )
+
+        self.corrected_increments = check_number_of_rotations(
+            self.rotation_ticks_peaks,
+            self.rotation_blocks_idx,
+            self.rot_deg,
         )
 
         (
@@ -70,6 +74,8 @@ class DerotationPipeline:
             self.rotation_ticks_peaks,
             self.rotation_on,
             self.lines_start,
+            self.corrected_increments,
+            self.rotation_blocks_idx,
         )
         (
             self.image_rotation_degrees_frame,

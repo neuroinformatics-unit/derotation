@@ -23,21 +23,63 @@ def get_starting_and_ending_times(clock, image, clock_type):
     return start, end, threshold
 
 
-def check_number_of_rotations(rotation_ticks_peaks, direction, rot_deg, dt):
+def check_number_of_rotations(
+    rotation_ticks_peaks, rotation_blocks_idx, rot_deg, given_increment=0.2
+):
+    print(f"Current increment: {given_increment}")
     # sanity check for the number of rotation ticks
-    number_of_rotations = len(direction)
-    expected_tiks_per_rotation = rot_deg / dt
-    ratio = len(rotation_ticks_peaks) / expected_tiks_per_rotation
-    if ratio > number_of_rotations:
-        print(
-            f"There are more rotation ticks than expected, \
-                {len(rotation_ticks_peaks)}"
-        )
-    elif ratio < number_of_rotations:
-        print(
-            f"There are less rotation ticks than expected, \
-                {len(rotation_ticks_peaks)}"
-        )
+    number_of_rotations = len(rotation_blocks_idx["start"])
+
+    expected_tiks_per_rotation = rot_deg / given_increment
+    found_ticks = len(rotation_ticks_peaks)
+    expected_ticks = expected_tiks_per_rotation * number_of_rotations
+
+    delta = len(rotation_ticks_peaks) - expected_ticks
+
+    if expected_ticks == found_ticks:
+        print(f"Number of ticks is as expected: {found_ticks}")
+        return np.ones(number_of_rotations) * given_increment
+    else:
+        print(f"Number of ticks is not as expected: {found_ticks}")
+        print(f"Expected ticks: {expected_ticks}")
+        print(f"Delta: {delta}")
+
+    corrected_increments = adjust_rotation_increment(
+        rotation_ticks_peaks,
+        rotation_blocks_idx,
+        expected_tiks_per_rotation,
+        rot_deg,
+        given_increment,
+    )
+
+    return corrected_increments
+
+
+def adjust_rotation_increment(
+    rotation_ticks,
+    rotation_blocks_idx,
+    expected_tiks_per_rotation,
+    rot_deg,
+    given_increment=0.2,
+):
+    increments_per_rotation = []
+    for i, (start, end) in enumerate(
+        zip(rotation_blocks_idx["start"], rotation_blocks_idx["end"])
+    ):
+        peaks_in_this_rotation = np.where(
+            np.logical_and(rotation_ticks > start, rotation_ticks < end)
+        )[0].shape[0]
+        if peaks_in_this_rotation == expected_tiks_per_rotation:
+            increments_per_rotation.append(given_increment)
+        else:
+            print(
+                "Rotation {} is missing or gaining {} ticks".format(
+                    i, expected_tiks_per_rotation - peaks_in_this_rotation
+                )
+            )
+            increments_per_rotation.append(rot_deg / peaks_in_this_rotation)
+
+    return increments_per_rotation
 
 
 def when_is_rotation_on(full_rotation):
@@ -55,6 +97,8 @@ def apply_rotation_direction(rotation_on, direction):
     latest_rotation_on_end = 0
 
     i = 0
+
+    rotation_blocks_idx = {"start": [], "end": []}
     while i < len(direction):
         # find the first rotation_on == 1
         try:
@@ -78,12 +122,9 @@ def apply_rotation_direction(rotation_on, direction):
             )
             continue
 
-        rotation_on[
-            latest_rotation_on_end
-            + first_rotation_on : latest_rotation_on_end
-            + first_rotation_on
-            + len_first_group
-        ] = direction[i]
+        start = latest_rotation_on_end + first_rotation_on
+        end = latest_rotation_on_end + first_rotation_on + len_first_group
+        rotation_on[start:end] = direction[i]
         latest_rotation_on_end = (
             latest_rotation_on_end + first_rotation_on + len_first_group
         )
@@ -92,39 +133,10 @@ def apply_rotation_direction(rotation_on, direction):
         ]
         i += 1  # Increment the loop counter
 
-    return rotation_on
+        rotation_blocks_idx["start"].append(start)
+        rotation_blocks_idx["end"].append(end)
 
-
-def interpolate_motor_ticks(
-    rotation_ticks_peaks,
-    rotation_on,
-    clock,
-    start,
-    time_threshold,
-    rotation_increment,
-):
-    rotation_degrees = np.empty_like(clock)
-    rotation_degrees[0] = 0
-    current_rotation: float = 0
-    tick_peaks_corrected = np.insert(rotation_ticks_peaks, 0, 0, axis=0)
-
-    for i in range(0, len(tick_peaks_corrected)):
-        time_interval = tick_peaks_corrected[i] - tick_peaks_corrected[i - 1]
-        if time_interval > time_threshold and i != 0:
-            current_rotation = 0
-        else:
-            current_rotation += rotation_increment
-        rotation_degrees[
-            tick_peaks_corrected[i - 1] : tick_peaks_corrected[i]
-        ] = current_rotation
-
-    signed_rotation_degrees = rotation_degrees * rotation_on
-
-    # rotation degrees per frame or per line
-    image_rotation_degree = signed_rotation_degrees[start]
-    image_rotation_degree *= -1
-
-    return image_rotation_degree, signed_rotation_degrees
+    return rotation_on, rotation_blocks_idx
 
 
 def find_rotation_for_each_frame_from_motor(
@@ -152,7 +164,12 @@ def find_rotation_for_each_frame_from_motor(
 
 
 def find_rotation_for_each_line_from_motor(
-    line_clock, rotation_ticks_peaks, rotation_on, lines_start
+    line_clock,
+    rotation_ticks_peaks,
+    rotation_on,
+    lines_start,
+    corrected_increments,
+    rotation_blocks_idx,
 ):
     #  calculate the rotation degrees for each line
     rotation_degrees = np.empty_like(line_clock)
@@ -160,6 +177,12 @@ def find_rotation_for_each_line_from_motor(
     rotation_increment: float = 0
     tick_peaks_corrected = np.insert(rotation_ticks_peaks, 0, 0, axis=0)
     for i in range(1, len(tick_peaks_corrected)):
+        rotation_idx = np.where(
+            rotation_blocks_idx["end"] > tick_peaks_corrected[i],
+        )[0][0]
+
+        increment = corrected_increments[rotation_idx]
+
         time_interval = tick_peaks_corrected[i] - tick_peaks_corrected[i - 1]
         if time_interval > 2000 and i != 0:
             rotation_increment = 0
@@ -167,11 +190,11 @@ def find_rotation_for_each_line_from_motor(
         else:
             rotation_array = np.linspace(
                 rotation_increment,
-                rotation_increment + 0.2,
+                rotation_increment + increment,
                 time_interval,
                 endpoint=True,
             )
-            rotation_increment += 0.2
+            rotation_increment += increment
         rotation_degrees[
             tick_peaks_corrected[i - 1] : tick_peaks_corrected[i]
         ] = rotation_array

@@ -58,13 +58,19 @@ def rotate_with_given_flavour(
                 order=order,
                 mode=key,
             )
-            rotated_mask = rotate(empty_image_mask, rotation, reshape=False)
+            rotated_mask = rotate(
+                empty_image_mask,
+                rotation,
+                reshape=False,
+                order=order,
+                mode=key,
+            )
 
             #  apply rotated mask to rotated line-image
             masked = ma.masked_array(rotated_line, rotated_mask)
 
             if previous_image_completed:
-                rotated_filled_image = img_with_new_lines
+                rotated_filled_image = np.zeros_like(img_with_new_lines)
 
             #  substitute the non masked values in the new image
             rotated_filled_image = np.where(
@@ -119,9 +125,12 @@ for j, key in enumerate(scipy_rotate_keys):
 
         fig, ax = plt.subplots(row, col)
         for i in range(len_images):
-            ax[i // col, i % col].imshow(rotated_flavours[(key, o)][i])
-            ax[i // col, i % col].axis("off")
-
+            try:
+                tup = (i // col, i % col)
+                ax[tup].imshow(rotated_flavours[(key, o)][i])
+                ax[tup].axis("off")
+            except IndexError:
+                print(i, key, o)
         plt.subplots_adjust(wspace=0, hspace=0)
         #  set title
         plt.suptitle("key: {}, order: {}".format(key, o))

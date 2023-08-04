@@ -17,7 +17,7 @@ from derotation.load_data.get_data import get_data
 
 
 class DerotationPipeline:
-    def __init__(self):
+    def __init__(self, dataset_name="grid"):
         (
             self.images_stack,
             self.frame_clock,
@@ -27,7 +27,7 @@ class DerotationPipeline:
             self.dt,
             self.config,
             self.direction,
-        ) = get_data()
+        ) = get_data(dataset_name)
         self.rot_deg = 360
 
         print("Data loaded")

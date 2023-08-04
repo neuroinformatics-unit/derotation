@@ -38,8 +38,8 @@ def get_paths(
     return path_tif, path_aux, config, path_randperm
 
 
-def get_data():
-    path_tif, path_aux, config, path_randperm = get_paths(dataset_name="grid")
+def get_data(dataset_name="grid"):
+    path_tif, path_aux, config, path_randperm = get_paths(dataset_name)
 
     image = tiff.imread(path_tif)
 

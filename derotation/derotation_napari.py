@@ -41,7 +41,7 @@ class Plotting(QWidget):
 
         self._viewer = napari_viewer
 
-        self.pipeline = DerotationPipeline()
+        self.pipeline = DerotationPipeline(dataset_name="grid")
         self._viewer.add_image(
             self.pipeline.images_stack, name="image", colormap="turbo"
         )

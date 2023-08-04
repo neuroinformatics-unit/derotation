@@ -30,7 +30,17 @@ def rotate_frames_line_by_line(image_stack, rotation_degrees):
         )
 
         if is_rotating:
+            if rotation_completed and (line_counter != 0):
+                #  starting a new rotation in the middle of the image
+                rotated_filled_image = image_stack[image_counter]
+            elif previous_image_completed:
+                # rotation in progress and new image to be rotated
+                rotated_filled_image = np.zeros_like(
+                    image_stack[image_counter]
+                )
+
             rotation_completed = False
+
             #  we want to take the line from the row image collected
             img_with_new_lines = image_stack[image_counter]
             line = img_with_new_lines[line_counter]
@@ -42,15 +52,22 @@ def rotate_frames_line_by_line(image_stack, rotation_degrees):
             empty_image_mask[line_counter] = 0
 
             rotated_line = rotate(
-                image_with_only_line, rotation, reshape=False
+                image_with_only_line,
+                rotation,
+                reshape=False,
+                order=0,
+                mode="constant",
             )
-            rotated_mask = rotate(empty_image_mask, rotation, reshape=False)
+            rotated_mask = rotate(
+                empty_image_mask,
+                rotation,
+                reshape=False,
+                order=0,
+                mode="constant",
+            )
 
             #  apply rotated mask to rotated line-image
             masked = ma.masked_array(rotated_line, rotated_mask)
-
-            if previous_image_completed:
-                rotated_filled_image = img_with_new_lines
 
             #  substitute the non masked values in the new image
             rotated_filled_image = np.where(
@@ -64,11 +81,15 @@ def rotate_frames_line_by_line(image_stack, rotation_degrees):
             # and there_is_a_rotated_image_in_locals
             and not rotation_completed
         ) or rotation_just_finished:
-            image_stack[image_counter] = rotated_filled_image
-            previous_image_completed = True
-
             if rotation_just_finished:
                 rotation_completed = True
+                #  add missing lines at the end of the image
+                rotated_filled_image[line_counter + 1 :] = image_stack[
+                    image_counter
+                ][line_counter + 1 :]
+
+            image_stack[image_counter] = rotated_filled_image
+            previous_image_completed = True
 
             print("Image {} rotated".format(image_counter))
 

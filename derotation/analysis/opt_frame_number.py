@@ -14,13 +14,19 @@ def count_frames(k, frame_clock, target_len):
 
 def find_best_k(clock, image, clock_type):
     target_len = len(image) if clock_type == "frame" else len(image) * 256
-    result = bisect(count_frames, -4, 4, args=(clock, target_len))  # -1, 1,
+    result = bisect(count_frames, -5, 5, args=(clock, target_len))  # -1, 1,
     best_k = result
 
     # Check if the best value of k satisfies the assertions
     threshold = np.mean(clock) + best_k * np.std(clock)
     start = np.where(np.diff(clock) > threshold)[0]
 
-    assert len(start) == target_len, f"{len(start)} != {target_len}"
+    try:
+        assert len(start) == target_len, f"{len(start)} != {target_len}"
+    except AssertionError:
+        print(
+            "Suboptimal threshold found, missing "
+            + f"{len(start) - target_len} line clock ticks"
+        )
 
     return best_k

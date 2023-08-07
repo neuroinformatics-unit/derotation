@@ -35,9 +35,10 @@ def rotate_frames_line_by_line(image_stack, rotation_degrees):
                 rotated_filled_image = image_stack[image_counter]
             elif previous_image_completed:
                 # rotation in progress and new image to be rotated
-                rotated_filled_image = np.zeros_like(
-                    image_stack[image_counter]
-                )
+                # rotated_filled_image = np.zeros_like(
+                #     image_stack[image_counter]
+                # )
+                rotated_filled_image = image_stack[image_counter]
 
             rotation_completed = False
 
@@ -55,14 +56,14 @@ def rotate_frames_line_by_line(image_stack, rotation_degrees):
                 image_with_only_line,
                 rotation,
                 reshape=False,
-                order=0,
+                order=3,
                 mode="constant",
             )
             rotated_mask = rotate(
                 empty_image_mask,
                 rotation,
                 reshape=False,
-                order=0,
+                order=3,
                 mode="constant",
             )
 

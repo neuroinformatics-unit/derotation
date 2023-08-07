@@ -34,6 +34,16 @@ def get_paths(
             path / "imaging" / "rotation_zf2_all_speeds_00002_enhanced.tif"
         )
         path_aux = path / "aux_stim" / "230731_grid_1_001.bin"
+    elif dataset_name == "CAA_1":
+        path_randperm = path / "230327_pollen" / "stimlus_randperm.mat"
+        path = path / "230801_CAA_1120181"
+        path_tif = path / "imaging" / "rotation_00001.tif"
+        path_aux = path / "aux_stim" / "2300801_CAA1120181_rotation_1_001.bin"
+    elif dataset_name == "CAA_2":
+        path_randperm = path / "230327_pollen" / "stimlus_randperm.mat"
+        path = path / "230802_CAA_1120182"
+        path_tif = path / "imaging" / "rotation_00001.tif"
+        path_aux = path / "aux_stim" / "230802_CAA_1120182_rotation_1_001.bin"
 
     return path_tif, path_aux, config, path_randperm
 

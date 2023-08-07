@@ -111,7 +111,8 @@ def apply_rotation_direction(rotation_on, direction):
         len_first_group = np.where(
             rotation_signal_copy[first_rotation_on:] == 0
         )[0][0]
-        if len_first_group < 1000:
+
+        if first_rotation_on < 1000:
             #  skip this short rotation because it is a false one
             #  done one additional time to clean up the trace at the end
             rotation_signal_copy = rotation_signal_copy[

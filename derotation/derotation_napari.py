@@ -10,10 +10,7 @@ from qtpy.QtWidgets import (
 )
 
 from derotation.analysis.derotation_pipeline import DerotationPipeline
-from derotation.analysis.find_centroid import detect_blobs, preprocess_image
-from derotation.analysis.rigid_registration import refine_derotation
 from derotation.analysis.rotate_images import (
-    image_stack_rotation,
     rotate_frames_line_by_line,
 )
 
@@ -52,13 +49,6 @@ class Plotting(QWidget):
         self.analyze_button.clicked.connect(self.analog_data_analysis)
         self.layout().addWidget(self.analyze_button)
 
-        self.rotate_images_button = QPushButton()
-        self.rotate_images_button.setText("Rotate images")
-        self.rotate_images_button.clicked.connect(
-            self.rotate_images_using_motor_feedback
-        )
-        self.layout().addWidget(self.rotate_images_button)
-
         self.rotate_by_line_button = QPushButton()
         self.rotate_by_line_button.setText("Rotate by line")
         self.rotate_by_line_button.clicked.connect(
@@ -79,31 +69,6 @@ class Plotting(QWidget):
         self.mpl_widget.draw()
         print("Data analysis done")
 
-    def find_centroids(self):
-        self.pipeline.get_clean_centroids()
-
-        centers = [
-            [t, coord[0], coord[1]]
-            for t, coord in enumerate(self.pipeline.correct_centers)
-        ]
-
-        self._viewer.add_points(
-            centers,
-        )
-        print("Centroids found")
-
-    def rotate_images_using_motor_feedback(self):
-        self.rotated_images = image_stack_rotation(
-            self.pipeline.images_stack,
-            self.pipeline.image_rotation_degrees_frame,
-        )
-        self._viewer.add_image(
-            np.array(self.rotated_images),
-            name="rotated_images",
-            colormap="turbo",
-        )
-        print("Images rotated")
-
     def rotate_images_using_line_clock(self):
         self.rotated_images = rotate_frames_line_by_line(
             self.pipeline.images_stack,
@@ -115,49 +80,3 @@ class Plotting(QWidget):
             colormap="turbo",
         )
         print("Images rotated")
-
-    def mask_images(self):
-        #  exclude borders of 50 pixels, make smaller array
-        length = len(self.rotated_images[0]) - 100
-        self.rotated_images_masked = np.zeros(
-            (len(self.rotated_images), length, length)
-        )
-        for i, image in enumerate(self.rotated_images):
-            self.rotated_images_masked[i] = image[50:-50, 50:-50]
-        self.rotated_images_masked = [o for o in self.rotated_images_masked]
-
-        self._viewer.add_image(
-            np.array(self.rotated_images_masked),
-            name="rotated_images_masked",
-            colormap="turbo",
-        )
-
-    def refine_derotation(self):
-        self.mask_images()
-
-        output = refine_derotation(self.rotated_images_masked)
-        refined_rotated_images = [o["timg"] for o in output]
-
-        self._viewer.add_image(
-            np.array(refined_rotated_images),
-            name="refined_rotated_images",
-            colormap="turbo",
-        )
-        print("Image rotation refined")
-
-    def label_derotated(self):
-        labels = self.label_derotated_images(self.rotated_images_masked)
-        self._viewer.add_image(
-            np.array(labels),
-            name="derotated_labels",
-            colormap="turbo",
-        )
-
-    @staticmethod
-    def label_derotated_images(image_stack):
-        labels = []
-        for img in image_stack:
-            img = preprocess_image(img)
-            label, _ = detect_blobs(img)
-            labels.append(label)
-        return labels

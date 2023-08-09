@@ -1,8 +1,12 @@
 import copy
+from pathlib import Path
 
 import numpy as np
+import numpy.ma as ma
+from scipy.ndimage import rotate
 from scipy.optimize import bisect
 from scipy.signal import find_peaks
+from tifffile import imsave
 
 from derotation.load_data.get_data import get_data
 
@@ -10,7 +14,7 @@ from derotation.load_data.get_data import get_data
 class DerotationPipeline:
     def __init__(self, dataset_name="grid"):
         (
-            self.images_stack,
+            self.image_stack,
             self.frame_clock,
             self.line_clock,
             self.full_rotation,
@@ -32,7 +36,7 @@ class DerotationPipeline:
             distance=20,
         )[0]
         self.rotation_on = self.find_when_is_rotation_on()
-        self.rotation_blocks_idx = self.apply_rotation_direction()
+        self.rot_blocks_idx = self.apply_rotation_direction()
         self.expected_tiks_per_rotation = self.check_number_of_rotations(
             given_increment=0.2
         )
@@ -48,7 +52,7 @@ class DerotationPipeline:
             self.threshold,
         ) = self.get_starting_and_ending_times(clock_type="line")
         (
-            self.image_rotation_degrees_line,
+            self.rot_deg_line,
             self.signed_rotation_degrees_line,
         ) = self.find_rotation_for_each_line_from_motor()
 
@@ -118,7 +122,7 @@ class DerotationPipeline:
     def check_number_of_rotations(self, given_increment=0.2):
         print(f"Current increment: {given_increment}")
         # sanity check for the number of rotation ticks
-        number_of_rotations = len(self.rotation_blocks_idx["start"])
+        number_of_rotations = len(self.rot_blocks_idx["start"])
 
         expected_tiks_per_rotation = self.rot_deg / given_increment
         found_ticks = len(self.rotation_ticks_peaks)
@@ -140,8 +144,8 @@ class DerotationPipeline:
         increments_per_rotation = []
         for i, (start, end) in enumerate(
             zip(
-                self.rotation_blocks_idx["start"],
-                self.rotation_blocks_idx["end"],
+                self.rot_blocks_idx["start"],
+                self.rot_blocks_idx["end"],
             )
         ):
             peaks_in_this_rotation = np.where(
@@ -169,9 +173,9 @@ class DerotationPipeline:
         clock = self.line_clock if clock_type == "line" else self.frame_clock
         # Calculate the threshold using a percentile of the total signal
         target_len = (
-            len(self.images_stack)
+            len(self.image_stack)
             if clock_type == "frame"
-            else len(self.images_stack) * 256
+            else len(self.image_stack) * 256
         )
         best_k = bisect(
             self.goodness_of_threshold, -5, 5, args=(clock, target_len)
@@ -213,7 +217,7 @@ class DerotationPipeline:
         )
         for i in range(1, len(tick_peaks_corrected)):
             rotation_idx = np.where(
-                self.rotation_blocks_idx["end"] > tick_peaks_corrected[i],
+                self.rot_blocks_idx["end"] > tick_peaks_corrected[i],
             )[0][0]
 
             increment = self.corrected_increments[rotation_idx]
@@ -242,3 +246,110 @@ class DerotationPipeline:
         image_rotation_degree_per_line *= -1
 
         return image_rotation_degree_per_line, signed_rotation_degrees
+
+    def rotate_frames_line_by_line(self):
+        #  fill new_rotated_image_stack with non-rotated images first
+        _, height, _ = self.image_stack.shape
+
+        rotated_image_stack = copy.deepcopy(self.image_stack)
+        previous_image_completed = True
+        rotation_completed = True
+        for i, rotation in enumerate(self.rot_deg_line):
+            line_counter = i % height
+            image_counter = i // height
+            is_rotating = np.absolute(rotation) > 0.00001
+            image_scanning_completed = line_counter == (height - 1)
+            rotation_just_finished = not is_rotating and (
+                np.absolute(self.rot_deg_line[i - 1]) > np.absolute(rotation)
+            )
+
+            if is_rotating:
+                if rotation_completed and (line_counter != 0):
+                    #  starting a new rotation in the middle of the image
+                    rotated_filled_image = self.image_stack[image_counter]
+                elif previous_image_completed:
+                    # rotation in progress and new image to be rotated
+                    # rotated_filled_image = np.zeros_like(
+                    #     image_stack[image_counter]
+                    # )
+                    rotated_filled_image = self.image_stack[image_counter]
+
+                rotation_completed = False
+
+                #  we want to take the line from the row image collected
+                img_with_new_lines = self.image_stack[image_counter]
+                line = img_with_new_lines[line_counter]
+
+                image_with_only_line = np.zeros_like(img_with_new_lines)
+                image_with_only_line[line_counter] = line
+
+                empty_image_mask = np.ones_like(img_with_new_lines)
+                empty_image_mask[line_counter] = 0
+
+                rotated_line = rotate(
+                    image_with_only_line,
+                    rotation,
+                    reshape=False,
+                    order=3,
+                    mode="constant",
+                )
+                rotated_mask = rotate(
+                    empty_image_mask,
+                    rotation,
+                    reshape=False,
+                    order=3,
+                    mode="constant",
+                )
+
+                #  apply rotated mask to rotated line-image
+                masked = ma.masked_array(rotated_line, rotated_mask)
+
+                #  substitute the non masked values in the new image
+                rotated_filled_image = np.where(
+                    masked.mask, rotated_filled_image, masked.data
+                )
+                previous_image_completed = False
+                print("*", end="")
+
+            if (
+                image_scanning_completed
+                # and there_is_a_rotated_image_in_locals
+                and not rotation_completed
+            ) or rotation_just_finished:
+                if rotation_just_finished:
+                    rotation_completed = True
+                    #  add missing lines at the end of the image
+                    rotated_filled_image[
+                        line_counter + 1 :
+                    ] = self.image_stack[image_counter][line_counter + 1 :]
+
+                # change the image in the stack inplace
+                rotated_image_stack[image_counter] = rotated_filled_image
+                previous_image_completed = True
+
+                print("Image {} rotated".format(image_counter))
+
+        return rotated_image_stack
+
+    @staticmethod
+    def add_circle_mask(rotated_image_stack):
+        img_height = rotated_image_stack.shape[1]
+        xx, yy = np.mgrid[:img_height, :img_height]
+        circle = (xx - img_height / 2) ** 2 + (yy - img_height / 2) ** 2
+        mask = circle < (img_height / 2) ** 2
+
+        masked_img_array = []
+        for img in rotated_image_stack:
+            masked_img_array.append(np.where(mask, img, np.nan))
+
+        return masked_img_array
+
+    @staticmethod
+    def save(dataset, masked):
+        path = Path(f"derotation/data/processed/{dataset}")
+        path.mkdir(parents=True, exist_ok=True)
+        imsave(
+            f"derotation/data/processed/{dataset}/masked.tif",
+            np.array(masked),
+        )
+        print(f"Masked image saved in {path}")

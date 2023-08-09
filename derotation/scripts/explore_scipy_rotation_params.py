@@ -113,7 +113,7 @@ def rotate_frames_line_by_line_explorative(image_stack, rotation_degrees):
 
 
 rotated_flavours = rotate_frames_line_by_line_explorative(
-    pipeline.images_stack, pipeline.image_rotation_degrees_line
+    pipeline.image_stack, pipeline.rot_deg_line
 )
 
 

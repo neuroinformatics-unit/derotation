@@ -40,7 +40,7 @@ class Plotting(QWidget):
 
         self.pipeline = DerotationPipeline(dataset_name="grid")
         self._viewer.add_image(
-            self.pipeline.images_stack, name="image", colormap="turbo"
+            self.pipeline.image_stack, name="image", colormap="turbo"
         )
         self.setLayout(QVBoxLayout())
 
@@ -71,8 +71,8 @@ class Plotting(QWidget):
 
     def rotate_images_using_line_clock(self):
         self.rotated_images = rotate_frames_line_by_line(
-            self.pipeline.images_stack,
-            self.pipeline.image_rotation_degrees_line,
+            self.pipeline.image_stack,
+            self.pipeline.rot_deg_line,
         )
         self._viewer.add_image(
             np.array(self.rotated_images),

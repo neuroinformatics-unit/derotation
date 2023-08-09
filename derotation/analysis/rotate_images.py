@@ -2,7 +2,7 @@ import numpy as np
 import numpy.ma as ma
 from scipy.ndimage import rotate
 
-from derotation.analysis.find_centroid import find_centroid_pipeline
+from derotation.analysis.archive.find_centroid import find_centroid_pipeline
 
 
 def image_stack_rotation(image_stack, rotation_degrees):

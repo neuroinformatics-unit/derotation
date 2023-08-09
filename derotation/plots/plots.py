@@ -1,6 +1,6 @@
 from matplotlib import pyplot as plt
 
-from derotation.analysis.find_centroid import (
+from derotation.analysis.archive.find_centroid import (
     in_region,
     not_center_of_image,
 )

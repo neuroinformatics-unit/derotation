@@ -8,10 +8,8 @@ from derotation.analysis.analog_preprocessing import (
     get_starting_and_ending_times,
     when_is_rotation_on,
 )
-from derotation.analysis.find_centroid import (
+from derotation.analysis.archive.find_centroid import (
     find_centroid_pipeline,
-    in_region,
-    not_center_of_image,
 )
 from derotation.load_data.get_data import get_data
 
@@ -103,24 +101,3 @@ class DerotationPipeline:
         ]
 
         return find_centroid_pipeline(self.images_stack, defoulting_parameters)
-
-    def get_clean_centroids(self):
-        self.correct_centers = []
-        for img in self.images_stack:
-            centers = self._calculate_centers()
-            this_center_found = False
-            for c in centers:
-                if (
-                    not_center_of_image(c)
-                    and in_region(c)
-                    and not this_center_found
-                ):
-                    self.correct_centers.append(c)
-                    this_center_found = True
-            if not this_center_found:
-                self.correct_centers.append(self.correct_centers[-1])
-
-        assert len(self.correct_centers) == len(
-            self.images_stack
-        ), f"len(self.correct_centers) = {len(self.correct_centers)},\
-            len(self.image) = {len(self.images_stack)}"

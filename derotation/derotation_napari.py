@@ -10,9 +10,6 @@ from qtpy.QtWidgets import (
 )
 
 from derotation.analysis.derotation_pipeline import DerotationPipeline
-from derotation.analysis.rotate_images import (
-    rotate_frames_line_by_line,
-)
 
 
 class DerotationCanvas(SingleAxesWidget):
@@ -37,8 +34,7 @@ class Plotting(QWidget):
         super().__init__()
 
         self._viewer = napari_viewer
-
-        self.pipeline = DerotationPipeline(dataset_name="grid")
+        self.pipeline = DerotationPipeline()
         self._viewer.add_image(
             self.pipeline.image_stack, name="image", colormap="turbo"
         )
@@ -56,27 +52,39 @@ class Plotting(QWidget):
         )
         self.layout().addWidget(self.rotate_by_line_button)
 
+        self.save_button = QPushButton()
+        self.save_button.setText("Save")
+        self.save_button.clicked.connect(self.save)
+        self.layout().addWidget(self.save_button)
+
         self.mpl_widget = DerotationCanvas(self._viewer)
         self.layout().addWidget(self.mpl_widget)
 
     def analog_data_analysis(self):
         self.pipeline.process_analog_signals()
 
-        self.mpl_widget.angles_over_time = (
-            self.pipeline.image_rotation_degrees_frame
-        )
+        self.mpl_widget.angles_over_time = self.pipeline.rot_deg_line
 
         self.mpl_widget.draw()
         print("Data analysis done")
 
     def rotate_images_using_line_clock(self):
-        self.rotated_images = rotate_frames_line_by_line(
-            self.pipeline.image_stack,
-            self.pipeline.rot_deg_line,
-        )
+        self.rotated_images = self.pipeline.rotate_frames_line_by_line()
         self._viewer.add_image(
             np.array(self.rotated_images),
             name="rotated_images",
             colormap="turbo",
         )
         print("Images rotated")
+
+    def save(self):
+        self.masked_img_array = self.pipeline.add_circle_mask()
+
+        self._viewer.add_image(
+            self.masked_img_array, name="masked", colormap="turbo"
+        )
+        print("Images masked")
+
+        self.pipeline.save(self.masked_img_array)
+
+        print("Images saved")

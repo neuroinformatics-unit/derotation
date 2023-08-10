@@ -1,5 +1,4 @@
 import copy
-from pathlib import Path
 
 import numpy as np
 import numpy.ma as ma
@@ -12,20 +11,21 @@ from derotation.load_data.get_data import get_data
 
 
 class DerotationPipeline:
-    def __init__(self, dataset_name="grid"):
+    def __init__(self):
         (
             self.image_stack,
             self.frame_clock,
             self.line_clock,
             self.full_rotation,
             self.rotation_ticks,
-            self.dt,
+            self.rotation_increment,
             self.config,
             self.direction,
-        ) = get_data(dataset_name)
+            self.path_to_dataset_folder,
+        ) = get_data()
         self.rot_deg = 360
 
-        print("Data loaded")
+        print(f"Dataset {self.config['paths']['dataset-folder']} loaded")
 
     def process_analog_signals(self):
         #  ===================================
@@ -38,10 +38,10 @@ class DerotationPipeline:
         self.rotation_on = self.find_when_is_rotation_on()
         self.rot_blocks_idx = self.apply_rotation_direction()
         self.expected_tiks_per_rotation = self.check_number_of_rotations(
-            given_increment=0.2
+            self.rotation_increment
         )
         self.corrected_increments = self.adjust_rotation_increment(
-            given_increment=0.2
+            self.rotation_increment
         )
 
         #  ===================================
@@ -150,7 +150,8 @@ class DerotationPipeline:
         ):
             peaks_in_this_rotation = np.where(
                 np.logical_and(
-                    self.rotation_ticks > start, self.rotation_ticks < end
+                    self.rotation_ticks_peaks > start,
+                    self.rotation_ticks_peaks < end,
                 )
             )[0].shape[0]
             if peaks_in_this_rotation == self.expected_tiks_per_rotation:
@@ -216,9 +217,12 @@ class DerotationPipeline:
             self.rotation_ticks_peaks, 0, 0, axis=0
         )
         for i in range(1, len(tick_peaks_corrected)):
-            rotation_idx = np.where(
-                self.rot_blocks_idx["end"] > tick_peaks_corrected[i],
-            )[0][0]
+            try:
+                rotation_idx = np.where(
+                    self.rot_blocks_idx["end"] > tick_peaks_corrected[i],
+                )[0][0]
+            except IndexError:
+                print("End of rotations...")
 
             increment = self.corrected_increments[rotation_idx]
 
@@ -344,12 +348,11 @@ class DerotationPipeline:
 
         return masked_img_array
 
-    @staticmethod
-    def save(dataset, masked):
-        path = Path(f"derotation/data/processed/{dataset}")
+    def save(self, masked):
+        path = self.path_to_dataset_folder / "dertotated"
         path.mkdir(parents=True, exist_ok=True)
         imsave(
-            f"derotation/data/processed/{dataset}/masked.tif",
+            path / "masked.tif",
             np.array(masked),
         )
         print(f"Masked image saved in {path}")

@@ -8,48 +8,34 @@ from scipy.io import loadmat
 from derotation.load_data.read_binary import read_rc2_bin
 
 
-def get_paths(
-    dataset_name="pollen",
-):
+def get_paths():
     path_config = "derotation/config.yml"
 
     with open(path_config, "r") as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
-    path = Path(config["path"])
+    root = Path(config["paths"]["root"])
+    path_to_randperm = root / Path(config["paths"]["path-to-randperm"])
+    path_to_dataset_folder = root / config["paths"]["dataset-folder"]
+    path_to_aux = path_to_dataset_folder / Path(config["paths"]["path-to-aux"])
+    path_to_tif = path_to_dataset_folder / Path(config["paths"]["path-to-tif"])
 
-    if dataset_name == "pollen":
-        path = path / "230327_pollen"
-        path_tif = path / "imaging/runtest_00001.tif"
-        path_aux = path / "aux_stim/202303271657_21_005.bin"
-        path_randperm = path / "stimlus_randperm.mat"
-    elif dataset_name == "far_focus_cells":
-        path_randperm = path / "230327_pollen" / "stimlus_randperm.mat"
-        path = path / "AK_1119329_hR_RSPd_mid_rotation"
-        path_tif = path / "rotation_00001.tif"
-        path_aux = path / "aux_files/rotation/rotation_1_001.bin"
-    elif dataset_name == "grid":
-        path_randperm = path / "230327_pollen" / "stimlus_randperm.mat"
-        path = path / "230731_25_micron_grid"
-        path_tif = (
-            path / "imaging" / "rotation_zf2_all_speeds_00002_enhanced.tif"
-        )
-        path_aux = path / "aux_stim" / "230731_grid_1_001.bin"
-    elif dataset_name == "CAA_1":
-        path_randperm = path / "230327_pollen" / "stimlus_randperm.mat"
-        path = path / "230801_CAA_1120181"
-        path_tif = path / "imaging" / "rotation_00001.tif"
-        path_aux = path / "aux_stim" / "2300801_CAA1120181_rotation_1_001.bin"
-    elif dataset_name == "CAA_2":
-        path_randperm = path / "230327_pollen" / "stimlus_randperm.mat"
-        path = path / "230802_CAA_1120182"
-        path_tif = path / "imaging" / "rotation_00001.tif"
-        path_aux = path / "aux_stim" / "230802_CAA_1120182_rotation_1_001.bin"
-
-    return path_tif, path_aux, config, path_randperm
+    return (
+        path_to_tif,
+        path_to_aux,
+        config,
+        path_to_randperm,
+        path_to_dataset_folder,
+    )
 
 
-def get_data(dataset_name="grid"):
-    path_tif, path_aux, config, path_randperm = get_paths(dataset_name)
+def get_data():
+    (
+        path_tif,
+        path_aux,
+        config,
+        path_randperm,
+        path_to_dataset_folder,
+    ) = get_paths()
 
     image = tiff.imread(path_tif)
 
@@ -76,4 +62,5 @@ def get_data(dataset_name="grid"):
         dt,
         config,
         direction,
+        path_to_dataset_folder,
     )

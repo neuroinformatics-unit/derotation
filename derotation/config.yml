@@ -1,49 +1,21 @@
-name: derotation
-display_name: Neuroinformatics derotation tools
-
-path: "/Users/lauraporta/local_data/rotation"
-
-contributions:
-  commands:
-    - id: derotation.make_plotting_widget
-      python_name: derotation.derotation_napari:Plotting
-      title: Make Plotting Widget
-  widgets:
-    - command: derotation.make_plotting_widget
-      display_name: NIU derotation plotting
+paths:
+  root:  "/Users/laura/data/derotation/raw/"
+  # following two expected inside root folder
+  path-to-randperm: "stimlus_randperm.mat"
+  dataset-folder: "230802_CAA_1120182"
+  # following two expected inside dataset-folder
+  path-to-aux: "aux_stim/230802_CAA_1120182_rotation_1_001.bin"
+  path-to-tif: "imaging/rotation_00001.tif"
 
 
-git_version: f10323ac598209d9130983420a93506f2f6c8894
-saving:
-  save_to: E:\Chryssanthi\test\rot_gfap\2023_rotgfap3
-  prefix: 202303271657
-  suffix: 21
-  index: 5
-  ai_min_voltage: -10.0
-  ai_max_voltage: 10.0
-nidaq:
-  ai:
-    rate: 50000.0
-    channel_names: [camera,scanimage_frameclock,photodiode1,photodiode2,PI_rotCW,filtered_teensy,stage,solenoid,multiplexer_output,Vistim_ttl]
-    channel_ids: [ai0,ai1,ai2,ai3,ai4,ai5,ai6,ai7,ai16,ai17]
-    offset: [ 0.0000000000,0.0000000000,0.0000000000,0.0000000000,0.0000000000,0.0000000000] # [0.0,0.0,0.0,0.0,0.0,0.5,0.0,0.0,0.0,0.0]
-    scale: [1.0000000000,1.0000000000,1.0000000000,1.0000000000,1.0000000000,1.0000000000] #[1.0,1.0,1.0,1.0,1.0,40.0,-40.0,1.0,40.0,1.0]
-  ao:
-    rate: 50000.0
-    channel_names: [velocity]
-    channel_ids: [ao0]
-    idle_offset: 0.5
-  co:
-    channel_names: [camera]
-    channel_ids: [ctr0]
-    init_delay: 0
-    low_samps: 107
-    high_samps: 60
-    clock_src: /Dev1/ai/SampleClock
-  do:
-    channel_names: [pump,multiplexer,solenoid,zero_teensy,visual_stimulus,soloist,disable_teensy]
-    channel_ids: [port0/line0,port0/line1,port0/line2,port0/line3,port0/line4,port0/line5,port0/line6]
-    clock_src: /Dev1/ai/SampleClock
-  di:
-    channel_names: [from_soloist,from_teensy]
-    channel_ids: [port1/line0,port1/line1]
+rotation_increment: 0.2
+channel_names: [
+    "camera",
+    "scanimage_frameclock",
+    "scanimage_lineclock",
+    "photodiode2",
+    "PI_rotON",
+    "PI_rotticks",
+]
+offset:  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+scale: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]

@@ -20,7 +20,7 @@ class DerotationPipeline:
         fancylog.start_logging(
             output_dir=str(Path("logs")),
             package=sys.modules[__name__.partition(".")[0]],
-            filename="rsp_vision",
+            filename="derotation",
             verbose=False,
         )
         (

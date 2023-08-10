@@ -3,9 +3,9 @@ import logging
 import sys
 from pathlib import Path
 
-import fancylog
 import numpy as np
 import numpy.ma as ma
+from fancylog import fancylog
 from scipy.ndimage import rotate
 from scipy.optimize import bisect
 from scipy.signal import find_peaks
@@ -309,14 +309,14 @@ class DerotationPipeline:
                     image_with_only_line,
                     rotation,
                     reshape=False,
-                    order=3,
+                    order=0,
                     mode="constant",
                 )
                 rotated_mask = rotate(
                     empty_image_mask,
                     rotation,
                     reshape=False,
-                    order=3,
+                    order=0,
                     mode="constant",
                 )
 

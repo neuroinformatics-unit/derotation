@@ -20,11 +20,12 @@ The derotated tiffs will be saved as `{dataset-folder}/derotated/masked.tif`.
 `python3 derotation/derotate.py`` will run the derotation based on the configuration file.
 
 ## Run with Napari
-```shell
-napari
-```
+In your conda environment, run `napari`.
+
 In the GUI, click on `Plugins` and then `NIU derotation plotting`.
 The data will be automatically loaded based on the configuration file.
 On the right you will see three buttons:
 - `Run analysis`: to run the pre-processing of the analog signal. After pressing this button the plot underneath will display the calculated derotation angles. If you navigate the video using the slider on the bottom, the vertical red line will show you where in the angle trace you are.
-- `Rotate by line`: to rotate the video by line. This will take a long while. Check the console to know at which frame did the computation arrive. The derotated video will be saved in `{dataset-folder}/derotated/masked.tif`.
+- `Rotate by line`: to rotate the video by line. This will take a long while. Check the console to know at which frame did the computation arrive.
+- `Save`: will apply a circular mask to the derotated video and save it in `{dataset-folder}/derotated/masked.tif`.
+-

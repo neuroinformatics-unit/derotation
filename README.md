@@ -7,6 +7,7 @@ Create your environment and install the package from the branch `napari-matplotl
 conda create -n derotation python=3.10
 conda activate derotation
 git clone git+https://github.com/neuroinformatics-unit/derotation
+cd derotation
 git checkout napari-matplotlib
 pip install -e .
 ```

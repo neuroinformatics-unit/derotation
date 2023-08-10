@@ -50,7 +50,6 @@ requires = [
     "matplotlib",
     "scipy",
     "PyYAML",
-    "scikit-image",
     "napari",
     "pyqt6",
     "napari-matplotlib",

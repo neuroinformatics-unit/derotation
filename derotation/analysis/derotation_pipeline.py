@@ -1,5 +1,9 @@
 import copy
+import logging
+import sys
+from pathlib import Path
 
+import fancylog
 import numpy as np
 import numpy.ma as ma
 from scipy.ndimage import rotate
@@ -12,6 +16,13 @@ from derotation.load_data.get_data import get_data
 
 class DerotationPipeline:
     def __init__(self):
+        Path("logs").mkdir(parents=True, exist_ok=True)
+        fancylog.start_logging(
+            output_dir=str(Path("logs")),
+            package=sys.modules[__name__.partition(".")[0]],
+            filename="rsp_vision",
+            verbose=False,
+        )
         (
             self.image_stack,
             self.frame_clock,
@@ -25,7 +36,9 @@ class DerotationPipeline:
         ) = get_data()
         self.rot_deg = 360
 
-        print(f"Dataset {self.config['paths']['dataset-folder']} loaded")
+        logging.info(
+            f"Dataset {self.config['paths']['dataset-folder']} loaded"
+        )
 
     def process_analog_signals(self):
         #  ===================================
@@ -79,7 +92,7 @@ class DerotationPipeline:
                 first_rotation_on = np.where(rotation_signal_copy == 1)[0][0]
             except IndexError:
                 #  no more rotations, data is over
-                print(
+                logging.info(
                     f"Completed, missing {len(self.direction) - i} rotations"
                 )
                 break
@@ -120,7 +133,7 @@ class DerotationPipeline:
         return rotation_blocks_idx
 
     def check_number_of_rotations(self, given_increment=0.2):
-        print(f"Current increment: {given_increment}")
+        logging.info(f"Current increment: {given_increment}")
         # sanity check for the number of rotation ticks
         number_of_rotations = len(self.rot_blocks_idx["start"])
 
@@ -131,12 +144,14 @@ class DerotationPipeline:
         delta = len(self.rotation_ticks_peaks) - expected_ticks
 
         if expected_ticks == found_ticks:
-            print(f"Number of ticks is as expected: {found_ticks}")
+            logging.info(f"Number of ticks is as expected: {found_ticks}")
             return np.ones(number_of_rotations) * given_increment
         else:
-            print(f"Number of ticks is not as expected: {found_ticks}")
-            print(f"Expected ticks: {expected_ticks}")
-            print(f"Delta: {delta}")
+            logging.warning(
+                f"Number of ticks is not as expected: {found_ticks}"
+            )
+            logging.warning(f"Expected ticks: {expected_ticks}")
+            logging.warning(f"Delta: {delta}")
 
         return expected_tiks_per_rotation
 
@@ -157,7 +172,7 @@ class DerotationPipeline:
             if peaks_in_this_rotation == self.expected_tiks_per_rotation:
                 increments_per_rotation.append(given_increment)
             else:
-                print(
+                logging.warning(
                     "Rotation {} is missing or gaining {} ticks".format(
                         i,
                         self.expected_tiks_per_rotation
@@ -186,9 +201,9 @@ class DerotationPipeline:
         try:
             start = np.where(np.diff(clock) > threshold)[0]
             assert len(start) == target_len, f"{len(start)} != {target_len}"
-            print(f"Best threshold: {threshold}")
+            logging.info(f"Best threshold: {threshold}")
         except AssertionError:
-            print(
+            logging.warning(
                 "Suboptimal threshold found, missing "
                 + f"{len(start) - target_len} line clock ticks"
             )
@@ -222,7 +237,7 @@ class DerotationPipeline:
                     self.rot_blocks_idx["end"] > tick_peaks_corrected[i],
                 )[0][0]
             except IndexError:
-                print("End of rotations...")
+                logging.warning("End of rotations reached")
 
             increment = self.corrected_increments[rotation_idx]
 
@@ -313,8 +328,6 @@ class DerotationPipeline:
                     masked.mask, rotated_filled_image, masked.data
                 )
                 previous_image_completed = False
-                print("*", end="")
-
             if (
                 image_scanning_completed
                 # and there_is_a_rotated_image_in_locals
@@ -331,7 +344,7 @@ class DerotationPipeline:
                 rotated_image_stack[image_counter] = rotated_filled_image
                 previous_image_completed = True
 
-                print("Image {} rotated".format(image_counter))
+                logging.info("Image {} rotated".format(image_counter))
 
         return rotated_image_stack
 
@@ -355,4 +368,4 @@ class DerotationPipeline:
             path / "masked.tif",
             np.array(masked),
         )
-        print(f"Masked image saved in {path}")
+        logging.info(f"Masked image saved in {path}")

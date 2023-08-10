@@ -53,6 +53,7 @@ requires = [
     "napari",
     "pyqt6",
     "napari-matplotlib",
+    "fancylog",
 ]
 build-backend = "setuptools.build_meta"
 

@@ -71,6 +71,27 @@ class DerotationPipeline:
 
         print("Analog signals processed")
 
+    def _find_rotation_peaks(self):
+        # to be improved
+        expected_tiks_per_rotation = self.rot_deg / self.rotation_increment
+
+        best_k = bisect(
+            self.goodness_of_threshold,
+            0,
+            np.max(self.rotation_ticks),
+            args=(
+                self.rotation_ticks,  # clock
+                expected_tiks_per_rotation,  # target len
+            ),
+        )
+        threshold = np.mean(self.rotation_ticks) + best_k * np.std(
+            self.rotation_ticks
+        )
+
+        start = np.where(np.diff(self.rotation_ticks) > threshold)[0]
+
+        return start
+
     def find_when_is_rotation_on(self):
         # identify the rotation ticks that correspond to
         # clockwise and counter clockwise rotations

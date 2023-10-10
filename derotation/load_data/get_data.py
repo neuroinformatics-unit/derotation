@@ -18,6 +18,7 @@ def get_paths():
     path_to_dataset_folder = root / config["paths"]["dataset-folder"]
     path_to_aux = path_to_dataset_folder / Path(config["paths"]["path-to-aux"])
     path_to_tif = path_to_dataset_folder / Path(config["paths"]["path-to-tif"])
+    filename = config["paths"]["path-to-tif"]
 
     return (
         path_to_tif,
@@ -25,6 +26,7 @@ def get_paths():
         config,
         path_to_randperm,
         path_to_dataset_folder,
+        filename,
     )
 
 
@@ -35,6 +37,7 @@ def get_data():
         config,
         path_randperm,
         path_to_dataset_folder,
+        filename,
     ) = get_paths()
 
     image = tiff.imread(path_tif)
@@ -63,4 +66,5 @@ def get_data():
         config,
         direction,
         path_to_dataset_folder,
+        filename,
     )

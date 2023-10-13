@@ -1,0 +1,24 @@
+paths_read:
+  path_to_randperm: "/Users/lauraporta/local_data/rotation/stimlus_randperm.mat"
+  path_to_aux: "/Users/lauraporta/local_data/rotation/230802_CAA_1120182/aux_stim/230802_CAA_1120182_rotation_1_001.bin"
+  path_to_tif: "/Users/lauraporta/local_data/rotation/230802_CAA_1120182/imaging/rotation_00001.tif"
+paths_write:
+  logs_folder: "/Users/lauraporta/local_data/rotation/230802_CAA_1120182/logs/"
+  derotated_tiff_folder: "/Users/lauraporta/local_data/rotation/230802_CAA_1120182/"
+  saving_name: "derotated_masked_full"
+
+
+channel_names: [
+    "camera",
+    "scanimage_frameclock",
+    "scanimage_lineclock",
+    "photodiode2",
+    "PI_rotON",
+    "PI_rotticks",
+]
+rotation_increment: 0.2
+
+assume_full_rotation: True
+adjust_increment: True
+rotation_kind: "line"
+rot_deg: 360

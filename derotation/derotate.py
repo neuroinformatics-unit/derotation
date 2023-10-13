@@ -1,6 +1,6 @@
 from derotation.analysis.derotation_pipeline import DerotationPipeline
 
-pipeline = DerotationPipeline()
+pipeline = DerotationPipeline("full_rotation")
 
 pipeline.process_analog_signals()
 

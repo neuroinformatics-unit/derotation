@@ -80,11 +80,7 @@ class DerotationPipeline:
     def process_analog_signals(self):
         #  ===================================
         #  Use rotation ticks to find the correct rotation angles
-        self.rotation_ticks_peaks = find_peaks(
-            self.rotation_ticks,
-            height=4,
-            distance=20,
-        )[0]
+        self.rotation_ticks_peaks = self.find_rotation_peaks()
         self.rotation_on = self.find_when_is_rotation_on()
         self.rot_blocks_idx = self.apply_rotation_direction()
         self.expected_tiks_per_rotation = self.check_number_of_rotations(
@@ -119,31 +115,30 @@ class DerotationPipeline:
 
         print("Analog signals processed")
 
-    def _find_rotation_peaks(self):
-        # to be improved
-        expected_tiks_per_rotation = self.rot_deg / self.rotation_increment
+    def find_rotation_peaks(self):
+        #  scipy method works well, it's enough for our purposes
 
-        best_k = bisect(
-            self.goodness_of_threshold,
-            0,
-            np.max(self.rotation_ticks),
-            args=(
-                self.rotation_ticks,  # clock
-                expected_tiks_per_rotation,  # target len
-            ),
-        )
-        threshold = np.mean(self.rotation_ticks) + best_k * np.std(
-            self.rotation_ticks
-        )
+        height = self.config["analog_signals_processing"][
+            "find_rotation_ticks_peaks"
+        ]["height"]
+        distance = self.config["analog_signals_processing"][
+            "find_rotation_ticks_peaks"
+        ]["distance"]
+        peaks = find_peaks(
+            self.rotation_ticks,
+            height=height,
+            distance=distance,
+        )[0]
 
-        start = np.where(np.diff(self.rotation_ticks) > threshold)[0]
-
-        return start
+        return peaks
 
     def find_when_is_rotation_on(self):
         # identify the rotation ticks that correspond to
         # clockwise and counter clockwise rotations
-        threshold = 0.5  # Threshold to consider "on" or rotation occurring
+
+        threshold = self.config["analog_signals_processing"]["rotation_is_on"][
+            "threshold"
+        ]
         rotation_on = np.zeros_like(self.full_rotation)
         rotation_on[self.full_rotation > threshold] = 1
         return rotation_on

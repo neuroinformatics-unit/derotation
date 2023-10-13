@@ -22,3 +22,10 @@ assume_full_rotation: True
 adjust_increment: True
 rotation_kind: "line"
 rot_deg: 360
+
+analog_signals_processing:
+  find_rotation_ticks_peaks:
+    height: 4
+    distance: 20
+  rotation_is_on:
+    threshold: 0.5

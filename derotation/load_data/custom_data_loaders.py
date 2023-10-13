@@ -12,7 +12,6 @@ def get_rotation_direction(path_to_randperm):
 
 
 def read_rc2_bin(path_aux, chan_names):
-    # Number of channels
     n_channels = len(chan_names)
 
     # Read binary data saved by rc2 (int16)

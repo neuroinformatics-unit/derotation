@@ -5,44 +5,77 @@ from pathlib import Path
 
 import numpy as np
 import numpy.ma as ma
+import tifffile as tiff
 import tqdm
+import yaml
 from fancylog import fancylog
 from scipy.ndimage import rotate
 from scipy.optimize import bisect
 from scipy.signal import find_peaks
 from tifffile import imsave
 
-from derotation.load_data.get_data import get_data
+from derotation.load_data.custom_data_loaders import (
+    get_analog_signals,
+    get_rotation_direction,
+)
 
 
 class DerotationPipeline:
-    def __init__(self):
-        Path("logs").mkdir(parents=True, exist_ok=True)
+    def __init__(self, config_name):
+        self.config = self.get_config(config_name)
+        self.start_logging()
+        self.load_data()
+
+        logging.info(f"Dataset {self.filename_raw} loaded")
+        logging.info(f"Filename: {self.filename}")
+
+    def get_config(self, config_name):
+        path_config = "derotation/config/" + config_name + ".yml"
+
+        with open(Path(path_config), "r") as f:
+            config = yaml.load(f, Loader=yaml.FullLoader)
+
+        return config
+
+    def start_logging(self):
+        path = self.config["paths_write"]["logs_folder"]
+        Path(path).mkdir(parents=True, exist_ok=True)
         fancylog.start_logging(
-            output_dir=str(Path("logs")),
+            output_dir=str(path),
             package=sys.modules[__name__.partition(".")[0]],
             filename="derotation",
             verbose=False,
         )
+
+    def load_data(self):
+        logging.info("Loading data...")
+
+        self.image_stack = tiff.imread(
+            self.config["paths_read"]["path_to_tif"]
+        )
+        self.direction = get_rotation_direction(
+            self.config["paths_read"]["path_to_randperm"]
+        )
         (
-            self.image_stack,
             self.frame_clock,
             self.line_clock,
             self.full_rotation,
             self.rotation_ticks,
-            self.rotation_increment,
-            self.config,
-            self.direction,
-            self.path_to_dataset_folder,
-            self.filename,
-        ) = get_data()
-        self.rot_deg = 360
-        self.assume_full_rotation = True
-
-        logging.info(
-            f"Dataset {self.config['paths']['dataset-folder']} loaded"
+        ) = get_analog_signals(
+            self.config["paths_read"]["path_to_aux"],
+            self.config["channel_names"],
         )
-        logging.info(f"Filename: {self.filename}")
+
+        self.rotation_increment = self.config["rotation_increment"]
+        self.rot_deg = self.config["rot_deg"]
+        self.assume_full_rotation = self.config["assume_full_rotation"]
+        self.adjust_increment = self.config["adjust_increment"]
+        self.rotation_kind = self.config["rotation_kind"]
+
+        self.filename_raw = Path(
+            self.config["paths_read"]["path_to_tif"]
+        ).stem.split(".")[0]
+        self.filename = self.config["paths_write"]["saving_name"]
 
     def process_analog_signals(self):
         #  ===================================

@@ -29,3 +29,5 @@ analog_signals_processing:
     distance: 20
   rotation_is_on:
     threshold: 0.5
+  upper_lim_bisect: 5
+  min_rotation_length: 1000

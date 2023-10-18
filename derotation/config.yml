@@ -1,5 +1,5 @@
 paths:
-  root:  "/Users/laura/data/derotation/raw/"
+  root:  "/Users/lauraporta/local_data/rotation/"
   # following two expected inside root folder
   path-to-randperm: "stimlus_randperm.mat"
   dataset-folder: "230802_CAA_1120182"

@@ -224,6 +224,45 @@ for roi in range(n_roi):
             # roi_window_dff = pd.DataFrame(roi_window_dff.T)
             rotation_data[direction] = roi_window_dff
 
+            for i, trace in enumerate(roi_window_dff.T):
+                fig, ax = plt.subplots(figsize=(10, 5))
+
+                ax.plot(trace, color="red")
+
+                ax.axvline(x=beginning_of_rotation, color="black")
+                ax.axvline(x=end_of_rotation, color="black")
+                # a.set_ylim(-3700, -2900)
+
+                # add color legend
+                ax.annotate(
+                    "counterclockwise",
+                    xy=(0.05, 0.95),
+                    xycoords="axes fraction",
+                    color="green",
+                )
+                ax.annotate(
+                    "clockwise",
+                    xy=(0.05, 0.9),
+                    xycoords="axes fraction",
+                    color="red",
+                )
+                ax.spines["right"].set_visible(False)
+                ax.spines["top"].set_visible(False)
+
+                if no_neuropil_subtraction:
+                    ax.set_ylabel("Arbitrary units", fontsize=15)
+                else:
+                    ax.set_ylabel("dF/F", fontsize=15)
+
+                ax.set_xlabel("Frames", fontsize=15)
+
+                #  bigger tick labels
+                ax.tick_params(axis="both", which="major", labelsize=15)
+
+                fig.savefig(
+                    f"/Users/lauraporta/local_data/rotation/230802_CAA_1120182/derotated/no_background/plots/neuropil_subtraction/trace:{i}_IMPR_roi_{roi}_speed_{speed}.png"
+                )
+
         fig, ax = plt.subplots(figsize=(10, 5))
         # make a line plot with matplotlib with all the dff values
 

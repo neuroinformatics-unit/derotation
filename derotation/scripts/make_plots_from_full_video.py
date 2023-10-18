@@ -10,6 +10,8 @@ from scipy.io import loadmat
 
 from derotation.analysis.derotation_pipeline import DerotationPipeline
 
+no_neuropil_subtraction = False
+
 pipeline = DerotationPipeline()
 
 pipeline.process_analog_signals()
@@ -169,8 +171,11 @@ dff = pd.DataFrame(dff.T)
 print(dff.shape)
 print(dff.head())
 
-# no neuropil subtraction
-# dff = pd.DataFrame(f.T)
+if no_neuropil_subtraction:
+    # no neuropil subtraction
+    dff = pd.DataFrame(f.T)
+    dff = dff / -dff.mean(axis=0)
+    dff += 1
 
 #  merge dff with rotated_frames
 n_roi = len(dff.columns)
@@ -197,7 +202,7 @@ for roi in range(n_roi):
         for direction in [-1, 1]:
             starting_frames = rotated_frames.loc[
                 (rotated_frames["rotation_speed"] == speed)
-                & (rotated_frames["starts_in_frame"] is True)
+                & rotated_frames["starts_in_frame"]
                 & (rotated_frames["direction"] == direction)
             ]
 
@@ -223,12 +228,12 @@ for roi in range(n_roi):
         # make a line plot with matplotlib with all the dff values
 
         ax.plot(rotation_data[1], color="red", alpha=0.1)
-        median_cw = np.median(rotation_data[1], axis=1)
-        ax.plot(median_cw, color="red", alpha=1)
+        mean_cw = np.mean(rotation_data[1], axis=1)
+        ax.plot(mean_cw, color="red", alpha=1)
 
         ax.plot(rotation_data[-1], color="green", alpha=0.1)
-        median_ccw = np.median(rotation_data[-1], axis=1)
-        ax.plot(median_ccw, color="green", alpha=1)
+        mean_ccw = np.mean(rotation_data[-1], axis=1)
+        ax.plot(mean_ccw, color="green", alpha=1)
 
         ax.axvline(x=beginning_of_rotation, color="black")
         ax.axvline(x=end_of_rotation, color="black")
@@ -244,9 +249,26 @@ for roi in range(n_roi):
         ax.annotate(
             "clockwise", xy=(0.05, 0.9), xycoords="axes fraction", color="red"
         )
+        ax.spines["right"].set_visible(False)
+        ax.spines["top"].set_visible(False)
 
-        fig.suptitle(f"roi {roi} speed {speed}")
+        if no_neuropil_subtraction:
+            ax.set_ylabel("Arbitrary units", fontsize=15)
+        else:
+            ax.set_ylabel("dF/F", fontsize=15)
+
+        ax.set_xlabel("Frames", fontsize=15)
+
+        #  bigger tick labels
+        ax.tick_params(axis="both", which="major", labelsize=15)
+
+        fig.suptitle(f"roi {roi} speed {speed}", fontsize=20)
         #  save this plot
-        fig.savefig(
-            f"/Users/lauraporta/local_data/rotation/230802_CAA_1120182/derotated/no_background/plots/neuropil_subtraction/roi_{roi}_speed_{speed}.png"
-        )
+        if no_neuropil_subtraction:
+            fig.savefig(
+                f"/Users/lauraporta/local_data/rotation/230802_CAA_1120182/derotated/no_background/plots/no_subtraction/IMPR_roi_{roi}_speed_{speed}.png"
+            )
+        else:
+            fig.savefig(
+                f"/Users/lauraporta/local_data/rotation/230802_CAA_1120182/derotated/no_background/plots/neuropil_subtraction/IMPR_roi_{roi}_speed_{speed}.png"
+            )

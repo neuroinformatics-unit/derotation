@@ -514,18 +514,20 @@ class DerotationPipeline:
         xx, yy = np.mgrid[:img_height, :img_height]
         circle = (xx - img_height / 2) ** 2 + (yy - img_height / 2) ** 2
         mask = circle < (img_height / 2) ** 2
+        img_min = np.nanmin(rotated_image_stack)
 
         masked_img_array = []
         for img in rotated_image_stack:
-            masked_img_array.append(np.where(mask, img, np.nan))
+            masked_img_array.append(np.where(mask, img, img_min))
 
         return masked_img_array
 
     def save(self, masked):
         path = self.path_to_dataset_folder / "derotated"
         path.mkdir(parents=True, exist_ok=True)
+
         imsave(
-            path / "masked_increment_with_adjustments_no_background.tif",
+            path / "CE_masked_with_adjustments_no_background.tif",
             np.array(masked),
         )
         logging.info(f"Masked image saved in {path}")

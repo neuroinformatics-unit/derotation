@@ -18,7 +18,7 @@ pipeline.process_analog_signals()
 
 # import already rotated images
 path_tif = Path(
-    "/Users/lauraporta/local_data/rotation/230802_CAA_1120182/derotated/no_background/masked_no_background.tif"
+    "/Users/lauraporta/local_data/rotation/230822_CAA_1120509/derotated/masked_increment_with_adjustments_no_background.tif"
 )
 derotated = tiff.imread(path_tif)
 
@@ -44,12 +44,18 @@ rot_end = pipeline.rot_blocks_idx["end"]
 all_initial_frames_counted = False
 _rotated_frames = []
 rotation_index = 0
+
+lines_per_img = derotated.shape[1]
+
 for f_idx, f_start in enumerate(frame_start):
     try:
         f_end = frame_start[f_idx + 1]
     except IndexError:
         break
     no_rotation_start = (f_start < rot_start[0]) and (f_end < rot_start[0])
+
+    line_id = f_idx * lines_per_img
+    angle = pipeline.rot_deg_line[line_id]
 
     if no_rotation_start:
         row = {
@@ -59,6 +65,7 @@ for f_idx, f_start in enumerate(frame_start):
             "rotation_speed": np.nan,
             "direction": np.nan,
             "starts_in_frame": False,
+            "angle": angle,
         }
         _rotated_frames.append(row)
     elif rotation_index < len(rot_start):
@@ -95,6 +102,7 @@ for f_idx, f_start in enumerate(frame_start):
                 "rotation_speed": rotation_speed[rotation_index],
                 "direction": direction[rotation_index],
                 "starts_in_frame": True,
+                "angle": angle,
             }
             _rotated_frames.append(row)
         elif intra_rotaion_frame or rotation_ends_in_frame:
@@ -105,6 +113,7 @@ for f_idx, f_start in enumerate(frame_start):
                 "rotation_speed": rotation_speed[rotation_index],
                 "direction": direction[rotation_index],
                 "starts_in_frame": False,
+                "angle": angle,
             }
             _rotated_frames.append(row)
         elif inter_rotation_frame:
@@ -115,6 +124,7 @@ for f_idx, f_start in enumerate(frame_start):
                 "rotation_speed": rotation_speed[rotation_index],
                 "direction": direction[rotation_index],
                 "starts_in_frame": False,
+                "angle": angle,
             }
             _rotated_frames.append(row)
         if next_rotation_starts_in_next_frame:
@@ -125,6 +135,11 @@ for f_idx, f_start in enumerate(frame_start):
 
 rotated_frames = pd.DataFrame(_rotated_frames)
 rotated_frames = rotated_frames.reset_index(drop=True)
+
+#  save as csv
+rotated_frames.to_csv(
+    "/Users/lauraporta/local_data/rotation/230802_CAA_1120182/derotated/no_background/rotated_frames.csv"
+)
 
 print(rotated_frames.head())
 print(rotated_frames.shape)

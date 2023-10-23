@@ -127,12 +127,7 @@ class DerotationPipeline:
 
         #  ===================================
         #  Quantify the rotation for each line of each frame
-        (
-            self.lines_start,
-            self.lines_end,
-        ) = self.get_starting_and_ending_times(
-            clock="line", target_len=256 * len(self.image_stack)
-        )
+
         if self.assume_full_rotation:
             (
                 self.rot_deg_line,

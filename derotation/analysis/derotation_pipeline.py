@@ -91,7 +91,7 @@ class DerotationPipeline:
         start, end = self.get_start_end_times_with_threshold(
             self.full_rotation, self.k
         )
-        self.rot_blocks_idx = self.clean_start_and_end_rotation_signal(
+        self.rot_blocks_idx = self.correct_start_and_end_rotation_signal(
             self.inter_rotation_interval_min_len, start, end
         )
         self.rotation_on = self.create_signed_rotation_array(
@@ -175,7 +175,7 @@ class DerotationPipeline:
         return start, end
 
     @staticmethod
-    def clean_start_and_end_rotation_signal(
+    def correct_start_and_end_rotation_signal(
         inter_rotation_interval_min_len, start, end
     ):
         """removes very short intervals of off signal,

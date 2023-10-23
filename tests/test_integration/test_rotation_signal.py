@@ -94,7 +94,9 @@ class TestRotationSignal:
             self.full_rotation, self.k
         )
         rotation_blocks_idx = (
-            DerotationPipeline.clean_start_and_end_rotation_signal(start, end)
+            DerotationPipeline.correct_start_and_end_rotation_signal(
+                start, end
+            )
         )
 
         assert len(rotation_blocks_idx["start"]) == len(
@@ -118,7 +120,9 @@ class TestRotationSignal:
             self.full_rotation, self.k
         )
         rotation_blocks_idx = (
-            DerotationPipeline.clean_start_and_end_rotation_signal(start, end)
+            DerotationPipeline.correct_start_and_end_rotation_signal(
+                start, end
+            )
         )
 
         rotation_on = DerotationPipeline.create_signed_rotation_array(

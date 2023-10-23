@@ -50,6 +50,11 @@ class DerotationPipeline:
         self.image_stack = tiff.imread(
             self.config["paths_read"]["path_to_tif"]
         )
+
+        self.num_frames = self.image_stack.shape[0]
+        self.num_lines_per_frame = self.image_stack.shape[1]
+        self.num_total_lines = self.num_frames * self.num_lines_per_frame
+
         self.direction = get_rotation_direction(
             self.config["paths_read"]["path_to_randperm"]
         )
@@ -63,6 +68,7 @@ class DerotationPipeline:
             self.config["paths_read"]["path_to_aux"],
             self.config["channel_names"],
         )
+        self.total_clock_time = len(self.frame_clock)
 
         self.rotation_increment = self.config["rotation_increment"]
         self.rot_deg = self.config["rot_deg"]

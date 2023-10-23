@@ -105,7 +105,7 @@ class DerotationPipeline:
             self.plot_rotation_on_and_ticks_for_inspection()
 
         self.check_number_of_rotations()
-        if not self.is_number_of_ticks_correct():
+        if not self.is_number_of_ticks_correct() and self.adjust_increment:
             if self.assume_full_rotation:
                 self.corrected_increments = self.adjust_rotation_increment(
                     self.rotation_increment
@@ -260,19 +260,19 @@ class DerotationPipeline:
     def is_number_of_ticks_correct(self):
         # sanity check for the number of rotation ticks
 
-        expected_tiks_per_rotation = (
+        self.expected_tiks_per_rotation = (
             self.rot_deg * self.number_of_rotations / self.rotation_increment
         )
         found_ticks = len(self.rotation_ticks_peaks)
 
-        if expected_tiks_per_rotation == found_ticks:
+        if self.expected_tiks_per_rotation == found_ticks:
             logging.info(f"Number of ticks is as expected: {found_ticks}")
             return True
         else:
             logging.warning(
                 f"Number of ticks is not as expected: {found_ticks}.\n"
-                + f"Expected ticks: {expected_tiks_per_rotation}\n"
-                + f"Delta: {found_ticks - expected_tiks_per_rotation}"
+                + f"Expected ticks: {self.expected_tiks_per_rotation}\n"
+                + f"Delta: {found_ticks - self.expected_tiks_per_rotation}"
             )
             return False
 

@@ -11,7 +11,6 @@ import tqdm
 import yaml
 from fancylog import fancylog
 from scipy.ndimage import rotate
-from scipy.optimize import bisect
 from scipy.signal import find_peaks
 from tifffile import imsave
 
@@ -317,46 +316,9 @@ class DerotationPipeline:
 
         return increments_per_rotation
 
-    def get_starting_and_ending_times(self, clock, target_len):
-        upper_lim_bisect = self.config["analog_signals_processing"][
-            "upper_lim_bisect"
-        ]
-        best_k = bisect(
-            self.goodness_of_threshold,
-            -upper_lim_bisect,
-            upper_lim_bisect,
-            args=(clock, target_len),
-        )
-        threshold = np.mean(clock) + best_k * np.std(clock)
-
-        try:
-            start = np.where(np.diff(clock) > threshold)[0]
-            assert len(start) == target_len, f"{len(start)} != {target_len}"
-            logging.info(f"Best threshold: {threshold}")
-        except AssertionError:
-            logging.warning(
-                "Suboptimal threshold found, missing "
-                + f"{len(start) - target_len} line clock ticks"
-            )
-
-        start = np.where(np.diff(clock) > threshold)[0]
-        end = np.where(np.diff(clock) < -threshold)[0]
-
-        return start, end
-
-    @staticmethod
-    def goodness_of_threshold(k, clock, target_len):
-        # Calculate the threshold using a percentile of the total signal
-        mean = np.mean(clock)
-        std = np.std(clock)
-        threshold = mean + k * std
-
-        start = np.where(np.diff(clock) > threshold)[0]
-        return len(start) - target_len
-
     def find_rotation_angles_by_frame_in_incremental_rotation(self):
-        frame_start, frame_end = self.get_starting_and_ending_times(
-            self.frame_clock, len(self.image_stack)
+        frame_start, frame_end = self.get_start_end_times_with_threshold(
+            self.frame_clock, self.k
         )
 
         rotation_increment_by_frame = np.zeros(len(self.image_stack))

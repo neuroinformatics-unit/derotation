@@ -106,6 +106,7 @@ class DerotationPipeline:
             self.rot_blocks_idx["end"],
             self.direction,
         )
+        self.drop_ticks_outside_of_rotation()
 
         if self.debugging_plots:
             self.plot_rotation_on_and_ticks_for_inspection()
@@ -207,6 +208,40 @@ class DerotationPipeline:
             rotation_on[start:end] = direction[i]
 
         return rotation_on
+
+    def drop_ticks_outside_of_rotation(self):
+        #  drop ticks outside of the rotation period
+        #  (e.g. at the beginning and at the end of the recording)
+
+        logging.info("Dropping ticks outside of the rotation period...")
+
+        len_before = len(self.rotation_ticks_peaks)
+
+        rolled_starts = np.roll(self.rot_blocks_idx["start"], -1)
+        rolled_starts[-1] = int(len(self.full_rotation))
+
+        inter_roatation_interval = [
+            idx
+            for i in range(self.number_of_rotations)
+            for idx in range(
+                self.rot_blocks_idx["end"][i],
+                rolled_starts[i],
+            )
+        ]
+
+        #  delete ticks in inter rotation interval
+        self.rotation_ticks_peaks = np.delete(
+            self.rotation_ticks_peaks,
+            np.where(
+                np.isin(self.rotation_ticks_peaks, inter_roatation_interval)
+            ),
+        )
+
+        len_after = len(self.rotation_ticks_peaks)
+        logging.info(
+            f"Ticks dropped: {len_before - len_after}.\n"
+            + f"Ticks remaining: {len_after}"
+        )
 
     def plot_rotation_on_and_ticks_for_inspection(self):
         #  visual inspection of the rotation ticks and the rotation on signal

@@ -3,6 +3,7 @@ import logging
 import sys
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 import numpy as np
 import numpy.ma as ma
 import tifffile as tiff
@@ -25,9 +26,6 @@ class DerotationPipeline:
         self.config = self.get_config(config_name)
         self.start_logging()
         self.load_data()
-
-        logging.info(f"Dataset {self.filename_raw} loaded")
-        logging.info(f"Filename: {self.filename}")
 
     def get_config(self, config_name):
         path_config = "derotation/config/" + config_name + ".yml"
@@ -56,6 +54,7 @@ class DerotationPipeline:
         self.direction = get_rotation_direction(
             self.config["paths_read"]["path_to_randperm"]
         )
+        self.number_of_rotations = len(self.direction)
         (
             self.frame_clock,
             self.line_clock,
@@ -82,6 +81,11 @@ class DerotationPipeline:
             "analog_signals_processing"
         ]["inter_rotation_interval_min_len"]
 
+        self.debugging_plots = self.config["debugging_plots"]
+
+        logging.info(f"Dataset {self.filename_raw} loaded")
+        logging.info(f"Filename: {self.filename}")
+
     def process_analog_signals(self):
         self.rotation_ticks_peaks = self.find_rotation_peaks()
 
@@ -98,18 +102,22 @@ class DerotationPipeline:
             self.direction,
         )
 
-        self.expected_tiks_per_rotation = self.check_number_of_rotations(
-            self.rotation_increment
-        )
-        if self.assume_full_rotation:
-            self.corrected_increments = self.adjust_rotation_increment(
-                self.rotation_increment
-            )
-        else:
-            self.corrected_increments = (
-                self.adjust_rotation_increment_for_incremental_changes()
-            )
-            logging.info(f"Corrected increments: {self.corrected_increments}")
+        if self.debugging_plots:
+            self.plot_rotation_on_and_ticks_for_inspection()
+
+        self.check_number_of_rotations()
+        if not self.is_number_of_ticks_correct():
+            if self.assume_full_rotation:
+                self.corrected_increments = self.adjust_rotation_increment(
+                    self.rotation_increment
+                )
+            else:
+                self.corrected_increments = (
+                    self.adjust_rotation_increment_for_incremental_changes()
+                )
+                logging.info(
+                    f"Corrected increments: {self.corrected_increments}"
+                )
 
         #  ===================================
         #  Quantify the rotation for each line of each frame
@@ -133,6 +141,8 @@ class DerotationPipeline:
 
     def find_rotation_peaks(self):
         #  scipy method works well, it's enough for our purposes
+
+        logging.info("Finding rotation ticks peaks...")
 
         height = self.config["analog_signals_processing"][
             "find_rotation_ticks_peaks"
@@ -172,6 +182,8 @@ class DerotationPipeline:
         """removes very short intervals of off signal,
         which are not full rotations"""
 
+        logging.info("Cleaning start and end rotation signal...")
+
         shifted_end = np.roll(end, 1)
         mask = start - shifted_end > inter_rotation_interval_min_len
         mask[0] = True  # first rotation is always a full rotation
@@ -183,6 +195,7 @@ class DerotationPipeline:
 
     @staticmethod
     def create_signed_rotation_array(len_full_rotation, start, end, direction):
+        logging.info("Creating signed rotation array...")
         rotation_on = np.zeros(len_full_rotation)
         for i, (start, end) in enumerate(
             zip(
@@ -194,28 +207,75 @@ class DerotationPipeline:
 
         return rotation_on
 
-    def check_number_of_rotations(self, given_increment=0.2):
-        logging.info(f"Current increment: {given_increment}")
+    def plot_rotation_on_and_ticks_for_inspection(self):
+        #  visual inspection of the rotation ticks and the rotation on signal
+
+        logging.info("Plotting rotation ticks and rotation on signal...")
+
+        fig, ax = plt.subplots(1, 1, figsize=(20, 5))
+
+        ax.scatter(
+            self.rotation_ticks_peaks,
+            self.rotation_on[self.rotation_ticks_peaks],
+            label="rotation ticks",
+            marker="o",
+            alpha=0.5,
+            color="orange",
+        )
+        ax.plot(
+            self.rotation_on,
+            label="rotation on",
+            color="navy",
+        )
+
+        ax.plot(
+            self.full_rotation / np.max(self.full_rotation),
+            label="rotation ticks",
+            color="black",
+            alpha=0.2,
+        )
+
+        ax.set_title("Rotation ticks and rotation on signal")
+
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+
+        plt.savefig(
+            Path(self.config["paths_write"]["debug_plots_folder"])
+            / "rotation_ticks_and_rotation_on.png"
+        )
+
+    def check_number_of_rotations(self):
+        if (
+            self.rot_blocks_idx["start"].shape[0]
+            != self.rot_blocks_idx["end"].shape[0]
+        ):
+            raise ValueError(
+                "Start and end of rotations have different lengths"
+            )
+        if self.rot_blocks_idx["start"].shape[0] != self.number_of_rotations:
+            raise ValueError("Number of rotations is not as expected")
+
+        logging.info("Number of rotations is as expected")
+
+    def is_number_of_ticks_correct(self):
         # sanity check for the number of rotation ticks
-        number_of_rotations = len(self.rot_blocks_idx["start"])
 
-        expected_tiks_per_rotation = self.rot_deg / given_increment
+        expected_tiks_per_rotation = (
+            self.rot_deg * self.number_of_rotations / self.rotation_increment
+        )
         found_ticks = len(self.rotation_ticks_peaks)
-        expected_ticks = expected_tiks_per_rotation * number_of_rotations
 
-        delta = len(self.rotation_ticks_peaks) - expected_ticks
-
-        if expected_ticks == found_ticks:
+        if expected_tiks_per_rotation == found_ticks:
             logging.info(f"Number of ticks is as expected: {found_ticks}")
-            return np.ones(number_of_rotations) * given_increment
+            return True
         else:
             logging.warning(
-                f"Number of ticks is not as expected: {found_ticks}"
+                f"Number of ticks is not as expected: {found_ticks}.\n"
+                + f"Expected ticks: {expected_tiks_per_rotation}\n"
+                + f"Delta: {found_ticks - expected_tiks_per_rotation}"
             )
-            logging.warning(f"Expected ticks: {expected_ticks}")
-            logging.warning(f"Delta: {delta}")
-
-        return expected_tiks_per_rotation
+            return False
 
     def adjust_rotation_increment_for_incremental_changes(
         self, given_increment=0.2

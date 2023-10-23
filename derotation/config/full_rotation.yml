@@ -23,6 +23,7 @@ adjust_increment: True
 rotation_kind: "line"
 rot_deg: 360
 
+debugging_plots: True
 
 analog_signals_processing:
   find_rotation_ticks_peaks:

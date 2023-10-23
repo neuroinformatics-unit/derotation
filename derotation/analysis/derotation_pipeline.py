@@ -113,9 +113,10 @@ class DerotationPipeline:
         self.check_number_of_rotations()
         if not self.is_number_of_ticks_correct() and self.adjust_increment:
             if self.assume_full_rotation:
-                self.corrected_increments = self.adjust_rotation_increment(
-                    self.rotation_increment
-                )
+                (
+                    self.corrected_increments,
+                    self.ticks_per_rotation,
+                ) = self.adjust_rotation_increment(self.rotation_increment)
             else:
                 self.corrected_increments = (
                     self.adjust_rotation_increment_for_incremental_changes()
@@ -293,6 +294,7 @@ class DerotationPipeline:
             return self.rot_deg / total_ticks_number
 
     def adjust_rotation_increment(self, given_increment=0.2):
+        ticks_per_rotation: int = []
         increments_per_rotation = []
         for i, (start, end) in enumerate(
             zip(
@@ -319,8 +321,9 @@ class DerotationPipeline:
                 increments_per_rotation.append(
                     self.rot_deg / peaks_in_this_rotation
                 )
+            ticks_per_rotation.append(peaks_in_this_rotation)
 
-        return increments_per_rotation
+        return increments_per_rotation, ticks_per_rotation
 
     def find_rotation_angles_by_frame_in_incremental_rotation(self):
         frame_start, frame_end = self.get_start_end_times_with_threshold(

@@ -13,6 +13,27 @@ def rotation_len():
 
 
 @pytest.fixture
+def full_length(number_of_rotations, rotation_len):
+    return number_of_rotations * rotation_len * 3
+
+
+@pytest.fixture
+def direction_interleaved():
+    direction = np.zeros(10)
+    direction[::2] = 1
+    direction[1::2] = -1
+    return direction
+
+
+@pytest.fixture
+def direction_incremental():
+    direction_1 = np.ones(5)
+    direction_2 = np.ones(5) * -1
+    direction = np.concatenate((direction_1, direction_2))
+    return direction
+
+
+@pytest.fixture
 def full_rotation(number_of_rotations, rotation_len):
     sequence = [0, 1, 0]
     dummy_signal = [

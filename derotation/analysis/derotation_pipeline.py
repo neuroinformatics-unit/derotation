@@ -115,9 +115,6 @@ class DerotationPipeline:
 
         self.drop_ticks_outside_of_rotation()
 
-        if self.debugging_plots:
-            self.plot_rotation_on_and_ticks_for_inspection()
-
         self.check_number_of_rotations()
         if not self.is_number_of_ticks_correct() and self.adjust_increment:
             if self.assume_full_rotation:
@@ -153,7 +150,9 @@ class DerotationPipeline:
                 self.find_rotation_angles_by_line_in_incremental_rotation()
             )
 
-        self.plot_rotation_angles_by_line_for_inspection()
+        if self.debugging_plots:
+            self.plot_rotation_on_and_ticks()
+            self.plot_rotation_angles()
 
         print("Analog signals processed")
 
@@ -259,7 +258,102 @@ class DerotationPipeline:
             + f"Ticks remaining: {len_after}"
         )
 
-    def plot_rotation_on_and_ticks_for_inspection(self):
+    def check_number_of_rotations(self):
+        if (
+            self.rot_blocks_idx["start"].shape[0]
+            != self.rot_blocks_idx["end"].shape[0]
+        ):
+            raise ValueError(
+                "Start and end of rotations have different lengths"
+            )
+        if self.rot_blocks_idx["start"].shape[0] != self.number_of_rotations:
+            raise ValueError("Number of rotations is not as expected")
+
+        logging.info("Number of rotations is as expected")
+
+    def is_number_of_ticks_correct(self):
+        # sanity check for the number of rotation ticks
+
+        self.expected_tiks_per_rotation = (
+            self.rot_deg * self.number_of_rotations / self.rotation_increment
+        )
+        found_ticks = len(self.rotation_ticks_peaks)
+
+        if self.expected_tiks_per_rotation == found_ticks:
+            logging.info(f"Number of ticks is as expected: {found_ticks}")
+            return True
+        else:
+            logging.warning(
+                f"Number of ticks is not as expected: {found_ticks}.\n"
+                + f"Expected ticks: {self.expected_tiks_per_rotation}\n"
+                + f"Delta: {found_ticks - self.expected_tiks_per_rotation}"
+            )
+            return False
+
+    def get_interpolated_angles(self):
+        logging.info("Interpolating angles...")
+
+        ticks_with_increment = [
+            item
+            for i in range(self.number_of_rotations)
+            for item in [self.corrected_increments[i]]
+            * self.ticks_per_rotation[i]
+        ]
+
+        cumulative_sum_to360 = np.cumsum(ticks_with_increment) % self.rot_deg
+
+        interpolated_angles = np.zeros(self.total_clock_time)
+
+        starts, stops = (
+            self.rotation_ticks_peaks[:-1],
+            self.rotation_ticks_peaks[1:],
+        )
+
+        for i, (start, stop) in enumerate(zip(starts, stops)):
+            if cumulative_sum_to360[i + 1] < cumulative_sum_to360[i]:
+                cumulative_sum_to360[i] = 0
+                cumulative_sum_to360[i + 1] = 0
+
+            interpolated_angles[start:stop] = np.linspace(
+                cumulative_sum_to360[i],
+                cumulative_sum_to360[i + 1],
+                stop - start,
+            )
+
+        interpolated_angles = interpolated_angles * self.rotation_on
+
+        return interpolated_angles
+
+    def calculate_angles_by_line_and_frame(self):
+        logging.info("Calculating angles by line and frame...")
+        logging.info(self.interpolated_angles.shape)
+        inverted_angles = self.interpolated_angles * -1
+        line_angles = np.zeros(self.num_total_lines)
+        frame_angles = np.zeros(self.num_frames)
+
+        if self.line_use_start:
+            line_angles = inverted_angles[self.line_start]
+        else:
+            line_angles = inverted_angles[self.line_end]
+
+        if self.frame_use_start:
+            frame_angles = inverted_angles[self.frame_start]
+        else:
+            frame_angles = inverted_angles[self.frame_end]
+
+        return line_angles, frame_angles
+
+    # converters
+    def clock_to_latest_line_start(self, clock_time):
+        return np.where(self.line_start < clock_time)[0][-1]
+
+    def clock_to_latest_frame_start(self, clock_time):
+        return np.where(self.frame_start < clock_time)[0][-1]
+
+    def clock_to_latest_rotation_start(self, clock_time):
+        return np.where(self.rot_blocks_idx["start"] < clock_time)[0][-1]
+
+    def plot_rotation_on_and_ticks(self):
         #  visual inspection of the rotation ticks and the rotation on signal
 
         logging.info("Plotting rotation ticks and rotation on signal...")
@@ -297,121 +391,9 @@ class DerotationPipeline:
             / "rotation_ticks_and_rotation_on.png"
         )
 
-    def check_number_of_rotations(self):
-        if (
-            self.rot_blocks_idx["start"].shape[0]
-            != self.rot_blocks_idx["end"].shape[0]
-        ):
-            raise ValueError(
-                "Start and end of rotations have different lengths"
-            )
-        if self.rot_blocks_idx["start"].shape[0] != self.number_of_rotations:
-            raise ValueError("Number of rotations is not as expected")
+    def plot_rotation_angles(self):
+        logging.info("Plotting rotation angles...")
 
-        logging.info("Number of rotations is as expected")
-
-    def is_number_of_ticks_correct(self):
-        # sanity check for the number of rotation ticks
-
-        self.expected_tiks_per_rotation = (
-            self.rot_deg * self.number_of_rotations / self.rotation_increment
-        )
-        found_ticks = len(self.rotation_ticks_peaks)
-
-        if self.expected_tiks_per_rotation == found_ticks:
-            logging.info(f"Number of ticks is as expected: {found_ticks}")
-            return True
-        else:
-            logging.warning(
-                f"Number of ticks is not as expected: {found_ticks}.\n"
-                + f"Expected ticks: {self.expected_tiks_per_rotation}\n"
-                + f"Delta: {found_ticks - self.expected_tiks_per_rotation}"
-            )
-            return False
-
-    def roatate_by_frame_incremental(self):
-        new_rotated_image_stack = np.zeros_like(self.image_stack)
-
-        rotation_increment_by_frame = (
-            self.find_rotation_angles_by_frame_in_incremental_rotation()
-        )
-
-        for idx, frame in enumerate(self.image_stack):
-            new_rotated_image_stack[idx] = rotate(
-                frame,
-                rotation_increment_by_frame[idx],
-                reshape=False,
-                order=0,
-                mode="constant",
-            )
-            logging.info(f"Frame {idx} rotated")
-
-        return new_rotated_image_stack
-
-    def get_interpolated_angles(self):
-        ticks_with_increment = [
-            item
-            for i in range(self.number_of_rotations)
-            for item in [self.corrected_increments[i]]
-            * self.ticks_per_rotation[i]
-        ]
-
-        cumulative_sum_to360 = np.cumsum(ticks_with_increment) % self.rot_deg
-
-        interpolated_angles = np.zeros(self.total_clock_time)
-
-        starts, stops = (
-            self.rotation_ticks_peaks[:-1],
-            self.rotation_ticks_peaks[1:],
-        )
-
-        for i, (start, stop) in enumerate(zip(starts, stops)):
-            if cumulative_sum_to360[i + 1] < cumulative_sum_to360[i]:
-                cumulative_sum_to360[i] = 0
-                cumulative_sum_to360[i + 1] = 0
-
-            interpolated_angles[start:stop] = np.linspace(
-                cumulative_sum_to360[i],
-                cumulative_sum_to360[i + 1],
-                stop - start,
-            )
-
-        #  multiply by rotation direction
-
-        interpolated_angles = interpolated_angles * self.rotation_on
-
-        return interpolated_angles
-
-    def calculate_angles_by_line_and_frame(self):
-        logging.info("Calculating angles by line and frame...")
-        logging.info(self.interpolated_angles.shape)
-        inverted_angles = self.interpolated_angles * -1
-        line_angles = np.zeros(self.num_total_lines)
-        frame_angles = np.zeros(self.num_frames)
-
-        if self.line_use_start:
-            line_angles = inverted_angles[self.line_start]
-        else:
-            line_angles = inverted_angles[self.line_end]
-
-        if self.frame_use_start:
-            frame_angles = inverted_angles[self.frame_start]
-        else:
-            frame_angles = inverted_angles[self.frame_end]
-
-        return line_angles, frame_angles
-
-    # converters
-    def clock_to_latest_line_start(self, clock_time):
-        return np.where(self.line_start < clock_time)[0][-1]
-
-    def clock_to_latest_frame_start(self, clock_time):
-        return np.where(self.frame_start < clock_time)[0][-1]
-
-    def clock_to_latest_rotation_start(self, clock_time):
-        return np.where(self.rot_blocks_idx["start"] < clock_time)[0][-1]
-
-    def plot_rotation_angles_by_line_for_inspection(self):
         fig, axs = plt.subplots(2, 2, figsize=(10, 10))
 
         speeds = set(self.speed)
@@ -447,7 +429,7 @@ class DerotationPipeline:
             ax.scatter(
                 self.frame_start[start_frame_idx:end_frame_idx],
                 self.rot_deg_frame[start_frame_idx:end_frame_idx],
-                label="line angles",
+                label="frame angles",
                 color="green",
                 marker="o",
             )
@@ -455,7 +437,17 @@ class DerotationPipeline:
             ax.spines["top"].set_visible(False)
             ax.spines["right"].set_visible(False)
 
-        print("debug")
+            ax.set_title(f"Speed: {self.speed[rotation_id]}")
+
+        fig.suptitle("Rotation angles by line and frame")
+
+        handles, labels = ax.get_legend_handles_labels()
+        fig.legend(handles, labels, loc="upper right")
+
+        plt.savefig(
+            Path(self.config["paths_write"]["debug_plots_folder"])
+            / "rotation_angles.png"
+        )
 
     def rotate_frames_line_by_line(self):
         #  fill new_rotated_image_stack with non-rotated images first
@@ -682,3 +674,22 @@ class DerotationPipeline:
                 break
 
         return rotation_increment_by_line
+
+    def roatate_by_frame_incremental(self):
+        new_rotated_image_stack = np.zeros_like(self.image_stack)
+
+        rotation_increment_by_frame = (
+            self.find_rotation_angles_by_frame_in_incremental_rotation()
+        )
+
+        for idx, frame in enumerate(self.image_stack):
+            new_rotated_image_stack[idx] = rotate(
+                frame,
+                rotation_increment_by_frame[idx],
+                reshape=False,
+                order=0,
+                mode="constant",
+            )
+            logging.info(f"Frame {idx} rotated")
+
+        return new_rotated_image_stack

@@ -29,6 +29,34 @@ def full_rotation(number_of_rotations, rotation_len):
 
 
 @pytest.fixture
+def start_end_times(number_of_rotations, rotation_len):
+    start = np.arange(
+        rotation_len - 1,
+        rotation_len - 1 + number_of_rotations * rotation_len * 3,
+        3 * rotation_len,
+    )
+    end = np.arange(
+        rotation_len - 1 + rotation_len,
+        2 * rotation_len - 1 + number_of_rotations * rotation_len * 3,
+        3 * rotation_len,
+    )
+
+    return start, end
+
+
+@pytest.fixture
+def start_end_times_with_bug(start_end_times):
+    start, end = start_end_times
+    fictional_end = 130
+    fictional_start = 140
+
+    start = np.insert(start, 1, fictional_start)
+    end = np.insert(end, 0, fictional_end)
+
+    return start, end
+
+
+@pytest.fixture
 def direction():
     direction = np.zeros(10)
     direction[::2] = 1

@@ -16,7 +16,7 @@ from tifffile import imsave
 
 from derotation.load_data.custom_data_loaders import (
     get_analog_signals,
-    get_rotation_direction,
+    read_randomized_stim_table,
 )
 
 
@@ -55,9 +55,10 @@ class DerotationPipeline:
         self.num_lines_per_frame = self.image_stack.shape[1]
         self.num_total_lines = self.num_frames * self.num_lines_per_frame
 
-        self.direction = get_rotation_direction(
+        self.direction, self.speed = read_randomized_stim_table(
             self.config["paths_read"]["path_to_randperm"]
         )
+
         self.number_of_rotations = len(self.direction)
 
         (

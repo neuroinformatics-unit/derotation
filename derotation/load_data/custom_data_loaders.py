@@ -2,13 +2,16 @@ import numpy as np
 from scipy.io import loadmat
 
 
-def get_rotation_direction(path_to_randperm):
+def read_randomized_stim_table(path_to_randperm):
     pseudo_random = loadmat(path_to_randperm)
     full_rotation_blocks_direction = pseudo_random["stimulus_random"][:, 2] > 0
     direction = np.where(
         full_rotation_blocks_direction, -1, 1
     )  # 1 is counterclockwise, -1 is clockwise
-    return direction
+
+    speed = pseudo_random["stimulus_random"][:, 0]
+
+    return direction, speed
 
 
 def read_rc2_bin(path_aux, chan_names):

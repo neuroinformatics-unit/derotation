@@ -364,11 +364,19 @@ class DerotationPipeline:
         )
 
         for i, (start, stop) in enumerate(zip(starts, stops)):
+            if cumulative_sum_to360[i + 1] < cumulative_sum_to360[i]:
+                cumulative_sum_to360[i] = 0
+                cumulative_sum_to360[i + 1] = 0
+
             interpolated_angles[start:stop] = np.linspace(
                 cumulative_sum_to360[i],
                 cumulative_sum_to360[i + 1],
                 stop - start,
             )
+
+        #  multiply by rotation direction
+
+        interpolated_angles = interpolated_angles * self.rotation_on
 
         return interpolated_angles
 

@@ -2,6 +2,7 @@ import copy
 import logging
 import sys
 from pathlib import Path
+from typing import Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -26,7 +27,21 @@ class DerotationPipeline:
         self.start_logging()
         self.load_data()
 
-    def get_config(self, config_name):
+    def get_config(self, config_name: str) -> dict:
+        """Loads config file from derotation/config folder.
+        Please edit it to change the parameters of the analysis.
+
+        Parameters
+        ----------
+        config_name : str
+            Name of the config file without extension.
+            Either "full_rotation" or "incremental_rotation".
+
+        Returns
+        -------
+        dict
+            Config dictionary.
+        """
         path_config = "derotation/config/" + config_name + ".yml"
 
         with open(Path(path_config), "r") as f:
@@ -35,6 +50,9 @@ class DerotationPipeline:
         return config
 
     def start_logging(self):
+        """Starts logging process using fancylog package.
+        Logs saved whenre specified in the config file.
+        """
         path = self.config["paths_write"]["logs_folder"]
         Path(path).mkdir(parents=True, exist_ok=True)
         fancylog.start_logging(
@@ -45,6 +63,22 @@ class DerotationPipeline:
         )
 
     def load_data(self):
+        """Loads data from the paths specified in the config file.
+        Data is stored in the class attributes.
+
+        What is loaded:
+        - image stack (tif file)
+        - direction and speed of rotation (from randperm file, uses
+        custom_data_loaders.read_randomized_stim_table)
+        - analog signals (from aux file, uses
+        custom_data_loaders.get_analog_signals). Measured in
+        "clock_time", they are:
+            - frame clock: on during acquisition of a new frame, off otherwise
+            - line clock: on during acquisition of a new line, off otherwise
+            - full rotation: when the motor is rotating
+            - rotation ticks: peaks at every given increment of rotation
+        - various parameters from config file
+        """
         logging.info("Loading data...")
 
         self.image_stack = tiff.imread(
@@ -98,6 +132,22 @@ class DerotationPipeline:
         logging.info(f"Filename: {self.filename}")
 
     def process_analog_signals(self):
+        """From the analog signals (frame clock, line clock, full rotation,
+        rotation ticks) calculates the rotation angles by line and frame.
+
+        It involves:
+        - finding rotation ticks peaks
+        - identifying the rotation ticks that correspond to
+        clockwise and counter clockwise rotations
+        - removing various kinds of artifacts that derive from wrong ticks
+        - interpolating the angles between the ticks
+        - calculating the angles by line and frame
+
+        If debugging_plots is True, it also plots:
+        - rotation ticks and the rotation on signal
+        - rotation angles by line and frame
+        """
+
         self.rotation_ticks_peaks = self.find_rotation_peaks()
 
         start, end = self.get_start_end_times_with_threshold(
@@ -121,7 +171,7 @@ class DerotationPipeline:
                 (
                     self.corrected_increments,
                     self.ticks_per_rotation,
-                ) = self.recalculate_rotation_increment()
+                ) = self.adjust_rotation_increment()
             else:
                 self.corrected_increments = (
                     self.adjust_rotation_increment_for_incremental_changes()
@@ -156,8 +206,16 @@ class DerotationPipeline:
 
         logging.info("Analog signals processed")
 
-    def find_rotation_peaks(self):
-        #  scipy method works well, it's enough for our purposes
+    def find_rotation_peaks(self) -> np.ndarray:
+        """Finds the peaks of the rotation ticks signal using
+        scipy.signal.find_peaks. It filters the peaks using
+        the height and distance parameters specified in the config file.
+
+        Returns
+        -------
+        np.ndarray
+            the clock times of the rotation ticks peaks
+        """
 
         logging.info("Finding rotation ticks peaks...")
 
@@ -176,9 +234,24 @@ class DerotationPipeline:
         return peaks
 
     @staticmethod
-    def get_start_end_times_with_threshold(signal, k):
-        # identify the rotation ticks that correspond to
-        # clockwise and counter clockwise rotations
+    def get_start_end_times_with_threshold(
+        signal: np.ndarray, k: float
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """Finds the start and end times of the on periods of the signal.
+        Works for analog signals that have a squared pulse shape.
+
+        Parameters
+        ----------
+        signal : np.ndarray
+            An analog signal.
+        k : float
+            The factor used to quantify the threshold.
+
+        Returns
+        -------
+        Tuple(np.ndarray, np.ndarray)
+            The start and end times of the on periods of the signal.
+        """
 
         mean = np.mean(signal)
         std = np.std(signal)
@@ -194,10 +267,30 @@ class DerotationPipeline:
 
     @staticmethod
     def correct_start_and_end_rotation_signal(
-        inter_rotation_interval_min_len, start, end
-    ):
-        """removes very short intervals of off signal,
-        which are not full rotations"""
+        inter_rotation_interval_min_len: int,
+        start: np.ndarray,
+        end: np.ndarray,
+    ) -> dict:
+        """Removes artifacts from the start and end times of the on periods
+        of the rotation signal. These artifacts appear as very brief off
+        periods that are not plausible given the experimental setup.
+        The two surrounding on periods are merged.
+
+        Parameters
+        ----------
+        inter_rotation_interval_min_len : int
+            Minimum length of the time in between two rotations.
+            It is important to remove artifacts.
+        start : np.ndarray
+            The start times of the on periods of rotation signal.
+        end : np.ndarray
+            The end times of the on periods of rotation signal.
+
+        Returns
+        -------
+        dict
+            Corrected start and end times of the on periods of rotation signal.
+        """
 
         logging.info("Cleaning start and end rotation signal...")
 
@@ -211,13 +304,37 @@ class DerotationPipeline:
         return {"start": new_start, "end": new_end}
 
     @staticmethod
-    def create_signed_rotation_array(len_full_rotation, start, end, direction):
+    def create_signed_rotation_array(
+        len_full_rotation: int, starts: np.ndarray, ends: np.ndarray, direction
+    ) -> np.ndarray:
+        """Reconstructs an array that has the same length as the full rotation
+        signal. It is 0 when the motor is off, and it is 1 or -1 when the motor
+        is on, depending on the direction of rotation. 1 is clockwise, -1 is
+        counter clockwise.
+
+        Parameters
+        ----------
+        len_full_rotation : int
+            Length of the full rotation signal.
+        starts : np.ndarray
+            The start times of the on periods of rotation signal.
+        ends : np.ndarray
+            The end times of the on periods of rotation signal.
+        direction : _type_
+            The direction of rotation of the motor.
+
+        Returns
+        -------
+        np.ndarray
+            The rotation on signal.
+        """
+
         logging.info("Creating signed rotation array...")
         rotation_on = np.zeros(len_full_rotation)
         for i, (start, end) in enumerate(
             zip(
-                start,
-                end,
+                starts,
+                ends,
             )
         ):
             rotation_on[start:end] = direction[i]
@@ -225,8 +342,7 @@ class DerotationPipeline:
         return rotation_on
 
     def drop_ticks_outside_of_rotation(self):
-        #  drop ticks outside of the rotation period
-        #  (e.g. at the beginning and at the end of the recording)
+        """Removes ticks that happen in between two rotations."""
 
         logging.info("Dropping ticks outside of the rotation period...")
 
@@ -244,7 +360,6 @@ class DerotationPipeline:
             )
         ]
 
-        #  delete ticks in inter rotation interval
         self.rotation_ticks_peaks = np.delete(
             self.rotation_ticks_peaks,
             np.where(
@@ -259,6 +374,16 @@ class DerotationPipeline:
         )
 
     def check_number_of_rotations(self):
+        """Checks that the number of rotations is as expected.
+
+        Raises
+        ------
+        ValueError
+            if the number of start and end of rotations is different
+        ValueError
+            if the number of rotations is not as expected
+        """
+
         if (
             self.rot_blocks_idx["start"].shape[0]
             != self.rot_blocks_idx["end"].shape[0]
@@ -271,9 +396,16 @@ class DerotationPipeline:
 
         logging.info("Number of rotations is as expected")
 
-    def is_number_of_ticks_correct(self):
-        # sanity check for the number of rotation ticks
+    def is_number_of_ticks_correct(self) -> bool:
+        """Compares the total number of ticks with the expected number of
+        ticks,  which is calculated from the number of rotations and the
+        rotation increment.
 
+        Returns
+        -------
+        bool
+            whether the number of ticks is as expected
+        """
         self.expected_tiks_per_rotation = (
             self.rot_deg * self.number_of_rotations / self.rotation_increment
         )
@@ -290,7 +422,18 @@ class DerotationPipeline:
             )
             return False
 
-    def recalculate_rotation_increment(self):
+    def adjust_rotation_increment(self) -> Tuple[np.ndarray, np.ndarray]:
+        """It calculates the new rotation increment for each rotation, given
+        the number of ticks in each rotation. It also outputs the number of
+        ticks in each rotation.
+
+        Returns
+        -------
+        Tuple[np.ndarray, np.ndarray]
+            The new rotation increment for each rotation, and the number of
+            ticks in each rotation.
+        """
+
         def get_peaks_in_rotation(start, end):
             return np.where(
                 np.logical_and(
@@ -312,7 +455,15 @@ class DerotationPipeline:
 
         return new_increments, ticks_per_rotation
 
-    def get_interpolated_angles(self):
+    def get_interpolated_angles(self) -> np.ndarray:
+        """Starting from the rotation ticks and knowing the rotation increment,
+        it calculates the rotation angles for each clock time.
+
+        Returns
+        -------
+        np.ndarray
+            The rotation angles for each clock time.
+        """
         logging.info("Interpolating angles...")
 
         ticks_with_increment = [
@@ -346,7 +497,18 @@ class DerotationPipeline:
 
         return interpolated_angles
 
-    def calculate_angles_by_line_and_frame(self):
+    def calculate_angles_by_line_and_frame(
+        self,
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """From the interpolated angles, it calculates the rotation angles
+        by line and frame. It can use the start or the end of the line/frame to
+        infer the angle.
+
+        Returns
+        -------
+        Tuple[np.ndarray, np.ndarray]
+            The rotation angles by line and frame.
+        """
         logging.info("Calculating angles by line and frame...")
 
         inverted_angles = self.interpolated_angles * -1
@@ -365,18 +527,59 @@ class DerotationPipeline:
 
         return line_angles, frame_angles
 
-    # converters
-    def clock_to_latest_line_start(self, clock_time):
+    def clock_to_latest_line_start(self, clock_time: int) -> int:
+        """Get the index of the line that is being scanned at the given clock
+        time.
+
+        Parameters
+        ----------
+        clock_time : int
+            The clock time.
+
+        Returns
+        -------
+        int
+            The index of the line
+        """
         return np.where(self.line_start < clock_time)[0][-1]
 
-    def clock_to_latest_frame_start(self, clock_time):
+    def clock_to_latest_frame_start(self, clock_time: int) -> int:
+        """Get the index of the frame that is being acquired at the given clock
+        time.
+
+        Parameters
+        ----------
+        clock_time : int
+            The clock time.
+
+        Returns
+        -------
+        int
+            The index of the frame
+        """
         return np.where(self.frame_start < clock_time)[0][-1]
 
-    def clock_to_latest_rotation_start(self, clock_time):
+    def clock_to_latest_rotation_start(self, clock_time: int) -> int:
+        """Get the index of the latest rotation that happened.
+
+        Parameters
+        ----------
+        clock_time : int
+            The clock time.
+
+        Returns
+        -------
+        int
+            The index of the latest rotation
+        """
         return np.where(self.rot_blocks_idx["start"] < clock_time)[0][-1]
 
     def plot_rotation_on_and_ticks(self):
-        #  visual inspection of the rotation ticks and the rotation on signal
+        """Plots the rotation ticks and the rotation on signal.
+        This plot will be saved in the debug_plots folder.
+        Please inspect it to check that the rotation ticks are correctly
+        placed during the times in which the motor is rotating.
+        """
 
         logging.info("Plotting rotation ticks and rotation on signal...")
 
@@ -414,6 +617,11 @@ class DerotationPipeline:
         )
 
     def plot_rotation_angles(self):
+        """Plots example rotation angles by line and frame for each speed.
+        This plot will be saved in the debug_plots folder.
+        Please inspect it to check that the rotation angles are correctly
+        calculated.
+        """
         logging.info("Plotting rotation angles...")
 
         fig, axs = plt.subplots(2, 2, figsize=(10, 10))

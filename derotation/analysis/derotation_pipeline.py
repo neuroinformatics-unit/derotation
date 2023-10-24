@@ -326,113 +326,6 @@ class DerotationPipeline:
             )
             return False
 
-    def adjust_rotation_increment_for_incremental_changes(
-        self, given_increment=0.2
-    ):
-        total_ticks_number = len(self.rotation_ticks_peaks)
-
-        if total_ticks_number == self.expected_tiks_per_rotation:
-            return given_increment
-        else:
-            return self.rot_deg / total_ticks_number
-
-    def adjust_rotation_increment(self, given_increment=0.2):
-        ticks_per_rotation: int = []
-        increments_per_rotation = []
-        for i, (start, end) in enumerate(
-            zip(
-                self.rot_blocks_idx["start"],
-                self.rot_blocks_idx["end"],
-            )
-        ):
-            peaks_in_this_rotation = np.where(
-                np.logical_and(
-                    self.rotation_ticks_peaks > start,
-                    self.rotation_ticks_peaks < end,
-                )
-            )[0].shape[0]
-            if peaks_in_this_rotation == self.expected_tiks_per_rotation:
-                increments_per_rotation.append(given_increment)
-            else:
-                logging.warning(
-                    "Rotation {} is missing or gaining {} ticks".format(
-                        i,
-                        self.expected_tiks_per_rotation
-                        - peaks_in_this_rotation,
-                    )
-                )
-                increments_per_rotation.append(
-                    self.rot_deg / peaks_in_this_rotation
-                )
-            ticks_per_rotation.append(peaks_in_this_rotation)
-
-        return increments_per_rotation, ticks_per_rotation
-
-    def find_rotation_angles_by_frame_in_incremental_rotation(self):
-        frame_start, frame_end = self.get_start_end_times_with_threshold(
-            self.frame_clock, self.k
-        )
-
-        rotation_increment_by_frame = np.zeros(len(self.image_stack))
-        total_rotation_of_this_frame = 0
-        for frame_id, start in enumerate(frame_start):
-            try:
-                ticks_in_this_frame = np.where(
-                    np.logical_and(
-                        self.rotation_ticks_peaks > start,
-                        self.rotation_ticks_peaks < frame_start[frame_id + 1],
-                    )
-                )[0].shape[0]
-            except IndexError:
-                ticks_in_this_frame = np.where(
-                    np.logical_and(
-                        self.rotation_ticks_peaks > start,
-                        self.rotation_ticks_peaks < frame_end[-1],
-                    )
-                )[0].shape[0]
-            total_rotation_of_this_frame += (
-                ticks_in_this_frame * self.corrected_increments
-            )
-
-            rotation_increment_by_frame[
-                frame_id
-            ] = total_rotation_of_this_frame
-
-        return rotation_increment_by_frame
-
-    def find_rotation_angles_by_line_in_incremental_rotation(self):
-        #  calculate the rotation degrees for each line
-        rotation_increment_by_line = np.zeros(len(self.image_stack) * 256)
-        total_rotation_of_this_line = 0
-        for line_id, start in enumerate(self.lines_start):
-            try:
-                ticks_in_this_line = np.where(
-                    np.logical_and(
-                        self.rotation_ticks_peaks > start,
-                        self.rotation_ticks_peaks
-                        < self.lines_start[line_id + 1],
-                    )
-                )[0].shape[0]
-            except IndexError:
-                ticks_in_this_line = np.where(
-                    np.logical_and(
-                        self.rotation_ticks_peaks > start,
-                        self.rotation_ticks_peaks < self.lines_end[-1],
-                    )
-                )[0].shape[0]
-            total_rotation_of_this_line += (
-                ticks_in_this_line * self.corrected_increments
-            )
-
-            try:
-                rotation_increment_by_line[
-                    line_id
-                ] = total_rotation_of_this_line
-            except IndexError:
-                break
-
-        return rotation_increment_by_line
-
     def roatate_by_frame_incremental(self):
         new_rotated_image_stack = np.zeros_like(self.image_stack)
 
@@ -496,65 +389,6 @@ class DerotationPipeline:
             frame_angles = inverted_angles[self.frame_end]
 
         return line_angles, frame_angles
-
-    def find_rotation_for_each_line_from_motor(self):
-        #  calculate the rotation degrees for each line
-        rotation_degrees = np.empty_like(self.line_clock)
-        rotation_degrees[0] = 0
-        rotation_increment: float = 0
-        tick_peaks_corrected = np.insert(
-            self.rotation_ticks_peaks, 0, 0, axis=0
-        )
-
-        for i in range(1, len(tick_peaks_corrected)):
-            try:
-                rotation_idx = np.where(
-                    self.rot_blocks_idx["end"] > tick_peaks_corrected[i],
-                )[0][0]
-            except IndexError:
-                logging.warning("End of rotations reached")
-
-            if self.assume_full_rotation:
-                increment = self.corrected_increments[rotation_idx]
-            else:
-                increment = self.rotation_increment
-
-            time_interval = (
-                tick_peaks_corrected[i] - tick_peaks_corrected[i - 1]
-            )
-            if (
-                (time_interval > 2000)
-                and (i != 0)
-                and self.assume_full_rotation
-            ):
-                #  we cannot trust the number of ticks
-                # to understand if a rotation is finished
-                #  therefore we wait the rotation off signal
-                rotation_increment = 0
-                rotation_array = np.zeros(time_interval)
-            else:
-                rotation_array = np.linspace(
-                    rotation_increment,
-                    rotation_increment + increment,
-                    time_interval,
-                    endpoint=True,
-                )
-                rotation_increment += increment
-            rotation_degrees[
-                tick_peaks_corrected[i - 1] : tick_peaks_corrected[i]
-            ] = rotation_array
-
-        if self.assume_full_rotation:
-            signed_rotation_degrees = rotation_degrees * self.rotation_on
-        else:
-            signed_rotation_degrees = rotation_degrees
-
-        image_rotation_degree_per_line = signed_rotation_degrees[
-            self.lines_start
-        ]
-        image_rotation_degree_per_line *= -1
-
-        return image_rotation_degree_per_line, signed_rotation_degrees
 
     def rotate_frames_line_by_line(self):
         #  fill new_rotated_image_stack with non-rotated images first
@@ -673,3 +507,112 @@ class DerotationPipeline:
             np.array(masked),
         )
         logging.info(f"Masked image saved in {path}")
+
+    # methods related to incremental rotation, to be reviewed
+
+    def adjust_rotation_increment_for_incremental_changes(
+        self, given_increment=0.2
+    ):
+        total_ticks_number = len(self.rotation_ticks_peaks)
+
+        if total_ticks_number == self.expected_tiks_per_rotation:
+            return given_increment
+        else:
+            return self.rot_deg / total_ticks_number
+
+    def adjust_rotation_increment(self, given_increment=0.2):
+        ticks_per_rotation: int = []
+        increments_per_rotation = []
+        for i, (start, end) in enumerate(
+            zip(
+                self.rot_blocks_idx["start"],
+                self.rot_blocks_idx["end"],
+            )
+        ):
+            peaks_in_this_rotation = np.where(
+                np.logical_and(
+                    self.rotation_ticks_peaks > start,
+                    self.rotation_ticks_peaks < end,
+                )
+            )[0].shape[0]
+            if peaks_in_this_rotation == self.expected_tiks_per_rotation:
+                increments_per_rotation.append(given_increment)
+            else:
+                logging.warning(
+                    "Rotation {} is missing or gaining {} ticks".format(
+                        i,
+                        self.expected_tiks_per_rotation
+                        - peaks_in_this_rotation,
+                    )
+                )
+                increments_per_rotation.append(
+                    self.rot_deg / peaks_in_this_rotation
+                )
+            ticks_per_rotation.append(peaks_in_this_rotation)
+
+        return increments_per_rotation, ticks_per_rotation
+
+    def find_rotation_angles_by_frame_in_incremental_rotation(self):
+        frame_start, frame_end = self.get_start_end_times_with_threshold(
+            self.frame_clock, self.k
+        )
+
+        rotation_increment_by_frame = np.zeros(len(self.image_stack))
+        total_rotation_of_this_frame = 0
+        for frame_id, start in enumerate(frame_start):
+            try:
+                ticks_in_this_frame = np.where(
+                    np.logical_and(
+                        self.rotation_ticks_peaks > start,
+                        self.rotation_ticks_peaks < frame_start[frame_id + 1],
+                    )
+                )[0].shape[0]
+            except IndexError:
+                ticks_in_this_frame = np.where(
+                    np.logical_and(
+                        self.rotation_ticks_peaks > start,
+                        self.rotation_ticks_peaks < frame_end[-1],
+                    )
+                )[0].shape[0]
+            total_rotation_of_this_frame += (
+                ticks_in_this_frame * self.corrected_increments
+            )
+
+            rotation_increment_by_frame[
+                frame_id
+            ] = total_rotation_of_this_frame
+
+        return rotation_increment_by_frame
+
+    def find_rotation_angles_by_line_in_incremental_rotation(self):
+        #  calculate the rotation degrees for each line
+        rotation_increment_by_line = np.zeros(len(self.image_stack) * 256)
+        total_rotation_of_this_line = 0
+        for line_id, start in enumerate(self.lines_start):
+            try:
+                ticks_in_this_line = np.where(
+                    np.logical_and(
+                        self.rotation_ticks_peaks > start,
+                        self.rotation_ticks_peaks
+                        < self.lines_start[line_id + 1],
+                    )
+                )[0].shape[0]
+            except IndexError:
+                ticks_in_this_line = np.where(
+                    np.logical_and(
+                        self.rotation_ticks_peaks > start,
+                        self.rotation_ticks_peaks < self.lines_end[-1],
+                    )
+                )[0].shape[0]
+            total_rotation_of_this_line += (
+                ticks_in_this_line * self.corrected_increments
+            )
+
+            try:
+                rotation_increment_by_line[
+                    line_id
+                ] = total_rotation_of_this_line
+            except IndexError:
+                break
+
+        return rotation_increment_by_line

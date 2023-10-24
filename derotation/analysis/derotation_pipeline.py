@@ -121,7 +121,7 @@ class DerotationPipeline:
                 (
                     self.corrected_increments,
                     self.ticks_per_rotation,
-                ) = self.adjust_rotation_increment(self.rotation_increment)
+                ) = self.recalculate_rotation_increment()
             else:
                 self.corrected_increments = (
                     self.adjust_rotation_increment_for_incremental_changes()
@@ -154,7 +154,7 @@ class DerotationPipeline:
             self.plot_rotation_on_and_ticks()
             self.plot_rotation_angles()
 
-        print("Analog signals processed")
+        logging.info("Analog signals processed")
 
     def find_rotation_peaks(self):
         #  scipy method works well, it's enough for our purposes
@@ -290,6 +290,28 @@ class DerotationPipeline:
             )
             return False
 
+    def recalculate_rotation_increment(self):
+        def get_peaks_in_rotation(start, end):
+            return np.where(
+                np.logical_and(
+                    self.rotation_ticks_peaks > start,
+                    self.rotation_ticks_peaks < end,
+                )
+            )[0].shape[0]
+
+        ticks_per_rotation = [
+            get_peaks_in_rotation(start, end)
+            for start, end in zip(
+                self.rot_blocks_idx["start"],
+                self.rot_blocks_idx["end"],
+            )
+        ]
+        new_increments = [self.rot_deg / t for t in ticks_per_rotation]
+
+        logging.info(f"New increment example: {new_increments[0]:.3f}")
+
+        return new_increments, ticks_per_rotation
+
     def get_interpolated_angles(self):
         logging.info("Interpolating angles...")
 
@@ -326,7 +348,7 @@ class DerotationPipeline:
 
     def calculate_angles_by_line_and_frame(self):
         logging.info("Calculating angles by line and frame...")
-        logging.info(self.interpolated_angles.shape)
+
         inverted_angles = self.interpolated_angles * -1
         line_angles = np.zeros(self.num_total_lines)
         frame_angles = np.zeros(self.num_frames)
@@ -577,38 +599,6 @@ class DerotationPipeline:
             return given_increment
         else:
             return self.rot_deg / total_ticks_number
-
-    def adjust_rotation_increment(self, given_increment=0.2):
-        ticks_per_rotation: int = []
-        increments_per_rotation = []
-        for i, (start, end) in enumerate(
-            zip(
-                self.rot_blocks_idx["start"],
-                self.rot_blocks_idx["end"],
-            )
-        ):
-            peaks_in_this_rotation = np.where(
-                np.logical_and(
-                    self.rotation_ticks_peaks > start,
-                    self.rotation_ticks_peaks < end,
-                )
-            )[0].shape[0]
-            if peaks_in_this_rotation == self.expected_tiks_per_rotation:
-                increments_per_rotation.append(given_increment)
-            else:
-                logging.warning(
-                    "Rotation {} is missing or gaining {} ticks".format(
-                        i,
-                        self.expected_tiks_per_rotation
-                        - peaks_in_this_rotation,
-                    )
-                )
-                increments_per_rotation.append(
-                    self.rot_deg / peaks_in_this_rotation
-                )
-            ticks_per_rotation.append(peaks_in_this_rotation)
-
-        return increments_per_rotation, ticks_per_rotation
 
     def find_rotation_angles_by_frame_in_incremental_rotation(self):
         frame_start, frame_end = self.get_start_end_times_with_threshold(

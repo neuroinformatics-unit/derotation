@@ -1,6 +1,8 @@
 import numpy as np
 import pytest
 
+np.random.seed(42)
+
 
 @pytest.fixture
 def number_of_rotations():
@@ -88,3 +90,25 @@ def direction():
 @pytest.fixture
 def k():
     return 0
+
+
+@pytest.fixture
+def ticks_per_rotation():
+    return 100
+
+
+@pytest.fixture
+def rotation_ticks(
+    full_length,
+    ticks_per_rotation,
+    number_of_rotations,
+):
+    correct_number_of_ticks = ticks_per_rotation * number_of_rotations
+    number_of_ticks = correct_number_of_ticks + np.random.randint(0, 10)
+
+    # distribute number_of_ticks in poisson indices
+    ticks = np.random.choice(
+        range(full_length), size=number_of_ticks, replace=False
+    )
+    ticks = np.sort(ticks)
+    return ticks

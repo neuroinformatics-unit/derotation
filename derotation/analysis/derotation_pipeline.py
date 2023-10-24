@@ -163,7 +163,13 @@ class DerotationPipeline:
             self.direction,
         )
 
-        self.drop_ticks_outside_of_rotation()
+        self.rotation_ticks_peaks = self.drop_ticks_outside_of_rotation(
+            self.rotation_ticks_peaks,
+            self.rot_blocks_idx["start"],
+            self.rot_blocks_idx["end"],
+            self.total_clock_time,
+            self.number_of_rotations,
+        )
 
         self.check_number_of_rotations()
         if not self.is_number_of_ticks_correct() and self.adjust_increment:
@@ -341,37 +347,44 @@ class DerotationPipeline:
 
         return rotation_on
 
-    def drop_ticks_outside_of_rotation(self):
+    @staticmethod
+    def drop_ticks_outside_of_rotation(
+        rotation_ticks_peaks: np.ndarray,
+        starts: np.ndarray,
+        ends: np.ndarray,
+        full_length: int,
+        number_of_rotations: int,
+    ):
         """Removes ticks that happen in between two rotations."""
 
         logging.info("Dropping ticks outside of the rotation period...")
 
-        len_before = len(self.rotation_ticks_peaks)
+        len_before = len(rotation_ticks_peaks)
 
-        rolled_starts = np.roll(self.rot_blocks_idx["start"], -1)
-        rolled_starts[-1] = int(len(self.full_rotation))
+        rolled_starts = np.roll(starts, -1)
+        rolled_starts[-1] = full_length
 
         inter_roatation_interval = [
             idx
-            for i in range(self.number_of_rotations)
+            for i in range(number_of_rotations)
             for idx in range(
-                self.rot_blocks_idx["end"][i],
+                ends[i],
                 rolled_starts[i],
             )
         ]
 
-        self.rotation_ticks_peaks = np.delete(
-            self.rotation_ticks_peaks,
-            np.where(
-                np.isin(self.rotation_ticks_peaks, inter_roatation_interval)
-            ),
+        rotation_ticks_peaks = np.delete(
+            rotation_ticks_peaks,
+            np.where(np.isin(rotation_ticks_peaks, inter_roatation_interval)),
         )
 
-        len_after = len(self.rotation_ticks_peaks)
+        len_after = len(rotation_ticks_peaks)
         logging.info(
             f"Ticks dropped: {len_before - len_after}.\n"
             + f"Ticks remaining: {len_after}"
         )
+
+        return rotation_ticks_peaks
 
     def check_number_of_rotations(self):
         """Checks that the number of rotations is as expected.

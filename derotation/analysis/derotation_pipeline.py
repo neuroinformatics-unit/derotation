@@ -399,6 +399,16 @@ class DerotationPipeline:
 
         return line_angles, frame_angles
 
+    # converters
+    def clock_to_latest_line_start(self, clock_time):
+        return np.where(self.line_start < clock_time)[0][-1]
+
+    def clock_to_latest_frame_start(self, clock_time):
+        return np.where(self.frame_start < clock_time)[0][-1]
+
+    def clock_to_latest_rotation_start(self, clock_time):
+        return np.where(self.rot_blocks_idx["start"] < clock_time)[0][-1]
+
     def rotate_frames_line_by_line(self):
         #  fill new_rotated_image_stack with non-rotated images first
         _, height, _ = self.image_stack.shape

@@ -72,6 +72,9 @@ class DerotationPipeline:
 
         self.total_clock_time = len(self.frame_clock)
 
+        self.line_use_start = self.config["interpolation"]["line_use_start"]
+        self.frame_use_start = self.config["interpolation"]["frame_use_start"]
+
         self.rotation_increment = self.config["rotation_increment"]
         self.rot_deg = self.config["rot_deg"]
         self.assume_full_rotation = self.config["assume_full_rotation"]
@@ -129,16 +132,21 @@ class DerotationPipeline:
                     f"Corrected increments: {self.corrected_increments}"
                 )
 
-        self.interpolate_angles()
-
-        #  ===================================
-        #  Quantify the rotation for each line of each frame
+        self.interpolated_angles = self.get_interpolated_angles()
+        (
+            self.line_start,
+            self.line_end,
+        ) = self.get_start_end_times_with_threshold(self.line_clock, self.k)
+        (
+            self.frame_start,
+            self.frame_end,
+        ) = self.get_start_end_times_with_threshold(self.frame_clock, self.k)
 
         if self.assume_full_rotation:
             (
                 self.rot_deg_line,
-                self.signed_rotation_degrees_line,
-            ) = self.find_rotation_for_each_line_from_motor()
+                self.rot_deg_frame,
+            ) = self.calculate_angles_by_line_and_frame()
         else:
             self.rot_deg_line = (
                 self.find_rotation_angles_by_line_in_incremental_rotation()
@@ -444,41 +452,50 @@ class DerotationPipeline:
 
         return new_rotated_image_stack
 
-    def interpolate_angles(self):
+    def get_interpolated_angles(self):
         ticks_with_increment = [
             item
             for i in range(self.number_of_rotations)
             for item in [self.corrected_increments[i]]
             * self.ticks_per_rotation[i]
         ]
+
         cumulative_sum_to360 = np.cumsum(ticks_with_increment) % self.rot_deg
 
-        interpolated_angles = np.zeros(self.total_clock_time * 256)
+        interpolated_angles = np.zeros(self.total_clock_time)
 
         starts, stops = (
             self.rotation_ticks_peaks[:-1],
             self.rotation_ticks_peaks[1:],
         )
-        angle_increments_between_ticks = [
-            np.linspace(
+
+        for i, (start, stop) in enumerate(zip(starts, stops)):
+            interpolated_angles[start:stop] = np.linspace(
                 cumulative_sum_to360[i],
                 cumulative_sum_to360[i + 1],
-                stops[i] - starts[i],
+                stop - start,
             )
-            for i in range(len(starts))
-        ]
-
-        np.put(
-            interpolated_angles,
-            [
-                idx
-                for start, stop in zip(starts, stops)
-                for idx in range(start, stop)
-            ],
-            np.concatenate(angle_increments_between_ticks),
-        )
 
         return interpolated_angles
+
+    def calculate_angles_by_line_and_frame(self):
+        logging.info("Calculating angles by line and frame...")
+        logging.info(self.interpolated_angles.shape)
+        inverted_angles = self.interpolated_angles * -1
+        line_angles = np.zeros(self.num_total_lines)
+        frame_angles = np.zeros(self.num_frames)
+
+        if self.line_use_start:
+            line_angles = inverted_angles[self.line_start]
+        else:
+            line_angles = inverted_angles[self.line_end]
+
+        if self.frame_use_start:
+            frame_angles = inverted_angles[self.frame_start]
+        else:
+            frame_angles = inverted_angles[self.frame_end]
+
+        return line_angles, frame_angles
 
     def find_rotation_for_each_line_from_motor(self):
         #  calculate the rotation degrees for each line

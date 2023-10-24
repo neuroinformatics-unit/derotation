@@ -153,6 +153,8 @@ class DerotationPipeline:
                 self.find_rotation_angles_by_line_in_incremental_rotation()
             )
 
+        self.plot_rotation_angles_by_line_for_inspection()
+
         print("Analog signals processed")
 
     def find_rotation_peaks(self):
@@ -408,6 +410,52 @@ class DerotationPipeline:
 
     def clock_to_latest_rotation_start(self, clock_time):
         return np.where(self.rot_blocks_idx["start"] < clock_time)[0][-1]
+
+    def plot_rotation_angles_by_line_for_inspection(self):
+        fig, axs = plt.subplots(2, 2, figsize=(10, 10))
+
+        speeds = set(self.speed)
+
+        last_idx_for_each_speed = [
+            np.where(self.speed == s)[0][-1] for s in speeds
+        ]
+        last_idx_for_each_speed = sorted(last_idx_for_each_speed)
+
+        for i, rotation_id in enumerate(last_idx_for_each_speed):
+            col = i // 2
+            row = i % 2
+
+            ax = axs[col, row]
+
+            rotation_starts = self.rot_blocks_idx["start"][rotation_id]
+            rotation_ends = self.rot_blocks_idx["end"][rotation_id]
+
+            start_line_idx = self.clock_to_latest_line_start(rotation_starts)
+            end_line_idx = self.clock_to_latest_line_start(rotation_ends)
+
+            start_frame_idx = self.clock_to_latest_frame_start(rotation_starts)
+            end_frame_idx = self.clock_to_latest_frame_start(rotation_ends)
+
+            ax.scatter(
+                self.line_start[start_line_idx:end_line_idx],
+                self.rot_deg_line[start_line_idx:end_line_idx],
+                label="line angles",
+                color="orange",
+                marker="o",
+            )
+
+            ax.scatter(
+                self.frame_start[start_frame_idx:end_frame_idx],
+                self.rot_deg_frame[start_frame_idx:end_frame_idx],
+                label="line angles",
+                color="green",
+                marker="o",
+            )
+
+            ax.spines["top"].set_visible(False)
+            ax.spines["right"].set_visible(False)
+
+        print("debug")
 
     def rotate_frames_line_by_line(self):
         #  fill new_rotated_image_stack with non-rotated images first

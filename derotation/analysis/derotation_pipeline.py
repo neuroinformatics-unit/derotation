@@ -354,8 +354,28 @@ class DerotationPipeline:
         ends: np.ndarray,
         full_length: int,
         number_of_rotations: int,
-    ):
-        """Removes ticks that happen in between two rotations."""
+    ) -> np.ndarray:
+        """_summary_
+
+        Parameters
+        ----------
+        rotation_ticks_peaks : np.ndarray
+            The clock times of the rotation ticks peaks.
+        starts : np.ndarray
+            The start times of the on periods of rotation signal.
+        ends : np.ndarray
+            The end times of the on periods of rotation signal.
+        full_length : int
+            The length of the analog signals, in clock time.
+        number_of_rotations : int
+            The number of rotations.
+
+        Returns
+        -------
+        np.ndarray
+            The clock times of the rotation ticks peaks, without the ticks
+            outside of the rotation periods.
+        """
 
         logging.info("Dropping ticks outside of the rotation period...")
 

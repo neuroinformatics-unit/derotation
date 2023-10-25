@@ -196,6 +196,7 @@ class DerotationPipeline:
             )
 
         if self.debugging_plots:
+            self.plot_ticks_in_first_rotation()
             self.plot_rotation_on_and_ticks()
             self.plot_rotation_angles()
 
@@ -425,16 +426,6 @@ class DerotationPipeline:
         the number of ticks in each rotation. It also outputs the number of
         ticks in each rotation.
 
-        Parameters
-        ----------
-        rotation_ticks_peaks : np.ndarray
-            The clock times of the rotation ticks peaks.
-        starts : np.ndarray
-            The start times of the on periods of rotation signal.
-        ends : np.ndarray
-            The end times of the on periods of rotation signal.
-        rot_deg : int
-            The rotation angle in degrees.
 
         Returns
         -------
@@ -582,6 +573,53 @@ class DerotationPipeline:
             The index of the latest rotation
         """
         return np.where(self.rot_blocks_idx["start"] < clock_time)[0][-1]
+
+    def plot_ticks_in_first_rotation(self):
+        """Plots a subset of the rotation ticks in the first rotation.
+        This plot will be saved in the debug_plots folder.
+        Please inspect it to check that the rotation ticks are correctly
+        placed during the times in which the motor is rotating.
+        """
+        fig, ax = plt.subplots(1, 1, figsize=(20, 5))
+        start = self.rot_blocks_idx["start"][0]
+        end = self.rot_blocks_idx["end"][0]
+
+        ticks_in_first_rotation = self.rotation_ticks_peaks[
+            np.where(
+                np.logical_and(
+                    self.rotation_ticks_peaks >= start,
+                    self.rotation_ticks_peaks <= end,
+                )
+            )
+        ]
+
+        ax.scatter(
+            ticks_in_first_rotation - start,
+            self.rotation_ticks[ticks_in_first_rotation],
+            label="rotation ticks",
+            marker="o",
+            alpha=0.5,
+            color="orange",
+        )
+
+        ax.plot(
+            self.rotation_ticks[start:end],
+            label="rotation ticks",
+            color="navy",
+        )
+
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+
+        ax.set_title("Rotation ticks in first rotation")
+
+        ax.set_xlim(50000, 52000)
+        ax.set_ylim(4.8, 5.1)
+
+        plt.savefig(
+            Path(self.config["paths_write"]["debug_plots_folder"])
+            / "rotation_ticks_peaks_in_first_rotation.png"
+        )
 
     def plot_rotation_on_and_ticks(self):
         """Plots the rotation ticks and the rotation on signal.

@@ -177,7 +177,12 @@ class DerotationPipeline:
                 (
                     self.corrected_increments,
                     self.ticks_per_rotation,
-                ) = self.adjust_rotation_increment()
+                ) = self.adjust_rotation_increment(
+                    self.rotation_ticks_peaks,
+                    self.rot_blocks_idx["start"],
+                    self.rot_blocks_idx["end"],
+                    self.rot_deg,
+                )
             else:
                 self.corrected_increments = (
                     self.adjust_rotation_increment_for_incremental_changes()
@@ -210,7 +215,7 @@ class DerotationPipeline:
             self.plot_rotation_on_and_ticks()
             self.plot_rotation_angles()
 
-        logging.info("Analog signals processed")
+        logging.info("✨ Analog signals processed ✨")
 
     def find_rotation_peaks(self) -> np.ndarray:
         """Finds the peaks of the rotation ticks signal using
@@ -455,10 +460,27 @@ class DerotationPipeline:
             )
             return False
 
-    def adjust_rotation_increment(self) -> Tuple[np.ndarray, np.ndarray]:
+    @staticmethod
+    def adjust_rotation_increment(
+        rotation_ticks_peaks: np.ndarray,
+        starts: np.ndarray,
+        ends: np.ndarray,
+        rot_deg: int,
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """It calculates the new rotation increment for each rotation, given
         the number of ticks in each rotation. It also outputs the number of
         ticks in each rotation.
+
+        Parameters
+        ----------
+        rotation_ticks_peaks : np.ndarray
+            The clock times of the rotation ticks peaks.
+        starts : np.ndarray
+            The start times of the on periods of rotation signal.
+        ends : np.ndarray
+            The end times of the on periods of rotation signal.
+        rot_deg : int
+            The rotation angle in degrees.
 
         Returns
         -------
@@ -470,19 +492,19 @@ class DerotationPipeline:
         def get_peaks_in_rotation(start, end):
             return np.where(
                 np.logical_and(
-                    self.rotation_ticks_peaks > start,
-                    self.rotation_ticks_peaks < end,
+                    rotation_ticks_peaks > start,
+                    rotation_ticks_peaks < end,
                 )
             )[0].shape[0]
 
         ticks_per_rotation = [
             get_peaks_in_rotation(start, end)
             for start, end in zip(
-                self.rot_blocks_idx["start"],
-                self.rot_blocks_idx["end"],
+                starts,
+                ends,
             )
         ]
-        new_increments = [self.rot_deg / t for t in ticks_per_rotation]
+        new_increments = [rot_deg / t for t in ticks_per_rotation]
 
         logging.info(f"New increment example: {new_increments[0]:.3f}")
 

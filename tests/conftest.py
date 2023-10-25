@@ -41,16 +41,25 @@ def direction_incremental():
 
 
 @pytest.fixture
-def full_rotation(number_of_rotations, rotation_len):
-    sequence = [0, 1, 0]
+def intervals():
+    return [0, 1, 0]
+
+
+@pytest.fixture
+def dummy_signal(intervals, number_of_rotations, rotation_len):
     dummy_signal = [
         num
         for _ in range(number_of_rotations)
-        for num in sequence
+        for num in intervals
         for _ in range(rotation_len)
     ]
+    return dummy_signal
+
+
+@pytest.fixture
+def full_rotation(number_of_rotations, rotation_len, intervals, dummy_signal):
     dummy_signal += np.random.normal(
-        0, 0.1, rotation_len * number_of_rotations * len(sequence)
+        0, 0.1, rotation_len * number_of_rotations * len(intervals)
     )
 
     return dummy_signal
@@ -139,6 +148,7 @@ def derotation_pipeline(
     direction,
     corrected_increments,
     ticks_per_rotation_calculated,
+    dummy_signal,
 ):
     pipeline = DerotationPipeline.__new__(DerotationPipeline)
 
@@ -153,7 +163,6 @@ def derotation_pipeline(
     pipeline.total_clock_time = full_length
     pipeline.full_rotation = full_rotation
     pipeline.rot_deg = 360
-    # pipeline.corrected_increments = corrected_increments
-    # pipeline.ticks_per_rotation = ticks_per_rotation_calculated
+    pipeline.rotation_on = dummy_signal
 
     return pipeline

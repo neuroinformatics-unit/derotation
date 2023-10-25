@@ -1,7 +1,10 @@
 import numpy as np
 import pytest
 
-np.random.seed(42)
+
+@pytest.fixture(autouse=True)
+def random():
+    np.random.seed(42)
 
 
 @pytest.fixture
@@ -89,7 +92,7 @@ def direction():
 
 @pytest.fixture
 def k():
-    return 0
+    return 0.2
 
 
 @pytest.fixture

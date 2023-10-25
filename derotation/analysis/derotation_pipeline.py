@@ -848,22 +848,48 @@ class DerotationPipeline:
         return rotated_image_stack
 
     @staticmethod
-    def add_circle_mask(rotated_image_stack):
-        img_height = rotated_image_stack.shape[1]
+    def add_circle_mask(
+        image_stack: np.ndarray,
+    ) -> np.ndarray:
+        """Adds a circular mask to the rotated image stack. It is useful
+        to hide the portions of the image that are not sampled equally
+        during the rotation.
+
+        Parameters
+        ----------
+        image_stack : np.ndarray
+            The image stack that you want to mask.
+
+        Returns
+        -------
+        np.ndarray
+            The masked image stack.
+        """
+        img_height = image_stack.shape[1]
         xx, yy = np.mgrid[:img_height, :img_height]
         circle = (xx - img_height / 2) ** 2 + (yy - img_height / 2) ** 2
         mask = circle < (img_height / 2) ** 2
-        img_min = np.nanmin(rotated_image_stack)
+        img_min = np.nanmin(image_stack)
 
         masked_img_array = []
-        for img in rotated_image_stack:
+        for img in image_stack:
             masked_img_array.append(np.where(mask, img, img_min))
 
-    def save(self, masked):
-        path = self.path_to_dataset_folder / "derotated"
+        return np.array(masked_img_array)
+
+    def save(self, masked: np.ndarray):
+        """Saves the masked image stack in the saving folder specified in the
+        config file.
+
+        Parameters
+        ----------
+        masked : np.ndarray
+            The masked derotated image stack.
+        """
+        path = self.config["saving_paths"]["derotated_tiff_folder"]
         path.mkdir(parents=True, exist_ok=True)
         imsave(
-            path / "masked_increment_with_adjustments_no_background.tif",
+            path / self.config["saving_paths"]["saving_name"],
             np.array(masked),
         )
         logging.info(f"Masked image saved in {path}")

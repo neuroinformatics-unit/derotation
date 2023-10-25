@@ -120,6 +120,16 @@ def rotation_ticks(
 
 
 @pytest.fixture
+def corrected_increments():
+    return np.asarray([10, 9, 11, 9, 11, 13, 14, 12, 10, 11])
+
+
+@pytest.fixture
+def ticks_per_rotation_calculated():
+    return np.asarray([36, 42, 33, 39, 34, 28, 25, 30, 36, 33])
+
+
+@pytest.fixture
 def derotation_pipeline(
     rotation_ticks,
     start_end_times,
@@ -127,6 +137,8 @@ def derotation_pipeline(
     number_of_rotations,
     full_rotation,
     direction,
+    corrected_increments,
+    ticks_per_rotation_calculated,
 ):
     pipeline = DerotationPipeline.__new__(DerotationPipeline)
 
@@ -141,5 +153,7 @@ def derotation_pipeline(
     pipeline.total_clock_time = full_length
     pipeline.full_rotation = full_rotation
     pipeline.rot_deg = 360
+    # pipeline.corrected_increments = corrected_increments
+    # pipeline.ticks_per_rotation = ticks_per_rotation_calculated
 
     return pipeline

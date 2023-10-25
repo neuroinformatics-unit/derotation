@@ -339,13 +339,21 @@ class DerotationPipeline:
         len_before = len(self.rotation_ticks_peaks)
 
         rolled_starts = np.roll(self.rot_blocks_idx["start"], -1)
+
+        # including the interval before the start of the first rotation
+        edited_ends = np.insert(self.rot_blocks_idx["end"], 0, 0)
+        rolled_starts = np.insert(
+            rolled_starts, 0, self.rot_blocks_idx["start"][0]
+        )
+
+        # including the end
         rolled_starts[-1] = self.total_clock_time
 
         inter_roatation_interval = [
             idx
-            for i in range(self.number_of_rotations)
+            for i in range(self.number_of_rotations + 1)
             for idx in range(
-                self.rot_blocks_idx["end"][i],
+                edited_ends[i],
                 rolled_starts[i],
             )
         ]
@@ -438,8 +446,8 @@ class DerotationPipeline:
         def get_peaks_in_rotation(start, end):
             return np.where(
                 np.logical_and(
-                    self.rotation_ticks_peaks > start,
-                    self.rotation_ticks_peaks < end,
+                    self.rotation_ticks_peaks >= start,
+                    self.rotation_ticks_peaks <= end,
                 )
             )[0].shape[0]
 

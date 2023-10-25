@@ -154,22 +154,11 @@ class DerotationPipeline:
             self.full_rotation, self.k
         )
         self.rot_blocks_idx = self.correct_start_and_end_rotation_signal(
-            self.inter_rotation_interval_min_len, start, end
+            start, end
         )
-        self.rotation_on = self.create_signed_rotation_array(
-            len(self.full_rotation),
-            self.rot_blocks_idx["start"],
-            self.rot_blocks_idx["end"],
-            self.direction,
-        )
+        self.rotation_on = self.create_signed_rotation_array()
 
-        self.rotation_ticks_peaks = self.drop_ticks_outside_of_rotation(
-            self.rotation_ticks_peaks,
-            self.rot_blocks_idx["start"],
-            self.rot_blocks_idx["end"],
-            self.total_clock_time,
-            self.number_of_rotations,
-        )
+        self.drop_ticks_outside_of_rotation()
 
         self.check_number_of_rotations()
         if not self.is_number_of_ticks_correct() and self.adjust_increment:
@@ -177,12 +166,7 @@ class DerotationPipeline:
                 (
                     self.corrected_increments,
                     self.ticks_per_rotation,
-                ) = self.adjust_rotation_increment(
-                    self.rotation_ticks_peaks,
-                    self.rot_blocks_idx["start"],
-                    self.rot_blocks_idx["end"],
-                    self.rot_deg,
-                )
+                ) = self.adjust_rotation_increment()
             else:
                 self.corrected_increments = (
                     self.adjust_rotation_increment_for_incremental_changes()
@@ -276,9 +260,8 @@ class DerotationPipeline:
 
         return start, end
 
-    @staticmethod
     def correct_start_and_end_rotation_signal(
-        inter_rotation_interval_min_len: int,
+        self,
         start: np.ndarray,
         end: np.ndarray,
     ) -> dict:
@@ -287,11 +270,12 @@ class DerotationPipeline:
         periods that are not plausible given the experimental setup.
         The two surrounding on periods are merged.
 
+        Used the inter_rotation_interval_min_len parameter from the config
+        file: the minimum length of the time in between two rotations.
+        It is important to remove artifacts.
+
         Parameters
         ----------
-        inter_rotation_interval_min_len : int
-            Minimum length of the time in between two rotations.
-            It is important to remove artifacts.
         start : np.ndarray
             The start times of the on periods of rotation signal.
         end : np.ndarray
@@ -306,7 +290,7 @@ class DerotationPipeline:
         logging.info("Cleaning start and end rotation signal...")
 
         shifted_end = np.roll(end, 1)
-        mask = start - shifted_end > inter_rotation_interval_min_len
+        mask = start - shifted_end > self.inter_rotation_interval_min_len
         mask[0] = True  # first rotation is always a full rotation
         shifted_mask = np.roll(mask, -1)
         new_start = start[mask]
@@ -314,25 +298,13 @@ class DerotationPipeline:
 
         return {"start": new_start, "end": new_end}
 
-    @staticmethod
-    def create_signed_rotation_array(
-        len_full_rotation: int, starts: np.ndarray, ends: np.ndarray, direction
-    ) -> np.ndarray:
+    def create_signed_rotation_array(self) -> np.ndarray:
         """Reconstructs an array that has the same length as the full rotation
         signal. It is 0 when the motor is off, and it is 1 or -1 when the motor
         is on, depending on the direction of rotation. 1 is clockwise, -1 is
         counter clockwise.
-
-        Parameters
-        ----------
-        len_full_rotation : int
-            Length of the full rotation signal.
-        starts : np.ndarray
-            The start times of the on periods of rotation signal.
-        ends : np.ndarray
-            The end times of the on periods of rotation signal.
-        direction : _type_
-            The direction of rotation of the motor.
+        Uses the start and end times of the on periods of rotation signal, and
+        the direction of rotation to reconstruct the array.
 
         Returns
         -------
@@ -341,39 +313,19 @@ class DerotationPipeline:
         """
 
         logging.info("Creating signed rotation array...")
-        rotation_on = np.zeros(len_full_rotation)
+        rotation_on = np.zeros(self.total_clock_time)
         for i, (start, end) in enumerate(
             zip(
-                starts,
-                ends,
+                self.rot_blocks_idx["start"],
+                self.rot_blocks_idx["end"],
             )
         ):
-            rotation_on[start:end] = direction[i]
+            rotation_on[start:end] = self.direction[i]
 
         return rotation_on
 
-    @staticmethod
-    def drop_ticks_outside_of_rotation(
-        rotation_ticks_peaks: np.ndarray,
-        starts: np.ndarray,
-        ends: np.ndarray,
-        full_length: int,
-        number_of_rotations: int,
-    ) -> np.ndarray:
-        """_summary_
-
-        Parameters
-        ----------
-        rotation_ticks_peaks : np.ndarray
-            The clock times of the rotation ticks peaks.
-        starts : np.ndarray
-            The start times of the on periods of rotation signal.
-        ends : np.ndarray
-            The end times of the on periods of rotation signal.
-        full_length : int
-            The length of the analog signals, in clock time.
-        number_of_rotations : int
-            The number of rotations.
+    def drop_ticks_outside_of_rotation(self) -> np.ndarray:
+        """Drops the rotation ticks that are outside of the rotation periods.
 
         Returns
         -------
@@ -384,32 +336,32 @@ class DerotationPipeline:
 
         logging.info("Dropping ticks outside of the rotation period...")
 
-        len_before = len(rotation_ticks_peaks)
+        len_before = len(self.rotation_ticks_peaks)
 
-        rolled_starts = np.roll(starts, -1)
-        rolled_starts[-1] = full_length
+        rolled_starts = np.roll(self.rot_blocks_idx["start"], -1)
+        rolled_starts[-1] = self.total_clock_time
 
         inter_roatation_interval = [
             idx
-            for i in range(number_of_rotations)
+            for i in range(self.number_of_rotations)
             for idx in range(
-                ends[i],
+                self.rot_blocks_idx["end"][i],
                 rolled_starts[i],
             )
         ]
 
-        rotation_ticks_peaks = np.delete(
-            rotation_ticks_peaks,
-            np.where(np.isin(rotation_ticks_peaks, inter_roatation_interval)),
+        self.rotation_ticks_peaks = np.delete(
+            self.rotation_ticks_peaks,
+            np.where(
+                np.isin(self.rotation_ticks_peaks, inter_roatation_interval)
+            ),
         )
 
-        len_after = len(rotation_ticks_peaks)
+        len_after = len(self.rotation_ticks_peaks)
         logging.info(
             f"Ticks dropped: {len_before - len_after}.\n"
             + f"Ticks remaining: {len_after}"
         )
-
-        return rotation_ticks_peaks
 
     def check_number_of_rotations(self):
         """Checks that the number of rotations is as expected.
@@ -460,13 +412,7 @@ class DerotationPipeline:
             )
             return False
 
-    @staticmethod
-    def adjust_rotation_increment(
-        rotation_ticks_peaks: np.ndarray,
-        starts: np.ndarray,
-        ends: np.ndarray,
-        rot_deg: int,
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    def adjust_rotation_increment(self) -> Tuple[np.ndarray, np.ndarray]:
         """It calculates the new rotation increment for each rotation, given
         the number of ticks in each rotation. It also outputs the number of
         ticks in each rotation.
@@ -492,19 +438,19 @@ class DerotationPipeline:
         def get_peaks_in_rotation(start, end):
             return np.where(
                 np.logical_and(
-                    rotation_ticks_peaks > start,
-                    rotation_ticks_peaks < end,
+                    self.rotation_ticks_peaks > start,
+                    self.rotation_ticks_peaks < end,
                 )
             )[0].shape[0]
 
         ticks_per_rotation = [
             get_peaks_in_rotation(start, end)
             for start, end in zip(
-                starts,
-                ends,
+                self.rot_blocks_idx["start"],
+                self.rot_blocks_idx["end"],
             )
         ]
-        new_increments = [rot_deg / t for t in ticks_per_rotation]
+        new_increments = [self.rot_deg / t for t in ticks_per_rotation]
 
         logging.info(f"New increment example: {new_increments[0]:.3f}")
 

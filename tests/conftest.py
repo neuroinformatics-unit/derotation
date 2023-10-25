@@ -1,6 +1,8 @@
 import numpy as np
 import pytest
 
+from derotation.analysis.derotation_pipeline import DerotationPipeline
+
 
 @pytest.fixture(autouse=True)
 def random():
@@ -115,3 +117,29 @@ def rotation_ticks(
     )
     ticks = np.sort(ticks)
     return ticks
+
+
+@pytest.fixture
+def derotation_pipeline(
+    rotation_ticks,
+    start_end_times,
+    full_length,
+    number_of_rotations,
+    full_rotation,
+    direction,
+):
+    pipeline = DerotationPipeline.__new__(DerotationPipeline)
+
+    pipeline.inter_rotation_interval_min_len = 50
+    pipeline.rotation_ticks_peaks = rotation_ticks
+    pipeline.rot_blocks_idx = {
+        "start": start_end_times[0],
+        "end": start_end_times[1],
+    }
+    pipeline.number_of_rotations = number_of_rotations
+    pipeline.direction = direction
+    pipeline.total_clock_time = full_length
+    pipeline.full_rotation = full_rotation
+    pipeline.rot_deg = 360
+
+    return pipeline

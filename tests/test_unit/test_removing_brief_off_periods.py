@@ -4,17 +4,15 @@ from derotation.analysis.derotation_pipeline import DerotationPipeline
 
 
 def test_removing_brief_off_periods(
-    start_end_times,
-    start_end_times_with_bug,
+    start_end_times: tuple,
+    start_end_times_with_bug: tuple,
+    derotation_pipeline: DerotationPipeline,
 ):
-    inter_rotation_interval_min_len = 50
     start_buggy, end_buggy = start_end_times_with_bug
     start, end = start_end_times
 
-    corrected = DerotationPipeline.correct_start_and_end_rotation_signal(
-        inter_rotation_interval_min_len,
-        start_buggy,
-        end_buggy,
+    corrected = derotation_pipeline.correct_start_and_end_rotation_signal(
+        start_buggy, end_buggy
     )
 
     assert len(corrected["start"]) == len(corrected["end"])
@@ -25,5 +23,5 @@ def test_removing_brief_off_periods(
 
     assert np.any(
         corrected["end"] - corrected["start"]
-        >= inter_rotation_interval_min_len
+        >= derotation_pipeline.inter_rotation_interval_min_len
     )

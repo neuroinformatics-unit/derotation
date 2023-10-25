@@ -1,10 +1,16 @@
+import numpy as np
+
 from derotation.analysis.derotation_pipeline import DerotationPipeline
 
 
 def test_finding_correct_start_end_times_with_threshold(
-    full_rotation, k, rotation_len, number_of_rotations
+    derotation_pipeline: DerotationPipeline,
+    full_rotation: np.ndarray,
+    k: int,
+    number_of_rotations: int,
+    rotation_len: int,
 ):
-    start, end = DerotationPipeline.get_start_end_times_with_threshold(
+    start, end = derotation_pipeline.get_start_end_times_with_threshold(
         full_rotation, k
     )
 

@@ -4,21 +4,12 @@ from derotation.analysis.derotation_pipeline import DerotationPipeline
 
 
 def test_adjust_rotation_increment_360(
-    rotation_ticks,
-    start_end_times,
+    derotation_pipeline: DerotationPipeline,
 ):
-    start, end = start_end_times
-    rot_deg = 360
-
     (
         new_increments,
         ticks_per_rotation,
-    ) = DerotationPipeline.adjust_rotation_increment(
-        rotation_ticks,
-        start,
-        end,
-        rot_deg,
-    )
+    ) = derotation_pipeline.adjust_rotation_increment()
 
     new_increments = np.round(new_increments, 0)
 
@@ -32,21 +23,14 @@ def test_adjust_rotation_increment_360(
 
 
 def test_adjust_rotation_increment_5(
-    rotation_ticks,
-    start_end_times,
+    derotation_pipeline: DerotationPipeline,
 ):
-    start, end = start_end_times
-    rot_deg = 5
+    derotation_pipeline.rot_deg = 5
 
     (
         new_increments,
-        ticks_per_rotation,
-    ) = DerotationPipeline.adjust_rotation_increment(
-        rotation_ticks,
-        start,
-        end,
-        rot_deg,
-    )
+        _,
+    ) = derotation_pipeline.adjust_rotation_increment()
 
     new_increments = np.round(new_increments, 3)
 

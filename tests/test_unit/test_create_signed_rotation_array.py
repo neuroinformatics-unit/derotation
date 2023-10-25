@@ -4,15 +4,11 @@ from derotation.analysis.derotation_pipeline import DerotationPipeline
 
 
 def test_create_signed_rotation_array_interleaved(
-    full_length, start_end_times, direction_interleaved
+    derotation_pipeline: DerotationPipeline,
+    start_end_times: tuple,
 ):
     start, end = start_end_times
-    rotation_on = DerotationPipeline.create_signed_rotation_array(
-        full_length,
-        start,
-        end,
-        direction_interleaved,
-    )
+    rotation_on = derotation_pipeline.create_signed_rotation_array()
 
     for idx in range(0, len(start), 2):
         assert np.all(rotation_on[start[idx] : end[idx]] == 1)
@@ -20,15 +16,13 @@ def test_create_signed_rotation_array_interleaved(
 
 
 def test_create_signed_rotation_array_incremental(
-    full_length, start_end_times, direction_incremental
+    derotation_pipeline: DerotationPipeline,
+    start_end_times: tuple,
+    direction_incremental: np.ndarray,
 ):
+    derotation_pipeline.direction = direction_incremental
     start, end = start_end_times
-    rotation_on = DerotationPipeline.create_signed_rotation_array(
-        full_length,
-        start,
-        end,
-        direction_incremental,
-    )
+    rotation_on = derotation_pipeline.create_signed_rotation_array()
 
     for idx in range(0, 5):
         assert np.all(rotation_on[start[idx] : end[idx]] == 1)

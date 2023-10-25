@@ -726,9 +726,28 @@ class DerotationPipeline:
             / "rotation_angles.png"
         )
 
-    def rotate_frames_line_by_line(self):
-        #  fill new_rotated_image_stack with non-rotated images first
-        _, height, _ = self.image_stack.shape
+    def rotate_frames_line_by_line(self) -> np.ndarray:
+        """Rotates the image stack line by line, using the rotation angles
+        by line calculated from the analog signals.
+
+        Description of the algorithm:
+        - for each line, it takes the line from the image stack
+        - it creates a new image with only the line
+        - it rotates the line by the corresponding angle
+        - it substitutes the line in the new image
+        - it adds the new image to the rotated image stack
+
+        Edge cases and how they are handled:
+        - the rotation starts in the middle of the image -> the first lines
+        are copied from the first frame
+        - the rotation ends in the middle of the image -> the last lines
+        are copied from the last frame
+
+        Returns
+        -------
+        np.ndarray
+            The rotated image stack.
+        """
 
         rotated_image_stack = copy.deepcopy(self.image_stack)
         previous_image_completed = True
@@ -737,11 +756,18 @@ class DerotationPipeline:
         min_value_img = np.min(self.image_stack)
 
         # use tqdm
-        for i, rotation in tqdm.tqdm(enumerate(self.rot_deg_line)):
-            line_counter = i % height
-            image_counter = i // height
+        for i, rotation in tqdm.tqdm(
+            enumerate(self.rot_deg_line), total=len(self.rot_deg_line)
+        ):
+            # when the frame is completed, the line analog signal does not
+            # pulse for the last line of the frame.
+            line_counter = i % self.num_lines_per_frame - 1
+            image_counter = i // self.num_lines_per_frame
+
             is_rotating = np.absolute(rotation) > 0.00001
-            image_scanning_completed = line_counter == (height - 1)
+            image_scanning_completed = line_counter == (
+                self.num_lines_per_frame - 1
+            )
             if not self.assume_full_rotation and i == 0:
                 rotation_just_finished = False
             else:
@@ -818,8 +844,7 @@ class DerotationPipeline:
                 rotated_image_stack[image_counter] = rotated_filled_image
                 previous_image_completed = True
 
-                # logging.info("Image {} rotated".format(image_counter))
-
+        logging.info("✨ Image stack rotated ✨")
         return rotated_image_stack
 
     @staticmethod

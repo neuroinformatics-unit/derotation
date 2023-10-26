@@ -18,19 +18,16 @@ channel_names: [
 ]
 rotation_increment: 0.2
 
-assume_full_rotation: True
 adjust_increment: True
-rotation_kind: "line"
 rot_deg: 360
 
-debugging_plots: False
+debugging_plots: True
 
 analog_signals_processing:
   find_rotation_ticks_peaks:
     height: 4
     distance: 20
   squared_pulse_k: 0
-  upper_lim_bisect: 5
   inter_rotation_interval_min_len: 1000
 
 interpolation:

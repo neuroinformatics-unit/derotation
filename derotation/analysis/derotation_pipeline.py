@@ -27,6 +27,12 @@ class DerotationPipeline:
         self.start_logging()
         self.load_data()
 
+    def __call__(self):
+        self.process_analog_signals()
+        rotated_images = self.rotate_frames_line_by_line()
+        masked = self.add_circle_mask(rotated_images)
+        self.save(masked)
+
     def get_config(self, config_name: str) -> dict:
         """Loads config file from derotation/config folder.
         Please edit it to change the parameters of the analysis.
@@ -112,9 +118,7 @@ class DerotationPipeline:
 
         self.rotation_increment = self.config["rotation_increment"]
         self.rot_deg = self.config["rot_deg"]
-        self.assume_full_rotation = self.config["assume_full_rotation"]
         self.adjust_increment = self.config["adjust_increment"]
-        self.rotation_kind = self.config["rotation_kind"]
 
         self.filename_raw = Path(
             self.config["paths_read"]["path_to_tif"]
@@ -162,18 +166,10 @@ class DerotationPipeline:
 
         self.check_number_of_rotations()
         if not self.is_number_of_ticks_correct() and self.adjust_increment:
-            if self.assume_full_rotation:
-                (
-                    self.corrected_increments,
-                    self.ticks_per_rotation,
-                ) = self.adjust_rotation_increment()
-            else:
-                self.corrected_increments = (
-                    self.adjust_rotation_increment_for_incremental_changes()
-                )
-                logging.info(
-                    f"Corrected increments: {self.corrected_increments}"
-                )
+            (
+                self.corrected_increments,
+                self.ticks_per_rotation,
+            ) = self.adjust_rotation_increment()
 
         self.interpolated_angles = self.get_interpolated_angles()
         (
@@ -185,18 +181,12 @@ class DerotationPipeline:
             self.frame_end,
         ) = self.get_start_end_times_with_threshold(self.frame_clock, self.k)
 
-        if self.assume_full_rotation:
-            (
-                self.rot_deg_line,
-                self.rot_deg_frame,
-            ) = self.calculate_angles_by_line_and_frame()
-        else:
-            self.rot_deg_line = (
-                self.find_rotation_angles_by_line_in_incremental_rotation()
-            )
+        (
+            self.rot_deg_line,
+            self.rot_deg_frame,
+        ) = self.calculate_angles_by_line_and_frame()
 
         if self.debugging_plots:
-            self.plot_ticks_in_first_rotation()
             self.plot_rotation_on_and_ticks()
             self.plot_rotation_angles()
 
@@ -421,6 +411,14 @@ class DerotationPipeline:
             )
             return False
 
+    def get_peaks_in_rotation(self, start, end):
+        return np.where(
+            np.logical_and(
+                self.rotation_ticks_peaks >= start,
+                self.rotation_ticks_peaks <= end,
+            )
+        )[0].shape[0]
+
     def adjust_rotation_increment(self) -> Tuple[np.ndarray, np.ndarray]:
         """It calculates the new rotation increment for each rotation, given
         the number of ticks in each rotation. It also outputs the number of
@@ -434,16 +432,8 @@ class DerotationPipeline:
             ticks in each rotation.
         """
 
-        def get_peaks_in_rotation(start, end):
-            return np.where(
-                np.logical_and(
-                    self.rotation_ticks_peaks >= start,
-                    self.rotation_ticks_peaks <= end,
-                )
-            )[0].shape[0]
-
         ticks_per_rotation = [
-            get_peaks_in_rotation(start, end)
+            self.get_peaks_in_rotation(start, end)
             for start, end in zip(
                 self.rot_blocks_idx["start"],
                 self.rot_blocks_idx["end"],
@@ -573,53 +563,6 @@ class DerotationPipeline:
             The index of the latest rotation
         """
         return np.where(self.rot_blocks_idx["start"] < clock_time)[0][-1]
-
-    def plot_ticks_in_first_rotation(self):
-        """Plots a subset of the rotation ticks in the first rotation.
-        This plot will be saved in the debug_plots folder.
-        Please inspect it to check that the rotation ticks are correctly
-        placed during the times in which the motor is rotating.
-        """
-        fig, ax = plt.subplots(1, 1, figsize=(20, 5))
-        start = self.rot_blocks_idx["start"][0]
-        end = self.rot_blocks_idx["end"][0]
-
-        ticks_in_first_rotation = self.rotation_ticks_peaks[
-            np.where(
-                np.logical_and(
-                    self.rotation_ticks_peaks >= start,
-                    self.rotation_ticks_peaks <= end,
-                )
-            )
-        ]
-
-        ax.scatter(
-            ticks_in_first_rotation - start,
-            self.rotation_ticks[ticks_in_first_rotation],
-            label="rotation ticks",
-            marker="o",
-            alpha=0.5,
-            color="orange",
-        )
-
-        ax.plot(
-            self.rotation_ticks[start:end],
-            label="rotation ticks",
-            color="navy",
-        )
-
-        ax.spines["top"].set_visible(False)
-        ax.spines["right"].set_visible(False)
-
-        ax.set_title("Rotation ticks in first rotation")
-
-        ax.set_xlim(50000, 52000)
-        ax.set_ylim(4.8, 5.1)
-
-        plt.savefig(
-            Path(self.config["paths_write"]["debug_plots_folder"])
-            / "rotation_ticks_peaks_in_first_rotation.png"
-        )
 
     def plot_rotation_on_and_ticks(self):
         """Plots the rotation ticks and the rotation on signal.
@@ -768,7 +711,7 @@ class DerotationPipeline:
             image_scanning_completed = line_counter == (
                 self.num_lines_per_frame - 1
             )
-            if not self.assume_full_rotation and i == 0:
+            if i == 0:
                 rotation_just_finished = False
             else:
                 rotation_just_finished = not is_rotating and (
@@ -886,106 +829,10 @@ class DerotationPipeline:
         masked : np.ndarray
             The masked derotated image stack.
         """
-        path = self.config["saving_paths"]["derotated_tiff_folder"]
-        path.mkdir(parents=True, exist_ok=True)
+        path = self.config["paths_write"]["derotated_tiff_folder"]
+
         imsave(
-            path / self.config["saving_paths"]["saving_name"],
+            path + self.config["paths_write"]["saving_name"] + ".tif",
             np.array(masked),
         )
         logging.info(f"Masked image saved in {path}")
-
-    # methods related to incremental rotation, to be reviewed
-
-    def adjust_rotation_increment_for_incremental_changes(
-        self, given_increment=0.2
-    ):
-        total_ticks_number = len(self.rotation_ticks_peaks)
-
-        if total_ticks_number == self.expected_tiks_per_rotation:
-            return given_increment
-        else:
-            return self.rot_deg / total_ticks_number
-
-    def find_rotation_angles_by_frame_in_incremental_rotation(self):
-        frame_start, frame_end = self.get_start_end_times_with_threshold(
-            self.frame_clock, self.k
-        )
-
-        rotation_increment_by_frame = np.zeros(len(self.image_stack))
-        total_rotation_of_this_frame = 0
-        for frame_id, start in enumerate(frame_start):
-            try:
-                ticks_in_this_frame = np.where(
-                    np.logical_and(
-                        self.rotation_ticks_peaks > start,
-                        self.rotation_ticks_peaks < frame_start[frame_id + 1],
-                    )
-                )[0].shape[0]
-            except IndexError:
-                ticks_in_this_frame = np.where(
-                    np.logical_and(
-                        self.rotation_ticks_peaks > start,
-                        self.rotation_ticks_peaks < frame_end[-1],
-                    )
-                )[0].shape[0]
-            total_rotation_of_this_frame += (
-                ticks_in_this_frame * self.corrected_increments
-            )
-
-            rotation_increment_by_frame[
-                frame_id
-            ] = total_rotation_of_this_frame
-
-        return rotation_increment_by_frame
-
-    def find_rotation_angles_by_line_in_incremental_rotation(self):
-        #  calculate the rotation degrees for each line
-        rotation_increment_by_line = np.zeros(len(self.image_stack) * 256)
-        total_rotation_of_this_line = 0
-        for line_id, start in enumerate(self.lines_start):
-            try:
-                ticks_in_this_line = np.where(
-                    np.logical_and(
-                        self.rotation_ticks_peaks > start,
-                        self.rotation_ticks_peaks
-                        < self.lines_start[line_id + 1],
-                    )
-                )[0].shape[0]
-            except IndexError:
-                ticks_in_this_line = np.where(
-                    np.logical_and(
-                        self.rotation_ticks_peaks > start,
-                        self.rotation_ticks_peaks < self.lines_end[-1],
-                    )
-                )[0].shape[0]
-            total_rotation_of_this_line += (
-                ticks_in_this_line * self.corrected_increments
-            )
-
-            try:
-                rotation_increment_by_line[
-                    line_id
-                ] = total_rotation_of_this_line
-            except IndexError:
-                break
-
-        return rotation_increment_by_line
-
-    def roatate_by_frame_incremental(self):
-        new_rotated_image_stack = np.zeros_like(self.image_stack)
-
-        rotation_increment_by_frame = (
-            self.find_rotation_angles_by_frame_in_incremental_rotation()
-        )
-
-        for idx, frame in enumerate(self.image_stack):
-            new_rotated_image_stack[idx] = rotate(
-                frame,
-                rotation_increment_by_frame[idx],
-                reshape=False,
-                order=0,
-                mode="constant",
-            )
-            logging.info(f"Frame {idx} rotated")
-
-        return new_rotated_image_stack

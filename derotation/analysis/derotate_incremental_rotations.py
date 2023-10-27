@@ -15,13 +15,15 @@ class DerotateIncremental(DerotationPipeline):
         super().__init__(*args, **kwargs)
 
         self.small_rotations = 10
-        self.number_of_rotations = len(self.rot_deg // self.small_rotations)
+        self.number_of_rotations = self.rot_deg // self.small_rotations
 
     def __call__(self):
         super().process_analog_signals()
+        # self.check_number_of_frame_angles()
         rotated_images = self.roatate_by_frame()
         masked = self.add_circle_mask(rotated_images)
         self.save(masked)
+        self.save_csv_with_derotation_data()
 
     def is_number_of_ticks_correct(self) -> bool:
         self.expected_tiks_per_rotation = (
@@ -83,6 +85,7 @@ class DerotateIncremental(DerotationPipeline):
         return interpolated_angles * -1
 
     def roatate_by_frame(self):
+        logging.info("Starting derotation by frame...")
         min_value_img = np.min(self.image_stack)
         new_rotated_image_stack = (
             np.ones_like(self.image_stack) * min_value_img
@@ -91,16 +94,31 @@ class DerotateIncremental(DerotationPipeline):
         for idx, frame in tqdm(
             enumerate(self.image_stack), total=self.num_frames
         ):
-            new_rotated_image_stack[idx] = rotate(
+            rotated_img = rotate(
                 frame,
                 self.rot_deg_frame[idx],
                 reshape=False,
                 order=0,
                 mode="constant",
             )
+            rotated_img = np.where(
+                rotated_img == 0, min_value_img, rotated_img
+            )
+
+            new_rotated_image_stack[idx] = rotated_img
+
         logging.info("Finished rotating the image stack")
 
         return new_rotated_image_stack
+
+    def check_number_of_frame_angles(self):
+        if len(self.rot_deg_frame) != self.num_frames:
+            raise ValueError(
+                "Number of rotation angles by frame is not equal to the "
+                + "number of frames in the image stack.\n"
+                + f"Number of angles: {len(self.rot_deg_frame)}\n"
+                + f"Number of frames: {self.num_frames}"
+            )
 
     def plot_rotation_angles(self):
         """Plots example rotation angles by line and frame for each speed.

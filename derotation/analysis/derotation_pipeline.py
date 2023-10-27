@@ -7,6 +7,7 @@ from typing import Tuple
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.ma as ma
+import pandas as pd
 import tifffile as tiff
 import tqdm
 import yaml
@@ -32,6 +33,7 @@ class DerotationPipeline:
         rotated_images = self.rotate_frames_line_by_line()
         masked = self.add_circle_mask(rotated_images)
         self.save(masked)
+        self.save_csv_with_derotation_data()
 
     def get_config(self, config_name: str) -> dict:
         """Loads config file from derotation/config folder.
@@ -623,14 +625,14 @@ class DerotationPipeline:
         ]
         last_idx_for_each_speed = sorted(last_idx_for_each_speed)
 
-        for i, rotation_id in enumerate(last_idx_for_each_speed):
+        for i, id in enumerate(last_idx_for_each_speed):
             col = i // 2
             row = i % 2
 
             ax = axs[col, row]
 
-            rotation_starts = self.rot_blocks_idx["start"][rotation_id]
-            rotation_ends = self.rot_blocks_idx["end"][rotation_id]
+            rotation_starts = self.rot_blocks_idx["start"][id]
+            rotation_ends = self.rot_blocks_idx["end"][id]
 
             start_line_idx = self.clock_to_latest_line_start(rotation_starts)
             end_line_idx = self.clock_to_latest_line_start(rotation_ends)
@@ -657,7 +659,10 @@ class DerotationPipeline:
             ax.spines["top"].set_visible(False)
             ax.spines["right"].set_visible(False)
 
-            ax.set_title(f"Speed: {self.speed[rotation_id]}")
+            ax.set_title(
+                f"Speed: {self.speed[id]},"
+                + f" direction: {'cw' if self.direction[id] == 1 else 'ccw'}"
+            )
 
         fig.suptitle("Rotation angles by line and frame")
 
@@ -691,6 +696,7 @@ class DerotationPipeline:
         np.ndarray
             The rotated image stack.
         """
+        logging.info("Starting derotation by line...")
 
         rotated_image_stack = copy.deepcopy(self.image_stack)
         previous_image_completed = True
@@ -704,12 +710,12 @@ class DerotationPipeline:
         ):
             # when the frame is completed, the line analog signal does not
             # pulse for the last line of the frame.
-            line_counter = i % self.num_lines_per_frame - 1
+            line_counter = i % self.num_lines_per_frame
             image_counter = i // self.num_lines_per_frame
 
             is_rotating = np.absolute(rotation) > 0.00001
             image_scanning_completed = line_counter == (
-                self.num_lines_per_frame - 1
+                self.num_lines_per_frame
             )
             if i == 0:
                 rotation_just_finished = False
@@ -836,3 +842,27 @@ class DerotationPipeline:
             np.array(masked),
         )
         logging.info(f"Masked image saved in {path}")
+
+    def save_csv_with_derotation_data(self):
+        df = pd.DataFrame(
+            columns=[
+                "frame",
+                "rotation_angle",
+                "rotation_on",
+                "clock",
+            ]
+        )
+
+        df["frame"] = np.arange(self.num_frames)
+        df["rotation_angle"] = self.rot_deg_frame[: self.num_frames]
+        df["rotation_on"] = self.rotation_on[
+            self.frame_start[: self.num_frames]
+        ]
+        df["clock"] = self.frame_start[: self.num_frames]
+
+        df.to_csv(
+            self.config["paths_write"]["derotated_tiff_folder"]
+            + self.config["paths_write"]["saving_name"]
+            + ".csv",
+            index=False,
+        )

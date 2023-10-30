@@ -799,6 +799,7 @@ class DerotationPipeline:
     @staticmethod
     def add_circle_mask(
         image_stack: np.ndarray,
+        diameter: int = 256,
     ) -> np.ndarray:
         """Adds a circular mask to the rotated image stack. It is useful
         to hide the portions of the image that are not sampled equally
@@ -815,14 +816,44 @@ class DerotationPipeline:
             The masked image stack.
         """
         img_height = image_stack.shape[1]
-        xx, yy = np.mgrid[:img_height, :img_height]
-        circle = (xx - img_height / 2) ** 2 + (yy - img_height / 2) ** 2
-        mask = circle < (img_height / 2) ** 2
+
+        #  crop the image to match the new size
+        if diameter != img_height:
+            image_stack = image_stack[
+                :,
+                int((img_height - diameter) / 2) : int(
+                    (img_height + diameter) / 2
+                ),
+                int((img_height - diameter) / 2) : int(
+                    (img_height + diameter) / 2
+                ),
+            ]
+
+        xx, yy = np.mgrid[:diameter, :diameter]
+
+        circle = (xx - diameter / 2) ** 2 + (yy - diameter / 2) ** 2
+        mask = circle < (diameter / 2) ** 2
+
         img_min = np.nanmin(image_stack)
 
         masked_img_array = []
         for img in image_stack:
             masked_img_array.append(np.where(mask, img, img_min))
+
+        if diameter != img_height:
+            delta = img_height - diameter
+            masked_img_array = np.pad(
+                masked_img_array,
+                ((0, 0), (int(delta / 2), int(delta / 2)), (0, 0)),
+                "constant",
+                constant_values=img_min,
+            )
+            masked_img_array = np.pad(
+                masked_img_array,
+                ((0, 0), (0, 0), (int(delta / 2), int(delta / 2))),
+                "constant",
+                constant_values=img_min,
+            )
 
         return np.array(masked_img_array)
 

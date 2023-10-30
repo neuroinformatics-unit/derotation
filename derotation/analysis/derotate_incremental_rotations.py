@@ -34,7 +34,11 @@ class DerotateIncremental(DerotationPipeline):
             masked_unregistered, x_fitted, y_fitted
         )
 
-        masked = self.add_circle_mask(registered_images)
+        new_diameter = self.num_lines_per_frame - 2 * max(
+            max(np.abs(shifts["x"])), max(np.abs(shifts["y"]))
+        )
+        masked = self.add_circle_mask(registered_images, new_diameter)
+
         self.save(masked)
         self.save_csv_with_derotation_data()
 

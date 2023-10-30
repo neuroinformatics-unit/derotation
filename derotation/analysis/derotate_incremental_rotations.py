@@ -1,3 +1,4 @@
+import copy
 import logging
 from pathlib import Path
 from typing import Tuple
@@ -21,7 +22,19 @@ class DerotateIncremental(DerotationPipeline):
         super().process_analog_signals()
         # self.check_number_of_frame_angles()
         rotated_images = self.roatate_by_frame()
-        masked = self.add_circle_mask(rotated_images)
+        masked_unregistered = self.add_circle_mask(rotated_images)
+
+        mean_images = self.calculate_mean_images(masked_unregistered)
+        target_image = self.get_target_image(masked_unregistered)
+        shifts = self.get_shifts_using_phase_cross_correlation(
+            mean_images, target_image
+        )
+        x_fitted, y_fitted = self.polinomial_fit(shifts)
+        registered_images = self.register_rotated_images(
+            masked_unregistered, x_fitted, y_fitted
+        )
+
+        masked = self.add_circle_mask(registered_images)
         self.save(masked)
         self.save_csv_with_derotation_data()
 
@@ -150,3 +163,77 @@ class DerotateIncremental(DerotationPipeline):
             Path(self.config["paths_write"]["debug_plots_folder"])
             / "rotation_angles.png"
         )
+
+    def calculate_mean_images(self, rotated_image_stack):
+        logging.info("Calculating mean images...")
+
+        #  there is a bug in the frame start time calculation
+        #  there are two additional frame starting points
+        angles_subset = copy.deepcopy(self.rot_deg_frame[2:])
+        # also there is a bias on the angles
+        angles_subset += -0.1
+        rounded_angles = np.round(angles_subset, 2)
+
+        mean_images = []
+        for i in np.arange(10, 360, 10):
+            images = rotated_image_stack[rounded_angles == i]
+            mean_image = np.mean(images, axis=0)
+
+            mean_images.append(mean_image)
+
+        #  drop the first because it is the same as the last (0, 360)
+        # mean_images = mean_images[1:]
+
+        return mean_images
+
+    @staticmethod
+    def get_target_image(rotated_image_stack):
+        return np.mean(rotated_image_stack[:100], axis=0)
+
+    def get_shifts_using_phase_cross_correlation(
+        self, mean_images, target_image
+    ):
+        logging.info("Calculating shifts using phase cross correlation...")
+        shifts = {"x": [], "y": []}
+        image_center = self.num_lines_per_frame / 2
+        for offset_image in mean_images:
+            image_product = (
+                np.fft.fft2(target_image) * np.fft.fft2(offset_image).conj()
+            )
+            cc_image = np.fft.fftshift(np.fft.ifft2(image_product))
+            peaks = np.unravel_index(np.argmax(cc_image), cc_image.shape)
+
+            shift = np.asarray(peaks) - image_center
+            shifts["x"].append(int(shift[0]))
+            shifts["y"].append(int(shift[1]))
+
+        return shifts
+
+    def polinomial_fit(self, shifts):
+        logging.info("Fitting polinomial to shifts...")
+        # 0 deg shifts should be 0, insert new value
+        shifts["x"].insert(0, 0)
+        shifts["y"].insert(0, 0)
+
+        angles_range = np.arange(0, 360, 10)
+        x = shifts["x"]
+        y = shifts["y"]
+
+        x_fitted = np.polyfit(angles_range, x, 6)
+        y_fitted = np.polyfit(angles_range, y, 6)
+
+        return x_fitted, y_fitted
+
+    def register_rotated_images(self, rotated_image_stack, x_fitted, y_fitted):
+        logging.info("Registering rotated images...")
+        registered_images = []
+        for i, img in enumerate(rotated_image_stack):
+            angle = self.rot_deg_frame[i]
+            x = np.polyval(x_fitted, angle)
+            y = np.polyval(y_fitted, angle)
+            shift = (int(x), int(y))
+            registered_images.append(np.roll(img, shift=shift, axis=(0, 1)))
+
+        registered_images = np.array(registered_images)
+
+        return registered_images

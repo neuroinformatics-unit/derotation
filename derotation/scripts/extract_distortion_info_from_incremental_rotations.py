@@ -75,13 +75,20 @@ df.to_csv(
     "/Users/laura/data/derotation/raw/230802_CAA_1120182/incremental/phase_cross_corr/pixel_precision.csv"
 )
 
+
+image_center = np.array(image.shape) / 2
+shifts = df[["x", "y"]]
+shifts = shifts - image_center
+shifts = shifts.astype(int)
 #  plot the shift values
 fig, ax = plt.subplots()
-ax.plot(df["rotation_angle"], df["x"], label="x")
-ax.plot(df["rotation_angle"], df["y"], label="y")
+ax.plot(df["rotation_angle"], shifts["x"], label="x")
+ax.plot(df["rotation_angle"], shifts["y"], label="y")
 ax.set_xlabel("rotation angle")
 ax.set_ylabel("shift value")
 ax.legend()
+
+fig.suptitle("Shift values of frames across rotation angles")
 
 ax.spines["right"].set_visible(False)
 ax.spines["top"].set_visible(False)
@@ -90,17 +97,9 @@ fig.savefig(
     "/Users/laura/data/derotation/raw/230802_CAA_1120182/incremental/phase_cross_corr/pixel_precision_shift_values.png"
 )
 
-image_center = np.array(image.shape) / 2
-shifts = df[["x", "y"]]
-shifts = shifts - image_center
-shifts = shifts.astype(int)
-
 # now use the shift values to correct the position of the images
 registered_images = []
 for i, image in enumerate(mean_images):
-    # shift = df.iloc[i][["x", "y"]]
-    # shift = shift - image_center
-    # shift = shift.astype(int)
     registered_image = np.roll(image, shift=shifts.iloc[i], axis=(0, 1))
     registered_images.append(registered_image)
 
@@ -108,4 +107,47 @@ registered_images = np.array(registered_images)
 tifffile.imwrite(
     "/Users/laura/data/derotation/raw/230802_CAA_1120182/incremental/derotated/derotated_masked_full_incremental_registered_small.tif",
     registered_images,
+)
+
+# polinomial fit of shifts
+angles_range = np.arange(0, 350, 10)
+
+x = shifts["x"]
+y = shifts["y"]
+
+X_fitted = np.polyfit(angles_range, x, 6)
+Y_fitted = np.polyfit(angles_range, y, 6)
+
+X = np.polyval(X_fitted, angles_range)
+Y = np.polyval(Y_fitted, angles_range)
+
+fig, ax = plt.subplots()
+ax.plot(angles_range, x, label="x")
+ax.plot(angles_range, y, label="y")
+ax.plot(angles_range, X, label="x fitted")
+ax.plot(angles_range, Y, label="y fitted")
+ax.legend()
+
+fig.suptitle("Shift values of frames across rotation angles")
+
+ax.spines["right"].set_visible(False)
+ax.spines["top"].set_visible(False)
+
+fig.savefig(
+    "/Users/laura/data/derotation/raw/230802_CAA_1120182/incremental/phase_cross_corr/pixel_precision_shift_values_fitted.png"
+)
+
+df = pd.read_csv(csv_path, index_col=0, header=0)
+
+new_registration = []
+for i, img in enumerate(tif):
+    angle = df.iloc[i]["rotation_angle"]
+    x = np.polyval(X_fitted, angle)
+    y = np.polyval(Y_fitted, angle)
+    new_registration.append(np.roll(img, shift=(int(x), int(y)), axis=(0, 1)))
+
+new_registration = np.array(new_registration)
+tifffile.imwrite(
+    "/Users/laura/data/derotation/raw/230802_CAA_1120182/incremental/derotated/derotated_masked_full_incremental_registered.tif",
+    new_registration,
 )

@@ -715,7 +715,7 @@ class DerotationPipeline:
 
             is_rotating = np.absolute(rotation) > 0.00001
             image_scanning_completed = line_counter == (
-                self.num_lines_per_frame
+                self.num_lines_per_frame - 1
             )
             if i == 0:
                 rotation_just_finished = False

@@ -24,11 +24,32 @@ from derotation.load_data.custom_data_loaders import (
 
 class DerotationPipeline:
     def __init__(self, config_name):
+        """DerotationPipeline is a class that derotates an image stack
+        acquired with a rotating sample under a microscope.
+        In the constructor, it loads the config file, starts the logging
+        process, and loads the data.
+        It is meant to be used for the full rotation protocol, in which
+        the sample is rotated by 360 degrees at various speeds and
+        directions.
+
+        Parameters
+        ----------
+        config_name : str
+            Name of the config file without extension.
+        """
         self.config = self.get_config(config_name)
         self.start_logging()
         self.load_data()
 
     def __call__(self):
+        """Execute the steps necessary to derotate the image stack
+        from start to finish.
+        It involves:
+        - processing the analog signals
+        - rotating the image stack line by line
+        - adding a circular mask to the rotated image stack
+        - saving the masked image stack
+        """
         self.process_analog_signals()
         rotated_images = self.rotate_frames_line_by_line()
         masked = self.add_circle_mask(rotated_images)
@@ -86,6 +107,10 @@ class DerotationPipeline:
             - full rotation: when the motor is rotating
             - rotation ticks: peaks at every given increment of rotation
         - various parameters from config file
+
+        The data is loaded using the custom_data_loaders module, which are
+        sepecific to the setup used in the lab. Please edit them to load
+        data from your setup.
         """
         logging.info("Loading data...")
 
@@ -413,7 +438,22 @@ class DerotationPipeline:
             )
             return False
 
-    def get_peaks_in_rotation(self, start, end):
+    def get_peaks_in_rotation(self, start: int, end: int) -> int:
+        """Counts the number of ticks in a rotation given the start and end
+        times of the rotation.
+
+        Parameters
+        ----------
+        start : int
+            Start clock time of the rotation.
+        end : int
+            End clock time of the rotation.
+
+        Returns
+        -------
+        int
+            The number of ticks in the rotation.
+        """
         return np.where(
             np.logical_and(
                 self.rotation_ticks_peaks >= start,
@@ -804,11 +844,18 @@ class DerotationPipeline:
         """Adds a circular mask to the rotated image stack. It is useful
         to hide the portions of the image that are not sampled equally
         during the rotation.
+        If a diameter is specified, the image stack is cropped to match
+        the diameter. The mask is then added to the cropped image stack,
+        and the cropped image stack is padded to match the original size.
+        This is important when the images are registered to correct from
+        motion artifacts.
 
         Parameters
         ----------
         image_stack : np.ndarray
             The image stack that you want to mask.
+        diameter : int, optional
+            The diameter of the circular mask, by default 256
 
         Returns
         -------
@@ -875,6 +922,10 @@ class DerotationPipeline:
         logging.info(f"Masked image saved in {path}")
 
     def save_csv_with_derotation_data(self):
+        """Saves a csv file with the rotation angles by line and frame,
+        and the rotation on signal.
+        It is saved in the saving folder specified in the config file.
+        """
         df = pd.DataFrame(
             columns=[
                 "frame",
@@ -886,9 +937,6 @@ class DerotationPipeline:
 
         df["frame"] = np.arange(self.num_frames)
         df["rotation_angle"] = self.rot_deg_frame[: self.num_frames]
-        df["rotation_on"] = self.rotation_on[
-            self.frame_start[: self.num_frames]
-        ]
         df["clock"] = self.frame_start[: self.num_frames]
 
         df.to_csv(

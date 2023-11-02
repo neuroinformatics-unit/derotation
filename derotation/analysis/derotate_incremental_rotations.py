@@ -1,7 +1,7 @@
 import copy
 import logging
 from pathlib import Path
-from typing import Tuple
+from typing import Dict, Tuple
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -13,12 +13,24 @@ from derotation.analysis.derotation_pipeline import DerotationPipeline
 
 class DerotateIncremental(DerotationPipeline):
     def __init__(self, *args, **kwargs):
+        """Derotate the image stack that was acquired using the incremental
+        rotation method.
+        As a child of DerotationPipeline, it inherits all the attributes and
+        methods from it and adds additional logic to register the images.
+        Here in the constructor we specify the degrees for each incremental
+        rotation and the number of rotations.
+        """
         super().__init__(*args, **kwargs)
 
         self.small_rotations = 10
         self.number_of_rotations = self.rot_deg // self.small_rotations
 
     def __call__(self):
+        """Overwrite the __call__ method from the parent class to derotate
+        the image stack acquired using the incremental rotation method.
+        After processing the analog signals, the image stack is rotated by
+        frame and then registered using phase cross correlation.
+        """
         super().process_analog_signals()
         # self.check_number_of_frame_angles()
         rotated_images = self.roatate_by_frame()
@@ -43,6 +55,14 @@ class DerotateIncremental(DerotationPipeline):
         self.save_csv_with_derotation_data()
 
     def is_number_of_ticks_correct(self) -> bool:
+        """Overwrite the method from the parent class to check if the number
+        of ticks is as expected.
+
+        Returns
+        -------
+        bool
+            True if the number of ticks is as expected, False otherwise.
+        """
         self.expected_tiks_per_rotation = (
             self.rot_deg / self.rotation_increment
         )
@@ -60,6 +80,14 @@ class DerotateIncremental(DerotationPipeline):
             return False
 
     def adjust_rotation_increment(self) -> Tuple[np.ndarray, np.ndarray]:
+        """Overwrite the method from the parent class to adjust the rotation
+        increment and the number of ticks per rotation.
+
+        Returns
+        -------
+        Tuple[np.ndarray, np.ndarray]
+            The new rotation increment and the number of ticks per rotation.
+        """
         ticks_per_rotation = [
             self.get_peaks_in_rotation(start, end)
             for start, end in zip(
@@ -74,6 +102,14 @@ class DerotateIncremental(DerotationPipeline):
         return new_increments, ticks_per_rotation
 
     def get_interpolated_angles(self) -> np.ndarray:
+        """Overwrite the method from the parent class to interpolate the
+        angles.
+
+        Returns
+        -------
+        np.ndarray
+            The interpolated angles.
+        """
         logging.info("Interpolating angles...")
 
         ticks_with_increment = [
@@ -101,7 +137,14 @@ class DerotateIncremental(DerotationPipeline):
 
         return interpolated_angles * -1
 
-    def roatate_by_frame(self):
+    def roatate_by_frame(self) -> np.ndarray:
+        """Rotate the image stack by frame.
+
+        Returns
+        -------
+        np.ndarray
+            Description of returned object.
+        """
         logging.info("Starting derotation by frame...")
         min_value_img = np.min(self.image_stack)
         new_rotated_image_stack = (
@@ -129,6 +172,15 @@ class DerotateIncremental(DerotationPipeline):
         return new_rotated_image_stack
 
     def check_number_of_frame_angles(self):
+        """Check if the number of rotation angles by frame is equal to the
+        number of frames in the image stack.
+
+        Raises
+        ------
+        ValueError
+            if the number of rotation angles by frame is not equal to the
+            number of frames in the image stack.
+        """
         if len(self.rot_deg_frame) != self.num_frames:
             raise ValueError(
                 "Number of rotation angles by frame is not equal to the "
@@ -168,7 +220,20 @@ class DerotateIncremental(DerotationPipeline):
             / "rotation_angles.png"
         )
 
-    def calculate_mean_images(self, rotated_image_stack):
+    def calculate_mean_images(self, rotated_image_stack: np.ndarray) -> list:
+        """Calculate the mean images for each rotation angle. This required
+        to calculate the shifts using phase cross correlation.
+
+        Parameters
+        ----------
+        rotated_image_stack : np.ndarray
+            The rotated image stack.
+
+        Returns
+        -------
+        list
+            The list of mean images.
+        """
         logging.info("Calculating mean images...")
 
         #  there is a bug in the frame start time calculation
@@ -191,14 +256,43 @@ class DerotateIncremental(DerotationPipeline):
         return mean_images
 
     @staticmethod
-    def get_target_image(rotated_image_stack):
+    def get_target_image(rotated_image_stack: np.ndarray) -> np.ndarray:
+        """Get the target image for phase cross correlation. This is the mean
+        of the first 100 images.
+
+        Parameters
+        ----------
+        rotated_image_stack : np.ndarray
+            The rotated image stack.
+
+        Returns
+        -------
+        np.ndarray
+            The target image.
+        """
         return np.mean(rotated_image_stack[:100], axis=0)
 
     def get_shifts_using_phase_cross_correlation(
-        self, mean_images, target_image
-    ):
+        self, mean_images: list, target_image: np.ndarray
+    ) -> Dict[str, list]:
+        """Get the shifts (i.e. the number of pixels that the image needs to
+        be shifted in order to be registered) using phase cross correlation.
+
+        Parameters
+        ----------
+        mean_images : list
+            The list of mean images for each rotation increment.
+        target_image : np.ndarray
+            The target image.
+
+        Returns
+        -------
+        Dict[str, list]
+            The shifts in x and y.
+        """
+
         logging.info("Calculating shifts using phase cross correlation...")
-        shifts = {"x": [], "y": []}
+        shifts: Dict[str, list] = {"x": [], "y": []}
         image_center = self.num_lines_per_frame / 2
         for offset_image in mean_images:
             image_product = (
@@ -213,7 +307,20 @@ class DerotateIncremental(DerotationPipeline):
 
         return shifts
 
-    def polinomial_fit(self, shifts):
+    def polinomial_fit(self, shifts: dict) -> Tuple[np.ndarray, np.ndarray]:
+        """Fit a polinomial to the shifts in order to get a smooth function
+        that can be used to register the images.
+
+        Parameters
+        ----------
+        shifts : dict
+            The shifts in x and y.
+
+        Returns
+        -------
+        Tuple[np.ndarray, np.ndarray]
+            The polinomial fit for x and y.
+        """
         logging.info("Fitting polinomial to shifts...")
         # 0 deg shifts should be 0, insert new value
         shifts["x"].insert(0, 0)
@@ -228,7 +335,29 @@ class DerotateIncremental(DerotationPipeline):
 
         return x_fitted, y_fitted
 
-    def register_rotated_images(self, rotated_image_stack, x_fitted, y_fitted):
+    def register_rotated_images(
+        self,
+        rotated_image_stack: np.ndarray,
+        x_fitted: np.ndarray,
+        y_fitted: np.ndarray,
+    ) -> np.ndarray:
+        """Register the rotated images using the polinomial fit.
+
+        Parameters
+        ----------
+        rotated_image_stack : np.ndarray
+            The rotated image stack.
+        x_fitted : np.ndarray
+            The polinomial fit for x.
+        y_fitted : np.ndarray
+            The polinomial fit for y.
+
+        Returns
+        -------
+        np.ndarray
+            The registered image stack.
+        """
+
         logging.info("Registering rotated images...")
         registered_images = []
         for i, img in enumerate(rotated_image_stack):

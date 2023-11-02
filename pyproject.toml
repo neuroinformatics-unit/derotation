@@ -19,6 +19,18 @@ classifiers = [
     "License :: OSI Approved :: BSD License",
 ]
 
+dependencies = [
+    "numpy",
+    "tiffile",
+    "matplotlib",
+    "scipy",
+    "PyYAML",
+    "fancylog",
+    "matplotlib",
+    "pandas",
+    "tqdm",
+]
+
 [project.urls]
 "Homepage" = "https://github.com/neuroinformatics-unit/derotation"
 "Bug Tracker" = "https://github.com/neuroinformatics-unit/derotation/issues"
@@ -45,15 +57,6 @@ requires = [
     "setuptools>=45",
     "wheel",
     "setuptools_scm[toml]>=6.2",
-    "numpy",
-    "tiffile",
-    "matplotlib",
-    "scipy",
-    "PyYAML",
-    "napari",
-    "pyqt6",
-    "napari-matplotlib",
-    "fancylog",
 ]
 build-backend = "setuptools.build_meta"
 

@@ -743,12 +743,9 @@ class DerotationPipeline:
 
         min_value_img = np.min(self.image_stack)
 
-        # use tqdm
         for i, rotation in tqdm.tqdm(
             enumerate(self.rot_deg_line), total=len(self.rot_deg_line)
         ):
-            # when the frame is completed, the line analog signal does not
-            # pulse for the last line of the frame.
             line_counter = i % self.num_lines_per_frame
             image_counter = i // self.num_lines_per_frame
 
@@ -766,7 +763,7 @@ class DerotationPipeline:
 
             if is_rotating:
                 if rotation_completed and (line_counter != 0):
-                    #  starting a new rotation in the middle of the image
+                    # when starting a new rotation in the middle of the image
                     rotated_filled_image = (
                         np.ones_like(self.image_stack[image_counter])
                         * min_value_img
@@ -782,7 +779,6 @@ class DerotationPipeline:
 
                 rotation_completed = False
 
-                #  we want to take the line from the row image collected
                 img_with_new_lines = self.image_stack[image_counter]
                 line = img_with_new_lines[line_counter]
 
@@ -797,24 +793,20 @@ class DerotationPipeline:
                     mode="constant",
                 )
 
-                #  substitute the non masked values in the new image
                 rotated_filled_image = np.where(
                     rotated_line == 0, rotated_filled_image, rotated_line
                 )
                 previous_image_completed = False
             if (
-                image_scanning_completed
-                # and there_is_a_rotated_image_in_locals
-                and not rotation_completed
+                image_scanning_completed and not rotation_completed
             ) or rotation_just_finished:
                 if rotation_just_finished:
                     rotation_completed = True
-                    #  add missing lines at the end of the image
+
                     rotated_filled_image[
                         line_counter + 1 :
                     ] = self.image_stack[image_counter][line_counter + 1 :]
 
-                # change the image in the stack inplace
                 rotated_image_stack[image_counter] = rotated_filled_image
                 previous_image_completed = True
 
@@ -872,6 +864,7 @@ class DerotationPipeline:
         for img in image_stack:
             masked_img_array.append(np.where(mask, img, img_min))
 
+        # pad the image to match the original size
         if diameter != img_height:
             delta = img_height - diameter
             masked_img_array = np.pad(

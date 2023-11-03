@@ -32,7 +32,6 @@ class DerotateIncremental(DerotationPipeline):
         frame and then registered using phase cross correlation.
         """
         super().process_analog_signals()
-        # self.check_number_of_frame_angles()
         rotated_images = self.roatate_by_frame()
         masked_unregistered = self.add_circle_mask(rotated_images)
 
@@ -236,8 +235,8 @@ class DerotateIncremental(DerotationPipeline):
         """
         logging.info("Calculating mean images...")
 
-        #  there is a bug in the frame start time calculation
-        #  there are two additional frame starting points
+        #  correct for a mismatch in the total number of frames
+        #  and the number of angles, given by instrument error
         angles_subset = copy.deepcopy(self.rot_deg_frame[2:])
         # also there is a bias on the angles
         angles_subset += -0.1
@@ -249,9 +248,6 @@ class DerotateIncremental(DerotationPipeline):
             mean_image = np.mean(images, axis=0)
 
             mean_images.append(mean_image)
-
-        #  drop the first because it is the same as the last (0, 360)
-        # mean_images = mean_images[1:]
 
         return mean_images
 
@@ -322,7 +318,7 @@ class DerotateIncremental(DerotationPipeline):
             The polinomial fit for x and y.
         """
         logging.info("Fitting polinomial to shifts...")
-        # 0 deg shifts should be 0, insert new value
+
         shifts["x"].insert(0, 0)
         shifts["y"].insert(0, 0)
 

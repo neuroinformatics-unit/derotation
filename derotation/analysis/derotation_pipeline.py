@@ -6,7 +6,6 @@ from typing import Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
-import numpy.ma as ma
 import pandas as pd
 import tifffile as tiff
 import tqdm
@@ -790,10 +789,6 @@ class DerotationPipeline:
                 image_with_only_line = np.zeros_like(img_with_new_lines)
                 image_with_only_line[line_counter] = line
 
-                # is the mask really useful if we rotate with order=0?
-                empty_image_mask = np.ones_like(img_with_new_lines)
-                empty_image_mask[line_counter] = 0
-
                 rotated_line = rotate(
                     image_with_only_line,
                     rotation,
@@ -801,20 +796,10 @@ class DerotationPipeline:
                     order=0,
                     mode="constant",
                 )
-                rotated_mask = rotate(
-                    empty_image_mask,
-                    rotation,
-                    reshape=False,
-                    order=0,
-                    mode="constant",
-                )
-
-                #  apply rotated mask to rotated line-image
-                masked = ma.masked_array(rotated_line, rotated_mask)
 
                 #  substitute the non masked values in the new image
                 rotated_filled_image = np.where(
-                    masked.mask, rotated_filled_image, masked.data
+                    rotated_line == 0, rotated_filled_image, rotated_line
                 )
                 previous_image_completed = False
             if (

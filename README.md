@@ -6,7 +6,7 @@ The Derotation package offers a robust solution for reconstructing rotated image
 
 In neuroscientific experiments, particularly those involving calcium imaging, precise data reconstruction is paramount. Derotation is designed to address this need, reconstructing the imaging data from experiments where the sample undergoes known rotational patterns.
 
-## Experimental Protocol
+### Experimental Protocol
 
 The package is built to accommodate a specific experimental protocol which includes two primary recording phases:
 
@@ -59,3 +59,20 @@ To run the derotation process, use one of the example scripts provided:
 python3 examples/derotate.py  # For full rotation based on "full_rotation.yml"
 python3 examples/derotate_incremental.py  # For incremental rotation based on "incremental_rotation.yml"
 ```
+
+### What happens behind the scenes?
+**Full rotation**:
+The main experimental protocol is a full rotation, where the sample is rotated 360 degrees. The rotation is recorded by the motor ticks, which are then converted to angles. The rotation angle is then interpolated to the line clock, which is used to derotate the image. Several steps are taken to ensure the accuracy of the derotation, including:
+- check the number of ticks
+- check the number of rotations
+- adjust the rotation increment if necessary
+Debugging plots can be used to visually inspect the output of each step.
+
+**Incremental rotation**:
+The incremental rotation is a preparatory phase that precedes the full rotation. The sample is rotated 10 degrees every 2 seconds. The rotation is recorded by the motor ticks, which are then converted to angles. The rotation angle is then interpolated to the frame clock, which is used to derotate the image. The same steps are taken to ensure the accuracy of the derotation.
+In addition, each frame position is corrected by using cross-correlation.
+
+## Explanations
+### Derotation by frame vs by line
+A frame-based derotation is simply the rotation of the image as a whole and is achieved using `scipy.ndimage.rotate`. This is the default derotation method for incremental rotations.
+The line-based derotation is more complex and is achieved by rotating each line of the image by a certain number of pixels. This is the default derotation method for full rotations.

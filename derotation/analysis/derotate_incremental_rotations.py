@@ -12,6 +12,10 @@ from derotation.analysis.derotation_pipeline import DerotationPipeline
 
 
 class DerotateIncremental(DerotationPipeline):
+    """Derotate the image stack that was acquired using the incremental
+    rotation method.
+    """
+
     def __init__(self, *args, **kwargs):
         """Derotate the image stack that was acquired using the incremental
         rotation method.

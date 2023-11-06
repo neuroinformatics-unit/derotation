@@ -22,6 +22,10 @@ from derotation.load_data.custom_data_loaders import (
 
 
 class DerotationPipeline:
+    """DerotationPipeline is a class that derotates an image stack
+    acquired with a rotating sample under a microscope.
+    """
+
     def __init__(self, config_name):
         """DerotationPipeline is a class that derotates an image stack
         acquired with a rotating sample under a microscope.
@@ -95,17 +99,18 @@ class DerotationPipeline:
         Data is stored in the class attributes.
 
         What is loaded:
-        - image stack (tif file)
-        - direction and speed of rotation (from randperm file, uses
-        custom_data_loaders.read_randomized_stim_table)
-        - analog signals (from aux file, uses
-        custom_data_loaders.get_analog_signals). Measured in
-        "clock_time", they are:
-            - frame clock: on during acquisition of a new frame, off otherwise
-            - line clock: on during acquisition of a new line, off otherwise
-            - full rotation: when the motor is rotating
-            - rotation ticks: peaks at every given increment of rotation
-        - various parameters from config file
+            * various parameters from config file
+            * image stack (tif file)
+            * direction and speed of rotation (from randperm file, uses  \
+            custom_data_loaders.read_randomized_stim_table)
+            * analog signals \
+            (from aux file, uses `custom_data_loaders.get_analog_signals`)
+
+        Analog signals are four files, measured in "clock_time":
+            * frame clock: on during acquisition of a new frame, off otherwise
+            * line clock: on during acquisition of a new line, off otherwise
+            * full rotation: when the motor is rotating
+            * rotation ticks: peaks at every given increment of rotation
 
         The data is loaded using the custom_data_loaders module, which are
         sepecific to the setup used in the lab. Please edit them to load

@@ -14,7 +14,7 @@ On the left, the original image. On the right, the derotated image.
 With the same algorithm, you can deform any image stack by any rotation angle array.
 Here an example of the deformation of a stack of images of dogs, by using a linearly increasing rotation angle array.
 ![Deformation example: any image stack, any rotation angle array](
-  ./images/dog_rotated.png)
+  ./images/dog_rotated_by_line.png)
 It has been created with the script `examples/deformation_by_line_of_a_dog.py`.
 
 ## Introduction: Derotation in Neuroscience

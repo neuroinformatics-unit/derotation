@@ -29,6 +29,10 @@ ax[3].set_title("Rotated image 3")
 
 ax[0].axis("off")
 ax[1].axis("off")
-plt.show()
+ax[2].axis("off")
+ax[3].axis("off")
 
-fig.savefig("dog_rotated_by_line.png")
+plt.show()
+plt.close()
+
+fig.savefig("./images/dog_rotated_by_line.png", bbox_inches="tight")

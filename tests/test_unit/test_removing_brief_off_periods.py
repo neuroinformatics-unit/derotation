@@ -1,12 +1,12 @@
 import numpy as np
 
-from derotation.analysis.derotation_pipeline import DerotationPipeline
+from derotation.analysis.full_rotation_pipeline import FullPipeline
 
 
 def test_removing_brief_off_periods(
     start_end_times: tuple,
     start_end_times_with_bug: tuple,
-    derotation_pipeline: DerotationPipeline,
+    derotation_pipeline: FullPipeline,
 ):
     start_buggy, end_buggy = start_end_times_with_bug
     start, end = start_end_times

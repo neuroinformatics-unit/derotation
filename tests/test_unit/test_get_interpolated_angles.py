@@ -1,9 +1,9 @@
 import numpy as np
 
-from derotation.analysis.derotation_pipeline import DerotationPipeline
+from derotation.analysis.full_rotation_pipeline import FullPipeline
 
 
-def test_get_interpolated_angles(derotation_pipeline: DerotationPipeline):
+def test_get_interpolated_angles(derotation_pipeline: FullPipeline):
     derotation_pipeline.drop_ticks_outside_of_rotation()
     (
         derotation_pipeline.corrected_increments,

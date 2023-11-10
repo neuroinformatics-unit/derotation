@@ -1,8 +1,8 @@
-from derotation.analysis.derotation_pipeline import DerotationPipeline
+from derotation.analysis.full_rotation_pipeline import FullPipeline
 
 
 def test_drop_ticks_generated_randomly(
-    derotation_pipeline: DerotationPipeline,
+    derotation_pipeline: FullPipeline,
 ):
     len_before = len(derotation_pipeline.rotation_ticks_peaks)
     derotation_pipeline.drop_ticks_outside_of_rotation()

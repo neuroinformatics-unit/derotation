@@ -1,4 +1,4 @@
-from derotation.analysis.derotation_pipeline import DerotationPipeline
+from derotation.analysis.full_rotation_pipeline import FullPipeline
 
-derotate = DerotationPipeline("full_rotation")
+derotate = FullPipeline("full_rotation")
 derotate()

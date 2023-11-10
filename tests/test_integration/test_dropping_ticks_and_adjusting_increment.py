@@ -1,10 +1,10 @@
 import numpy as np
 
-from derotation.analysis.derotation_pipeline import DerotationPipeline
+from derotation.analysis.full_rotation_pipeline import FullPipeline
 
 
 def test_dropping_ticks_and_adjusting_increment(
-    derotation_pipeline: DerotationPipeline,
+    derotation_pipeline: FullPipeline,
 ):
     len(derotation_pipeline.rotation_ticks_peaks)
     derotation_pipeline.drop_ticks_outside_of_rotation()

@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from derotation.analysis.derotation_pipeline import DerotationPipeline
+from derotation.analysis.full_rotation_pipeline import FullPipeline
 
 
 @pytest.fixture(autouse=True)
@@ -150,7 +150,7 @@ def derotation_pipeline(
     ticks_per_rotation_calculated,
     dummy_signal,
 ):
-    pipeline = DerotationPipeline.__new__(DerotationPipeline)
+    pipeline = FullPipeline.__new__(FullPipeline)
 
     pipeline.inter_rotation_interval_min_len = 50
     pipeline.rotation_ticks_peaks = rotation_ticks

@@ -1,10 +1,10 @@
 import numpy as np
 
-from derotation.analysis.derotation_pipeline import DerotationPipeline
+from derotation.analysis.full_rotation_pipeline import FullPipeline
 
 
 def test_adjust_rotation_increment_360(
-    derotation_pipeline: DerotationPipeline,
+    derotation_pipeline: FullPipeline,
     corrected_increments,
     ticks_per_rotation_calculated,
 ):
@@ -22,7 +22,7 @@ def test_adjust_rotation_increment_360(
 
 
 def test_adjust_rotation_increment_5(
-    derotation_pipeline: DerotationPipeline,
+    derotation_pipeline: FullPipeline,
 ):
     derotation_pipeline.rot_deg = 5
 

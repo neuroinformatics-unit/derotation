@@ -8,10 +8,10 @@ from matplotlib import pyplot as plt
 from scipy.ndimage import rotate
 from tqdm import tqdm
 
-from derotation.analysis.derotation_pipeline import DerotationPipeline
+from derotation.analysis.full_rotation_pipeline import FullPipeline
 
 
-class DerotateIncremental(DerotationPipeline):
+class IncrementalPipeline(FullPipeline):
     """Derotate the image stack that was acquired using the incremental
     rotation method.
     """
@@ -19,7 +19,7 @@ class DerotateIncremental(DerotationPipeline):
     def __init__(self, *args, **kwargs):
         """Derotate the image stack that was acquired using the incremental
         rotation method.
-        As a child of DerotationPipeline, it inherits all the attributes and
+        As a child of FullPipeline, it inherits all the attributes and
         methods from it and adds additional logic to register the images.
         Here in the constructor we specify the degrees for each incremental
         rotation and the number of rotations.

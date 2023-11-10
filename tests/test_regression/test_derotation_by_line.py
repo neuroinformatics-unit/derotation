@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from PIL import Image
 
-from derotation.analysis.derotation_pipeline import DerotationPipeline
+from derotation.analysis.full_rotation_pipeline import FullPipeline
 
 lenna = Image.open("tests/test_regression/images/lenna.png").convert("L")
 
@@ -42,7 +42,7 @@ def get_angles(kind, n_lines, n_total_lines):
 
 
 def test_rotation_by_line(image_stack, n_lines, n_total_lines, len_stack):
-    pipeline = DerotationPipeline.__new__(DerotationPipeline)
+    pipeline = FullPipeline.__new__(FullPipeline)
     pipeline.image_stack = image_stack
 
     for kind in ["uniform", "sinusoidal"]:

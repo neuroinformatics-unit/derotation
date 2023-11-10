@@ -1,6 +1,6 @@
-from derotation.analysis.derotate_incremental_rotations import (
-    DerotateIncremental,
+from derotation.analysis.incremental_rotation_pipeline import (
+    IncrementalPipeline,
 )
 
-derotate = DerotateIncremental("incremental_rotation")
+derotate = IncrementalPipeline("incremental_rotation")
 derotate()

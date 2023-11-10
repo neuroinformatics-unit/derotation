@@ -21,7 +21,7 @@ from derotation.load_data.custom_data_loaders import (
 )
 
 
-class DerotationPipeline:
+class FullPipeline:
     """DerotationPipeline is a class that derotates an image stack
     acquired with a rotating sample under a microscope.
     """

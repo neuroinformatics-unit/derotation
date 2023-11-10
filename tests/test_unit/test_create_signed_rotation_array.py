@@ -1,10 +1,10 @@
 import numpy as np
 
-from derotation.analysis.derotation_pipeline import DerotationPipeline
+from derotation.analysis.full_rotation_pipeline import FullPipeline
 
 
 def test_create_signed_rotation_array_interleaved(
-    derotation_pipeline: DerotationPipeline,
+    derotation_pipeline: FullPipeline,
     start_end_times: tuple,
 ):
     start, end = start_end_times
@@ -16,7 +16,7 @@ def test_create_signed_rotation_array_interleaved(
 
 
 def test_create_signed_rotation_array_incremental(
-    derotation_pipeline: DerotationPipeline,
+    derotation_pipeline: FullPipeline,
     start_end_times: tuple,
     direction_incremental: np.ndarray,
 ):

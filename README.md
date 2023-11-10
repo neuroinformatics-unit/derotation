@@ -2,8 +2,22 @@
 
 The Derotation package offers a robust solution for reconstructing rotated images, particularly those acquired during experimental preparations in the field of neuroscience research. Although it's tailored for calcium imaging data, this versatile tool is adaptable for any dataset where rotation angles are recorded, making it an essential utility for a wide array of image processing applications.
 
-## Introduction
+The core algorithm, `rotate_an_image_array_line_by_line` can be also used as a standalone function to deform images by a given angle.
 
+## Derotation example: a grid
+Derotate an image of a rotating grid using motor feedback.
+On the left, the original image. On the right, the derotated image.
+![Derotation example: a grid](
+  ./images/rotation_by_line.png)
+
+## Deformation example: any image stack, any rotation angle array
+With the same algorithm, you can deform any image stack by any rotation angle array.
+Here an example of the deformation of a stack of images of dogs, by using a linearly increasing rotation angle array.
+![Deformation example: any image stack, any rotation angle array](
+  ./images/dog_rotated.png)
+It has been created with the script `examples/deformation_by_line_of_a_dog.py`.
+
+## Introduction: Derotation in Neuroscience
 In neuroscientific experiments, particularly those involving calcium imaging, precise data reconstruction is paramount. Derotation is designed to address this need, reconstructing the imaging data from experiments where the sample undergoes known rotational patterns.
 
 ### Experimental Protocol

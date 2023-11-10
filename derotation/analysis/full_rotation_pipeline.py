@@ -1,4 +1,3 @@
-import copy
 import logging
 import sys
 from pathlib import Path
@@ -8,13 +7,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import tifffile as tiff
-import tqdm
 import yaml
 from fancylog import fancylog
-from scipy.ndimage import rotate
 from scipy.signal import find_peaks
 from tifffile import imsave
 
+from derotation.derotate_by_line import rotate_an_image_array_line_by_line
 from derotation.load_data.custom_data_loaders import (
     get_analog_signals,
     read_randomized_stim_table,
@@ -723,16 +721,16 @@ class FullPipeline:
         by line calculated from the analog signals.
 
         Description of the algorithm:
-        - for each line, it takes the line from the image stack
-        - it creates a new image with only the line
-        - it rotates the line by the corresponding angle
-        - it substitutes the line in the new image
-        - it adds the new image to the rotated image stack
+        - takes one line from the image stack
+        - creates a new image with only that line
+        - rotates the line by the given angle
+        - substitutes the line in the new image
+        - adds the new image to the rotated image stack
 
         Edge cases and how they are handled:
-        - the rotation starts in the middle of the image -> the first lines
+        - the rotation starts in the middle of the image -> the previous lines
         are copied from the first frame
-        - the rotation ends in the middle of the image -> the last lines
+        - the rotation ends in the middle of the image -> the remaining lines
         are copied from the last frame
 
         Returns
@@ -742,78 +740,10 @@ class FullPipeline:
         """
         logging.info("Starting derotation by line...")
 
-        rotated_image_stack = copy.deepcopy(self.image_stack)
-        previous_image_completed = True
-        rotation_completed = True
-
-        min_value_img = np.min(self.image_stack)
-
-        for i, rotation in tqdm.tqdm(
-            enumerate(self.rot_deg_line), total=len(self.rot_deg_line)
-        ):
-            line_counter = i % self.num_lines_per_frame
-            image_counter = i // self.num_lines_per_frame
-
-            is_rotating = np.absolute(rotation) > 0.00001
-            image_scanning_completed = line_counter == (
-                self.num_lines_per_frame - 1
-            )
-            if i == 0:
-                rotation_just_finished = False
-            else:
-                rotation_just_finished = not is_rotating and (
-                    np.absolute(self.rot_deg_line[i - 1])
-                    > np.absolute(rotation)
-                )
-
-            if is_rotating:
-                if rotation_completed and (line_counter != 0):
-                    # when starting a new rotation in the middle of the image
-                    rotated_filled_image = (
-                        np.ones_like(self.image_stack[image_counter])
-                        * min_value_img
-                    )  # non sampled pixels are set to the min val of the image
-                    rotated_filled_image[:line_counter] = self.image_stack[
-                        image_counter
-                    ][:line_counter]
-                elif previous_image_completed:
-                    rotated_filled_image = (
-                        np.ones_like(self.image_stack[image_counter])
-                        * min_value_img
-                    )
-
-                rotation_completed = False
-
-                img_with_new_lines = self.image_stack[image_counter]
-                line = img_with_new_lines[line_counter]
-
-                image_with_only_line = np.zeros_like(img_with_new_lines)
-                image_with_only_line[line_counter] = line
-
-                rotated_line = rotate(
-                    image_with_only_line,
-                    rotation,
-                    reshape=False,
-                    order=0,
-                    mode="constant",
-                )
-
-                rotated_filled_image = np.where(
-                    rotated_line == 0, rotated_filled_image, rotated_line
-                )
-                previous_image_completed = False
-            if (
-                image_scanning_completed and not rotation_completed
-            ) or rotation_just_finished:
-                if rotation_just_finished:
-                    rotation_completed = True
-
-                    rotated_filled_image[
-                        line_counter + 1 :
-                    ] = self.image_stack[image_counter][line_counter + 1 :]
-
-                rotated_image_stack[image_counter] = rotated_filled_image
-                previous_image_completed = True
+        rotated_image_stack = rotate_an_image_array_line_by_line(
+            self.image_stack,
+            self.rot_deg_line,
+        )
 
         logging.info("✨ Image stack rotated ✨")
         return rotated_image_stack

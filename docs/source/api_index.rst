@@ -4,13 +4,13 @@ API
 Full derotation
 ---------------
 
-.. currentmodule:: derotation.analysis.derotation_pipeline
+.. currentmodule:: derotation.analysis.full_rotation_pipeline
 
-.. autoclass:: DerotationPipeline
+.. autoclass:: FullPipeline
 
 Incremental derotation
 ----------------------
 
-.. currentmodule:: derotation.analysis.derotate_incremental_rotations
+.. currentmodule:: derotation.analysis.incremental_rotation_pipeline
 
-.. autoclass:: DerotateIncremental
+.. autoclass:: IncrementalPipeline

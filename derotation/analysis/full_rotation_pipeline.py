@@ -843,7 +843,6 @@ class FullPipeline:
             columns=[
                 "frame",
                 "rotation_angle",
-                "rotation_on",
                 "clock",
             ]
         )
@@ -851,6 +850,29 @@ class FullPipeline:
         df["frame"] = np.arange(self.num_frames)
         df["rotation_angle"] = self.rot_deg_frame[: self.num_frames]
         df["clock"] = self.frame_start[: self.num_frames]
+
+        df["direction"] = np.nan * np.ones(len(df))
+        df["speed"] = np.nan * np.ones(len(df))
+        df["rotation_count"] = np.nan * np.ones(len(df))
+
+        rotation_counter = 0
+        adding_roatation = False
+        for i in range(len(df)):
+            row = df.loc[i]
+            if np.abs(row["rotation_angle"]) > 0.0:
+                adding_roatation = True
+                row["direction"] = self.direction[rotation_counter]
+                row["speed"] = self.speed[rotation_counter]
+                row["rotation_count"] = rotation_counter
+
+                df.loc[i] = row
+            if (
+                rotation_counter < 79
+                and adding_roatation
+                and np.abs(df.loc[i + 1, "rotation_angle"]) == 0.0
+            ):
+                rotation_counter += 1
+                adding_roatation = False
 
         df.to_csv(
             self.config["paths_write"]["derotated_tiff_folder"]

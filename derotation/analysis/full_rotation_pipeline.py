@@ -201,6 +201,9 @@ class FullPipeline:
             ) = self.adjust_rotation_increment()
 
         self.interpolated_angles = self.get_interpolated_angles()
+
+        self.remove_artifacts_from_interpolated_angles()
+
         (
             self.line_start,
             self.line_end,
@@ -516,6 +519,7 @@ class FullPipeline:
             self.rotation_ticks_peaks[1:],
         )
 
+        # interpolate between the ticks
         for i, (start, stop) in enumerate(zip(starts, stops)):
             if cumulative_sum_to360[i + 1] < cumulative_sum_to360[i]:
                 cumulative_sum_to360[i] = 0
@@ -530,6 +534,32 @@ class FullPipeline:
         interpolated_angles = interpolated_angles * self.rotation_on
 
         return interpolated_angles
+
+    def remove_artifacts_from_interpolated_angles(self):
+        """Removes artifacts from the interpolated angles, coming from
+        an inconsistency between the number of ticks and cumulative sum.
+        These artifacts appear as very brief rotation periods that are not
+        plausible given the experimental setup.
+        """
+        logging.info("Cleaning interpolated angles...")
+
+        # find very short rotation periods in self.interpolated_angles
+
+        thresholded = np.zeros_like(self.interpolated_angles)
+        thresholded[np.abs(self.interpolated_angles) > 0.15] = 1
+        rotation_start = np.where(np.diff(thresholded) > 0)[0]
+        rotation_end = np.where(np.diff(thresholded) < 0)[0]
+
+        assert len(rotation_start) == len(rotation_end)
+        assert len(rotation_start) == self.number_of_rotations
+
+        for i, (start, end) in enumerate(
+            zip(rotation_start[1:], rotation_end[:-1])
+        ):
+            self.interpolated_angles[end:start] = 0
+
+        self.interpolated_angles[: rotation_start[0]] = 0
+        self.interpolated_angles[rotation_end[-1] :] = 0
 
     def calculate_angles_by_line_and_frame(
         self,

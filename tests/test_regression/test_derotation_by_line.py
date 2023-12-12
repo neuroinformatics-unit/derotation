@@ -57,7 +57,7 @@ def test_rotation_by_line(image_stack, n_lines, n_total_lines, len_stack):
         for i, image in enumerate(rotated_images):
             target_image = Image.open(
                 "tests/test_regression/images/"
-                + f"{kind}_rotation/rotated_lenna_{i + 1}.png"
+                + f"{kind}_rotation/rotated_dog_{i + 1}.png"
             )
             target_image = np.array(target_image.convert("L"))
             assert np.allclose(

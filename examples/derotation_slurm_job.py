@@ -9,6 +9,10 @@ from derotation.analysis.incremental_rotation_pipeline import (
     IncrementalPipeline,
 )
 
+# =====================================================================
+# Set up the config files
+# =====================================================================
+
 job_id = int(sys.argv[1:][0])
 dataset_path = sys.argv[1:][1]
 datasets = [path for path in os.listdir(dataset_path) if path.startswith("23")]
@@ -30,7 +34,6 @@ image_files = [
 full_rotation_image = [file for file in image_files if "rotation_0" in file][0]
 incremental_image = [file for file in image_files if "increment_0" in file][0]
 
-#  make debug_plots and logs and derotated folder in dataset
 Path(f"{dataset_path}/{dataset}/debug_plots_incremental/").mkdir(
     parents=True, exist_ok=True
 )
@@ -78,8 +81,13 @@ for config_name in ["incremental_rotation", "full_rotation"]:
         yaml.dump(config, f)
 
 
-derotate = IncrementalPipeline(f"incremental_rotation_{job_id}")
-derotate()
+# =====================================================================
+# Run the pipeline
+# =====================================================================
+
+derotate_incremental = IncrementalPipeline(f"incremental_rotation_{job_id}")
+derotate_incremental()
 
 derotate_full = FullPipeline(f"full_rotation_{job_id}")
+derotate_full.mask_diameter = derotate_incremental.new_diameter
 derotate_full()

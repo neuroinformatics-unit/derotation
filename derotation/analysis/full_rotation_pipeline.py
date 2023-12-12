@@ -1,3 +1,4 @@
+import copy
 import logging
 import sys
 from pathlib import Path
@@ -57,7 +58,7 @@ class FullPipeline:
         self.contrast_enhancement()
         self.process_analog_signals()
         rotated_images = self.rotate_frames_line_by_line()
-        masked = self.add_circle_mask(rotated_images)
+        masked = self.add_circle_mask(rotated_images, self.mask_diameter)
         self.save(masked)
         self.save_csv_with_derotation_data()
 
@@ -127,6 +128,7 @@ class FullPipeline:
         self.num_frames = self.image_stack.shape[0]
         self.num_lines_per_frame = self.image_stack.shape[1]
         self.num_total_lines = self.num_frames * self.num_lines_per_frame
+        self.mask_diameter = copy.deepcopy(self.num_lines_per_frame)
 
         self.direction, self.speed = read_randomized_stim_table(
             self.config["paths_read"]["path_to_randperm"]

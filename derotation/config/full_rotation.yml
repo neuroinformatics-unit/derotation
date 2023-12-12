@@ -17,12 +17,14 @@ channel_names: [
     "PI_rotON",
     "PI_rotticks",
 ]
-rotation_increment: 0.2
 
+rotation_increment: 0.2
 adjust_increment: True
 rot_deg: 360
 
 debugging_plots: True
+
+contrast_enhancment: 0.35
 
 analog_signals_processing:
   find_rotation_ticks_peaks:
@@ -30,6 +32,7 @@ analog_signals_processing:
     distance: 20
   squared_pulse_k: 0
   inter_rotation_interval_min_len: 1000
+  angle_interpolation_artifact_threshold: 0.15
 
 interpolation:
   line_use_start: True

@@ -175,7 +175,9 @@ class FullPipeline:
 
         self.image_stack = np.array(
             [
-                self.contrast_enhancement_single_image(img)
+                self.contrast_enhancement_single_image(
+                    img, self.config["contrast_enhancement"]
+                )
                 for img in self.image_stack
             ]
         )
@@ -585,6 +587,9 @@ class FullPipeline:
 
         # find very short rotation periods in self.interpolated_angles
 
+        self.config["analog_signals_processing"][
+            "angle_interpolation_artifact_threshold"
+        ]
         thresholded = np.zeros_like(self.interpolated_angles)
         thresholded[np.abs(self.interpolated_angles) > 0.15] = 1
         rotation_start = np.where(np.diff(thresholded) > 0)[0]

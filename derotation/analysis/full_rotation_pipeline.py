@@ -10,6 +10,7 @@ import tifffile as tiff
 import yaml
 from fancylog import fancylog
 from scipy.signal import find_peaks
+from skimage.exposure import rescale_intensity
 from tifffile import imsave
 
 from derotation.derotate_by_line import rotate_an_image_array_line_by_line
@@ -46,11 +47,13 @@ class FullPipeline:
         """Execute the steps necessary to derotate the image stack
         from start to finish.
         It involves:
+        - contrast enhancement
         - processing the analog signals
         - rotating the image stack line by line
         - adding a circular mask to the rotated image stack
         - saving the masked image stack
         """
+        self.contrast_enhancement()
         self.process_analog_signals()
         rotated_images = self.rotate_frames_line_by_line()
         masked = self.add_circle_mask(rotated_images)
@@ -163,6 +166,43 @@ class FullPipeline:
 
         logging.info(f"Dataset {self.filename_raw} loaded")
         logging.info(f"Filename: {self.filename}")
+
+    def contrast_enhancement(self):
+        """Applies contrast enhancement to the image stack.
+        It is useful to visualize the image stack before derotation.
+        """
+        logging.info("Applying contrast enhancement...")
+
+        self.image_stack = np.array(
+            [
+                self.contrast_enhancement_single_image(img)
+                for img in self.image_stack
+            ]
+        )
+
+    @staticmethod
+    def contrast_enhancement_single_image(
+        img: np.ndarray, saturated_percentage=0.35
+    ) -> np.ndarray:
+        """Applies contrast enhancement to a single image.
+        It is useful to visualize the image stack before derotation.
+
+        Parameters
+        ----------
+        img : np.ndarray
+            The image to enhance.
+        saturated_percentage : float, optional
+            The percentage of saturated pixels, by default 0.35
+
+        Returns
+        -------
+        np.ndarray
+            The enhanced image.
+        """
+        v_min, v_max = np.percentile(
+            img, (saturated_percentage, 100 - saturated_percentage)
+        )
+        return rescale_intensity(img, in_range=(v_min, v_max))
 
     def process_analog_signals(self):
         """From the analog signals (frame clock, line clock, full rotation,

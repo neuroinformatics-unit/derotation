@@ -4,7 +4,7 @@ from PIL import Image
 
 from derotation.analysis.full_rotation_pipeline import FullPipeline
 
-lenna = Image.open("tests/test_regression/images/lenna.png").convert("L")
+dog = Image.open("images/dog.png").convert("L")
 
 
 @pytest.fixture
@@ -14,7 +14,7 @@ def len_stack():
 
 @pytest.fixture
 def image_stack(len_stack):
-    image_stack = np.array([np.array(lenna) for _ in range(len_stack)])
+    image_stack = np.array([np.array(dog) for _ in range(len_stack)])
     return image_stack
 
 
@@ -63,3 +63,32 @@ def test_rotation_by_line(image_stack, n_lines, n_total_lines, len_stack):
             assert np.allclose(
                 image, target_image, atol=1
             ), f"Failed for {kind} rotation, image {i + 1}"
+
+
+def regenerate_images_for_testing(image_stack, n_lines, n_total_lines):
+    pipeline = FullPipeline.__new__(FullPipeline)
+    pipeline.image_stack = image_stack
+
+    for kind in ["uniform", "sinusoidal"]:
+        pipeline.rot_deg_line = get_angles(kind, n_lines, n_total_lines)
+        pipeline.num_lines_per_frame = n_lines
+
+        rotated_images = pipeline.rotate_frames_line_by_line()
+
+        for i, image in enumerate(rotated_images):
+            image = Image.fromarray(image.astype("uint8"))
+            image.save(
+                "tests/test_regression/images/"
+                + f"{kind}_rotation/rotated_dog_{i + 1}.png"
+            )
+
+
+if __name__ == "__main__":
+    # Please comment the fixture decorators in order to regenerate the images
+
+    stack_len = 10
+    stack = image_stack(stack_len)
+    lines_n = stack.shape[1]
+    total_lines = stack.shape[0] * lines_n
+
+    regenerate_images_for_testing(stack, lines_n, total_lines)

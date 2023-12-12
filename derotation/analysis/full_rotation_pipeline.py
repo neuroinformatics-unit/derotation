@@ -11,6 +11,7 @@ import yaml
 from fancylog import fancylog
 from scipy.signal import find_peaks
 from skimage.exposure import rescale_intensity
+from sklearn.mixture import GaussianMixture
 from tifffile import imsave
 
 from derotation.derotate_by_line import rotate_an_image_array_line_by_line
@@ -808,6 +809,10 @@ class FullPipeline:
         - the rotation ends in the middle of the image -> the remaining lines
         are copied from the last frame
 
+        Before derotation, it finds the image offset, which is the peak of
+        the gaussian mixture model fitted to the image histogram. It is
+        useful to fill in the blank pixels that appear during the derotation.
+
         Returns
         -------
         np.ndarray
@@ -815,13 +820,36 @@ class FullPipeline:
         """
         logging.info("Starting derotation by line...")
 
+        offset = self.find_image_offset(self.image_stack[0])
+
         rotated_image_stack = rotate_an_image_array_line_by_line(
             self.image_stack,
             self.rot_deg_line,
+            blank_pixels_value=offset,
         )
 
         logging.info("✨ Image stack rotated ✨")
         return rotated_image_stack
+
+    @staticmethod
+    def find_image_offset(img):
+        """Find the "F0", also called "image offset" for a given image.
+
+        Parameters
+        ----------
+        img : np.ndarray
+            The image for which you want to find the offset.
+
+        Returns
+        -------
+        float
+            The offset.
+        """
+        gm = GaussianMixture(n_components=7, random_state=0).fit(
+            img[0].reshape(-1, 1)
+        )
+        offset = np.min(gm.means_)
+        return offset
 
     @staticmethod
     def add_circle_mask(

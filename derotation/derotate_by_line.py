@@ -8,6 +8,7 @@ from scipy.ndimage import rotate
 def rotate_an_image_array_line_by_line(
     image_stack: np.ndarray,
     rot_deg_line: np.ndarray,
+    blank_pixels_value: float = 0,
 ) -> np.ndarray:
     """Rotates the image stack line by line, using the rotation angles
     provided.
@@ -43,8 +44,6 @@ def rotate_an_image_array_line_by_line(
     previous_image_completed = True
     rotation_completed = True
 
-    min_value_img = np.min(image_stack)
-
     for i, rotation in tqdm.tqdm(
         enumerate(rot_deg_line), total=len(rot_deg_line)
     ):
@@ -64,14 +63,16 @@ def rotate_an_image_array_line_by_line(
             if rotation_completed and (line_counter != 0):
                 # when starting a new rotation in the middle of the image
                 rotated_filled_image = (
-                    np.ones_like(image_stack[image_counter]) * min_value_img
+                    np.ones_like(image_stack[image_counter])
+                    * blank_pixels_value
                 )  # non sampled pixels are set to the min val of the image
                 rotated_filled_image[:line_counter] = image_stack[
                     image_counter
                 ][:line_counter]
             elif previous_image_completed:
                 rotated_filled_image = (
-                    np.ones_like(image_stack[image_counter]) * min_value_img
+                    np.ones_like(image_stack[image_counter])
+                    * blank_pixels_value
                 )
 
             rotation_completed = False

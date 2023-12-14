@@ -116,7 +116,7 @@ class FullPipeline:
             * rotation ticks: peaks at every given increment of rotation
 
         The data is loaded using the custom_data_loaders module, which are
-        sepecific to the setup used in the lab. Please edit them to load
+        specific to the setup used in the lab. Please edit them to load
         data from your setup.
         """
         logging.info("Loading data...")

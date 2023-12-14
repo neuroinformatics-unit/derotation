@@ -86,7 +86,7 @@ class FullPipeline:
 
     def start_logging(self):
         """Starts logging process using fancylog package.
-        Logs saved whenre specified in the config file.
+        Logs saved where specified in the config file.
         """
         path = self.config["paths_write"]["logs_folder"]
         Path(path).mkdir(parents=True, exist_ok=True)

@@ -18,19 +18,12 @@ img_rotated = rotate_an_image_array_line_by_line(img_stack, rotation_angles)
 
 fig, ax = plt.subplots(1, 4, figsize=(10, 5))
 
-ax[0].imshow(img, cmap="gray")
-ax[0].set_title("Original image")
-ax[1].imshow(img_rotated[0], cmap="gray")
-ax[1].set_title("Rotated image 1")
-ax[2].imshow(img_rotated[1], cmap="gray")
-ax[2].set_title("Rotated image 2")
-ax[3].imshow(img_rotated[2], cmap="gray")
-ax[3].set_title("Rotated image 3")
-
-ax[0].axis("off")
-ax[1].axis("off")
-ax[2].axis("off")
-ax[3].axis("off")
+image_names = ["Original image"] + [f"Rotated image {i}" for i in range(1, 4)]
+images_to_plot = [img] + [img_rotated[i] for i in range(3)]
+for i, image_name in enumerate(image_names):
+    ax[i].imshow(images_to_plot[i], cmap="gray")
+    ax[i].set_title(image_name)
+    ax[i].axis("off")
 
 plt.show()
 plt.close()

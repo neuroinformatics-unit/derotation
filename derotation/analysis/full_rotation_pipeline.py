@@ -971,10 +971,9 @@ class FullPipeline:
         df["rotation_angle"] = self.rot_deg_frame[: self.num_frames]
         df["clock"] = self.frame_start[: self.num_frames]
 
-        df["direction"] = np.nan * np.ones(len(df))
-        df["speed"] = np.nan * np.ones(len(df))
-        df["rotation_count"] = np.nan * np.ones(len(df))
-
+        df["direction"] = np.nan
+        df["speed"] = np.nan
+        df["rotation_count"] = np.nan
         rotation_counter = 0
         adding_roatation = False
         for i, row in df.iterrows():

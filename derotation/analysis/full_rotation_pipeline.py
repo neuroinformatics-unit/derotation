@@ -323,8 +323,8 @@ class FullPipeline:
         thresholded_signal = np.zeros_like(signal)
         thresholded_signal[signal > threshold] = 1
 
-        start = np.where(np.diff(thresholded_signal) > 0)[0]
-        end = np.where(np.diff(thresholded_signal) < 0)[0]
+        start = np.nonzero(np.diff(thresholded_signal) > 0)[0]
+        end = np.nonzero(np.diff(thresholded_signal) < 0)[0]
 
         return start, end
 
@@ -428,7 +428,7 @@ class FullPipeline:
 
         self.rotation_ticks_peaks = np.delete(
             self.rotation_ticks_peaks,
-            np.where(
+            np.nonzero(
                 np.isin(self.rotation_ticks_peaks, inter_roatation_interval)
             ),
         )
@@ -504,7 +504,7 @@ class FullPipeline:
         int
             The number of ticks in the rotation.
         """
-        return np.where(
+        return np.nonzero(
             np.logical_and(
                 self.rotation_ticks_peaks >= start,
                 self.rotation_ticks_peaks <= end,
@@ -595,8 +595,8 @@ class FullPipeline:
         ]
         thresholded = np.zeros_like(self.interpolated_angles)
         thresholded[np.abs(self.interpolated_angles) > 0.15] = 1
-        rotation_start = np.where(np.diff(thresholded) > 0)[0]
-        rotation_end = np.where(np.diff(thresholded) < 0)[0]
+        rotation_start = np.nonzero(np.diff(thresholded) > 0)[0]
+        rotation_end = np.nonzero(np.diff(thresholded) < 0)[0]
 
         assert len(rotation_start) == len(rotation_end)
         assert len(rotation_start) == self.number_of_rotations
@@ -653,7 +653,7 @@ class FullPipeline:
         int
             The index of the line
         """
-        return np.where(self.line_start < clock_time)[0][-1]
+        return np.nonzero(self.line_start < clock_time)[0][-1]
 
     def clock_to_latest_frame_start(self, clock_time: int) -> int:
         """Get the index of the frame that is being acquired at the given clock
@@ -669,7 +669,7 @@ class FullPipeline:
         int
             The index of the frame
         """
-        return np.where(self.frame_start < clock_time)[0][-1]
+        return np.nonzero(self.frame_start < clock_time)[0][-1]
 
     def clock_to_latest_rotation_start(self, clock_time: int) -> int:
         """Get the index of the latest rotation that happened.
@@ -684,7 +684,7 @@ class FullPipeline:
         int
             The index of the latest rotation
         """
-        return np.where(self.rot_blocks_idx["start"] < clock_time)[0][-1]
+        return np.nonzero(self.rot_blocks_idx["start"] < clock_time)[0][-1]
 
     def plot_rotation_on_and_ticks(self):
         """Plots the rotation ticks and the rotation on signal.
@@ -741,7 +741,7 @@ class FullPipeline:
         speeds = set(self.speed)
 
         last_idx_for_each_speed = [
-            np.where(self.speed == s)[0][-1] for s in speeds
+            np.nonzero(self.speed == s)[0][-1] for s in speeds
         ]
         last_idx_for_each_speed = sorted(last_idx_for_each_speed)
 

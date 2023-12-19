@@ -4,7 +4,9 @@ from pathlib import Path
 from typing import Dict, Tuple
 
 import numpy as np
+import pandas as pd
 from matplotlib import pyplot as plt
+from numpy import ndarray
 from scipy.ndimage import rotate
 from tqdm import tqdm
 
@@ -57,6 +59,19 @@ class IncrementalPipeline(FullPipeline):
 
         self.save(masked)
         self.save_csv_with_derotation_data()
+
+    def create_signed_rotation_array(self) -> ndarray:
+        logging.info("Creating signed rotation array...")
+        rotation_on = np.zeros(self.total_clock_time)
+        for i, (start, end) in enumerate(
+            zip(
+                self.rot_blocks_idx["start"],
+                self.rot_blocks_idx["end"],
+            )
+        ):
+            rotation_on[start:end] = np.ones(end - start) * -1  # -1
+
+        return rotation_on
 
     def is_number_of_ticks_correct(self) -> bool:
         """Overwrite the method from the parent class to check if the number
@@ -192,6 +207,24 @@ class IncrementalPipeline(FullPipeline):
                 + f"Number of angles: {len(self.rot_deg_frame)}\n"
                 + f"Number of frames: {self.num_frames}"
             )
+
+    def check_rotation_number(self, start: np.ndarray, end: np.ndarray):
+        """Checks that the number of rotations is as expected.
+
+        Raises
+        ------
+        ValueError
+            if the number of start and end of rotations is different
+        ValueError
+            if the number of rotations is not as expected
+        """
+
+        if start.shape[0] != end.shape[0]:
+            raise ValueError(
+                "Start and end of rotations have different lengths"
+            )
+        if start.shape[0] != 1:
+            raise ValueError("Number of rotations is not as expected")
 
     def plot_rotation_angles(self):
         """Plots example rotation angles by line and frame for each speed.
@@ -371,3 +404,27 @@ class IncrementalPipeline(FullPipeline):
         registered_images = np.array(registered_images)
 
         return registered_images
+
+    def save_csv_with_derotation_data(self):
+        """Saves a csv file with the rotation angles by line and frame,
+        and the rotation on signal.
+        It is saved in the saving folder specified in the config file.
+        """
+        df = pd.DataFrame(
+            columns=[
+                "frame",
+                "rotation_angle",
+                "clock",
+            ]
+        )
+
+        df["frame"] = np.arange(self.num_frames)
+        df["rotation_angle"] = self.rot_deg_frame[: self.num_frames]
+        df["clock"] = self.frame_start[: self.num_frames]
+
+        df.to_csv(
+            self.config["paths_write"]["derotated_tiff_folder"]
+            + self.config["paths_write"]["saving_name"]
+            + ".csv",
+            index=False,
+        )

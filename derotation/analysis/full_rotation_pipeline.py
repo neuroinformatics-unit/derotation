@@ -228,9 +228,7 @@ class FullPipeline:
 
         self.rotation_ticks_peaks = self.find_rotation_peaks()
 
-        start, end = self.get_start_end_times_with_threshold(
-            self.full_rotation, self.k
-        )
+        start, end = self.get_start_end_times(self.full_rotation, self.k)
         self.rot_blocks_idx = self.correct_start_and_end_rotation_signal(
             start, end
         )
@@ -252,11 +250,11 @@ class FullPipeline:
         (
             self.line_start,
             self.line_end,
-        ) = self.get_start_end_times_with_threshold(self.line_clock, self.k)
+        ) = self.get_start_end_times(self.line_clock, self.k)
         (
             self.frame_start,
             self.frame_end,
-        ) = self.get_start_end_times_with_threshold(self.frame_clock, self.k)
+        ) = self.get_start_end_times(self.frame_clock, self.k)
 
         (
             self.rot_deg_line,
@@ -297,7 +295,7 @@ class FullPipeline:
         return peaks
 
     @staticmethod
-    def get_start_end_times_with_threshold(
+    def get_start_end_times(
         signal: np.ndarray, k: float
     ) -> Tuple[np.ndarray, np.ndarray]:
         """Finds the start and end times of the on periods of the signal.
@@ -598,8 +596,7 @@ class FullPipeline:
         rotation_start = np.nonzero(np.diff(thresholded) > 0)[0]
         rotation_end = np.nonzero(np.diff(thresholded) < 0)[0]
 
-        assert len(rotation_start) == len(rotation_end)
-        assert len(rotation_start) == self.number_of_rotations
+        self.check_rotation_number(start=rotation_start, end=rotation_end)
 
         for i, (start, end) in enumerate(
             zip(rotation_start[1:], rotation_end[:-1])
@@ -608,6 +605,24 @@ class FullPipeline:
 
         self.interpolated_angles[: rotation_start[0]] = 0
         self.interpolated_angles[rotation_end[-1] :] = 0
+
+    def check_rotation_number(self, start: np.ndarray, end: np.ndarray):
+        """Checks that the number of rotations is as expected.
+
+        Raises
+        ------
+        ValueError
+            if the number of start and end of rotations is different
+        ValueError
+            if the number of rotations is not as expected
+        """
+
+        if start.shape[0] != end.shape[0]:
+            raise ValueError(
+                "Start and end of rotations have different lengths"
+            )
+        if start.shape[0] != self.number_of_rotations:
+            raise ValueError("Number of rotations is not as expected")
 
     def calculate_angles_by_line_and_frame(
         self,
@@ -962,19 +977,18 @@ class FullPipeline:
 
         rotation_counter = 0
         adding_roatation = False
-        for i in range(len(df)):
-            row = df.loc[i]
+        for i, row in df.iterrows():
             if np.abs(row["rotation_angle"]) > 0.0:
                 adding_roatation = True
                 row["direction"] = self.direction[rotation_counter]
                 row["speed"] = self.speed[rotation_counter]
                 row["rotation_count"] = rotation_counter
-
-                df.loc[i] = row
             if (
-                rotation_counter < 79
+                rotation_counter < self.number_of_rotations - 1
                 and adding_roatation
-                and np.abs(df.loc[i + 1, "rotation_angle"]) == 0.0
+                and np.isclose(
+                    np.abs(df.loc[i + 1, "rotation_angle"]), 0.0, 1e-3
+                )
             ):
                 rotation_counter += 1
                 adding_roatation = False

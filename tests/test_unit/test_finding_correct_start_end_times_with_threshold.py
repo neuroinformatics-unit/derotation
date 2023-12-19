@@ -10,9 +10,7 @@ def test_finding_correct_start_end_times_with_threshold(
     number_of_rotations: int,
     rotation_len: int,
 ):
-    start, end = derotation_pipeline.get_start_end_times_with_threshold(
-        full_rotation, k
-    )
+    start, end = derotation_pipeline.get_start_end_times(full_rotation, k)
 
     assert len(start) == len(end)
     assert start[0] < end[0]

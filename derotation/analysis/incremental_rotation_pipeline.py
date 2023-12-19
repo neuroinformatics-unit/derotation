@@ -47,7 +47,7 @@ class IncrementalPipeline(FullPipeline):
         shifts = self.get_shifts_using_phase_cross_correlation(
             mean_images, target_image
         )
-        x_fitted, y_fitted = self.polinomial_fit(shifts)
+        x_fitted, y_fitted = self.polynomial_fit(shifts)
         registered_images = self.register_rotated_images(
             masked_unregistered, x_fitted, y_fitted
         )
@@ -341,8 +341,8 @@ class IncrementalPipeline(FullPipeline):
 
         return shifts
 
-    def polinomial_fit(self, shifts: dict) -> Tuple[np.ndarray, np.ndarray]:
-        """Fit a polinomial to the shifts in order to get a smooth function
+    def polynomial_fit(self, shifts: dict) -> Tuple[np.ndarray, np.ndarray]:
+        """Fit a polynomial to the shifts in order to get a smooth function
         that can be used to register the images.
 
         Parameters
@@ -353,9 +353,9 @@ class IncrementalPipeline(FullPipeline):
         Returns
         -------
         Tuple[np.ndarray, np.ndarray]
-            The polinomial fit for x and y.
+            The polynomial fit for x and y.
         """
-        logging.info("Fitting polinomial to shifts...")
+        logging.info("Fitting polynomial to shifts...")
 
         shifts["x"].insert(0, 0)
         shifts["y"].insert(0, 0)
@@ -375,16 +375,16 @@ class IncrementalPipeline(FullPipeline):
         x_fitted: np.ndarray,
         y_fitted: np.ndarray,
     ) -> np.ndarray:
-        """Register the rotated images using the polinomial fit.
+        """Register the rotated images using the polynomial fit.
 
         Parameters
         ----------
         rotated_image_stack : np.ndarray
             The rotated image stack.
         x_fitted : np.ndarray
-            The polinomial fit for x.
+            The polynomial fit for x.
         y_fitted : np.ndarray
-            The polinomial fit for y.
+            The polynomial fit for y.
 
         Returns
         -------

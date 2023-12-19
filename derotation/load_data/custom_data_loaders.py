@@ -1,8 +1,27 @@
+# These functions are used to load data from the custom data format used in the
+# experiments. The data is saved by Matlab scripts that are not included in
+# this repository.
+# The idea is that these functions can be re-written if the preprocessing in
+# Matlab is changed or if the experimental setup is changed.
+
 import numpy as np
 from scipy.io import loadmat
 
 
-def read_randomized_stim_table(path_to_randperm):
+def read_randomized_stim_table(path_to_randperm: str) -> tuple:
+    """Read the randomized stimulus table used in the experiments.
+    It contains the direction and speed of rotation for each trial.
+
+    Parameters
+    ----------
+    path_to_randperm : str
+        Path to the randomized stimulus table.
+
+    Returns
+    -------
+    tuple
+        Tuple containing the direction and speed of rotation for each trial.
+    """
     pseudo_random = loadmat(path_to_randperm)
     full_rotation_blocks_direction = pseudo_random["stimulus_random"][:, 2] > 0
     direction = np.where(
@@ -14,25 +33,45 @@ def read_randomized_stim_table(path_to_randperm):
     return direction, speed
 
 
-def read_rc2_bin(path_aux, chan_names):
-    n_channels = len(chan_names)
+def convert_to_volts(data: np.ndarray) -> np.ndarray:
+    """Convert 16-bit integer to volts between -10 and 10.
 
-    # Read binary data saved by rc2 (int16)
-    # Channels along the columns, samples along the rows.
-    data = np.fromfile(path_aux, dtype=np.int16)
-    data = data.reshape((-1, n_channels))
+    Parameters
+    ----------
+    data : np.ndarray
+        Data from the binary file.
 
-    # Transform the data.
-    # Convert 16-bit integer to volts between -10 and 10.
+    Returns
+    -------
+    np.ndarray
+        Data in volts.
+    """
     data = -10 + 20 * (data + 2**15) / 2**16
+    return data
 
-    return data, chan_names
 
+def get_analog_signals(path_to_aux: str, channel_names: list) -> tuple:
+    """Read the analog signals: frame clock, line clock, full rotation and
+    rotation ticks.
 
-def get_analog_signals(path_to_aux, channel_names):
-    data, chan_names = read_rc2_bin(path_to_aux, channel_names)
+    Parameters
+    ----------
+    path_to_aux : str
+        Path to the binary file.
+    channel_names : list
+        Names of the channels in the binary file.
 
-    data_dict = {chan: data[:, i] for i, chan in enumerate(chan_names)}
+    Returns
+    -------
+    tuple
+        _description_
+    """
+
+    data = np.fromfile(path_to_aux, dtype=np.int16)
+    data = data.reshape((-1, len(channel_names)))
+    data = convert_to_volts(data)
+
+    data_dict = {chan: data[:, i] for i, chan in enumerate(channel_names)}
 
     frame_clock = data_dict["scanimage_frameclock"]
     line_clock = data_dict["scanimage_lineclock"]

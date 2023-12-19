@@ -102,7 +102,7 @@ def direction():
 
 
 @pytest.fixture
-def k():
+def std_coef():
     return 0.2
 
 

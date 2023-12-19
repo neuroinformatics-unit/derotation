@@ -160,7 +160,9 @@ class FullPipeline:
         ).stem.split(".")[0]
         self.filename = self.config["paths_write"]["saving_name"]
 
-        self.k = self.config["analog_signals_processing"]["squared_pulse_k"]
+        self.std_coef = self.config["analog_signals_processing"][
+            "squared_pulse_k"
+        ]
         self.inter_rotation_interval_min_len = self.config[
             "analog_signals_processing"
         ]["inter_rotation_interval_min_len"]
@@ -296,7 +298,7 @@ class FullPipeline:
 
     @staticmethod
     def get_start_end_times(
-        signal: np.ndarray, k: float
+        signal: np.ndarray, std_coef: float
     ) -> Tuple[np.ndarray, np.ndarray]:
         """Finds the start and end times of the on periods of the signal.
         Works for analog signals that have a squared pulse shape.
@@ -316,7 +318,7 @@ class FullPipeline:
 
         mean = np.mean(signal)
         std = np.std(signal)
-        threshold = mean + k * std
+        threshold = mean + std_coef * std
 
         thresholded_signal = np.zeros_like(signal)
         thresholded_signal[signal > threshold] = 1

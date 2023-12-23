@@ -1,124 +1,119 @@
 from pathlib import Path
 
-import numpy as np
-import tifffile as tiff
-from matplotlib import pyplot as plt
-from read_binary import read_rc2_bin
-from scipy.io import loadmat
+from adjust_rotation_degrees import (
+    apply_new_rotations,
+    get_optimal_rotation_degs,
+)
+from analog_preprocessing import (
+    apply_rotation_direction,
+    check_number_of_rotations,
+    find_rotation_for_each_frame_from_motor,
+    get_missing_frames,
+    get_starting_and_ending_frames,
+    when_is_rotation_on,
+)
+from get_data import get_data
 from scipy.signal import find_peaks
 
-# Set aux and imaging locations and initialize dip image software
-rot_deg = 360
+from derotation.plots import (
+    analog_signals_overview_plots,
+    derotation_video_with_rotation_plot,
+    plot_drift_of_centroids,
+    threshold_boxplot,
+)
+from derotation.rotate_images import rotate_images
 
-path = Path("/Users/lauraporta/local_data/230327_pollen")
-
-path_tif = path / "imaging/runtest_00001.tif"
-path_aux = path / "aux_stim/202303271657_21_005.bin"
-path_config = "derotation/config.yml"
-path_randperm = path / "stimlus_randperm.mat"
-
-image = tiff.imread(path_tif)
-
-pseudo_random = loadmat(path_randperm)
-full_rotation_blocks_direction = pseudo_random["stimulus_random"][:, 2] > 0
-dir = np.ones(4)
-dir[full_rotation_blocks_direction[0:4]] = -1
-
-data, dt, chan_names, config = read_rc2_bin(path_aux, path_config)
-data_dict = {chan: data[:, i] for i, chan in enumerate(chan_names)}
-
-frame_clock = data_dict["scanimage_frameclock"]
-line_clock = data_dict["camera"]
-full_rotation = data_dict["PI_rotCW"]
-rotation_ticks = data_dict["Vistim_ttl"]
-#  0.2 deg for 1 tick
-
-#  find the starting/ending points of the frame_clock signal
-frames_start = np.where(np.diff(frame_clock) > 4)[0]
-frames_end = np.where(np.diff(frame_clock) < -4)[0]
-#  compare if the number of frames is the same as the length of tif file
-#  maybe take a percentile as threshold instead of 4
-
-#  find the peaks of the rot_tick2 signal
-rot_tick2_peaks = find_peaks(rotation_ticks, height=4)[0]
-#  exclude external ticks
-
-#  identify rotation blocks
-rotation_blocks = np.where(full_rotation > 4)
-
-#  assign to each block a number in order to identify the direction
-
-
-fig, ax = plt.subplots(4, 1, sharex=True)
-ax[0].plot(
+# ==============================================================================
+# PREPROCESSING PIPELINE FOR DEROTATION
+# ==============================================================================
+(
+    image,
     frame_clock,
-    label="frame clock",
-    color="black",
-    alpha=0.5,
-)
-# plot dots for starting and ending points of the frame_clock signal
-ax[0].plot(
-    frames_start,
-    frame_clock[frames_start],
-    linestyle="none",
-    marker="o",
-    color="red",
-    alpha=0.5,
-)
-ax[0].plot(
-    frames_end,
-    frame_clock[frames_end],
-    linestyle="none",
-    marker="o",
-    color="green",
-    alpha=0.5,
-)
-ax[1].plot(
     line_clock,
-    label="line clock",
-    color="red",
-    alpha=0.5,
-)
-ax[2].plot(
     full_rotation,
-    label="rot tick",
-    color="blue",
-    alpha=0.5,
-)
-ax[3].plot(
     rotation_ticks,
-    label="rot tick 2",
-    color="green",
-    alpha=0.5,
-    marker="o",
+    dt,
+    config,
+    direction,
+) = get_data(Path("/Users/laura/data/230327_pollen"))
+rot_deg = 360
+missing_frames, diffs = get_missing_frames(frame_clock)
+frames_start, frames_end, threshold = get_starting_and_ending_frames(
+    frame_clock, image
 )
-ax[3].plot(
-    rot_tick2_peaks,
-    # np.ones(len(rot_tick2_peaks)) * 5.2,
-    rotation_ticks[rot_tick2_peaks],
-    linestyle="none",
-    marker="*",
-    color="red",
-    alpha=0.5,
+#  find the peaks of the rot_tick2 signal
+rotation_ticks_peaks = find_peaks(
+    rotation_ticks,
+    height=4,
+    distance=20,
+)[0]
+
+check_number_of_rotations(rotation_ticks_peaks, direction, rot_deg, dt)
+rotation_on = when_is_rotation_on(full_rotation)
+rotation_on = apply_rotation_direction(rotation_on, direction)
+(
+    image_rotation_degree_per_frame,
+    signed_rotation_degrees,
+) = find_rotation_for_each_frame_from_motor(
+    frame_clock, rotation_ticks_peaks, rotation_on, frames_start
 )
 
 
-# set the initial x axis limits
-for axis in ax:
-    # axis.set_xlim(1610000, 1800000)
-    # axis.set_xlim(1680000, 1710000)
-    axis.spines["top"].set_visible(False)
-    axis.spines["right"].set_visible(False)
+# ==============================================================================
+# TRY TO OPTIMIZE THE ROTATION DEGREES
+# ==============================================================================
+opt_result, indexes, optimized_parameters = get_optimal_rotation_degs(
+    image, image_rotation_degree_per_frame
+)
+new_image_rotation_degree_per_frame = apply_new_rotations(
+    opt_result, image_rotation_degree_per_frame, indexes
+)
 
-#  set subplots titles
-ax[0].set_title("Frame clock (black) and starting/ending points (red/green)")
-ax[1].set_title("Line clock")
-ax[2].set_title("Full rotation info")
-ax[3].set_title("Rotation ticks, 0.2 deg for 1 tick (green), peaks (red)")
 
-#  plot title
-fig.suptitle("Frame clock and rotation ticks")
+# ==============================================================================
+# ROTATE THE IMAGE TO THE CORRECT POSITION
+# ==============================================================================
+(
+    rotated_image,
+    rotated_image_corrected,
+    centers,
+    centers_rotated,
+    centers_rotated_corrected,
+) = rotate_images(
+    image,
+    image_rotation_degree_per_frame,
+    new_image_rotation_degree_per_frame,
+)
 
-plt.show()
+# ==============================================================================
+# PLOTS
+# ==============================================================================
 
-print("test")
+centroid_fig = plot_drift_of_centroids(
+    centers, centers_rotated, centers_rotated_corrected
+)
+rotation_video_with_plot = derotation_video_with_rotation_plot(
+    rotated_image,
+    image,
+    rotated_image_corrected,
+    centers,
+    centers_rotated,
+    centers_rotated_corrected,
+    frames_start,
+    signed_rotation_degrees,
+    image_rotation_degree_per_frame,
+)
+
+boxplot = threshold_boxplot(diffs, threshold)
+
+analog_overview = analog_signals_overview_plots(
+    diffs,
+    frame_clock,
+    frames_start,
+    frames_end,
+    line_clock,
+    full_rotation,
+    rotation_on,
+    rotation_ticks,
+    rotation_ticks_peaks,
+)

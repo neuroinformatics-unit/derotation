@@ -1,25 +1,16 @@
 API
-===
+====
 
-math
-----
+Full derotation
+---------------
 
-.. currentmodule:: derotation.math
+.. currentmodule:: derotation.analysis.full_rotation_pipeline
 
-.. autosummary::
-    :toctree: api_generated
-    :template: function.rst
+.. autoclass:: FullPipeline
 
-    add_two_integers
-    subtract_two_integers
+Incremental derotation
+----------------------
 
-greetings
----------
+.. currentmodule:: derotation.analysis.incremental_rotation_pipeline
 
-.. currentmodule:: derotation.greetings
-
-.. autosummary::
-    :toctree: api_generated
-    :template: class.rst
-
-    Greetings
+.. autoclass:: IncrementalPipeline

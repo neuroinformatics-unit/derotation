@@ -25,6 +25,7 @@ copyright = "2022, Laura Porta"
 author = "Laura Porta"
 try:
     release = setuptools_scm.get_version(root="../..", relative_to=__file__)
+    release = release.split("+")[0]
 except LookupError:
     # if git is not initialised, still allow local build
     # with a dummy version
@@ -34,15 +35,18 @@ except LookupError:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
-    "sphinx.ext.napoleon",
-    "sphinx.ext.autodoc",
     "sphinx.ext.githubpages",
-    "sphinx_autodoc_typehints",
+    "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
+    "sphinx.ext.napoleon",
     "myst_parser",
+    "numpydoc",
     "nbsphinx",
+    "sphinx_autodoc_typehints",
+    "sphinx_design",
+    "sphinxarg.ext",
 ]
 
 # Configure the myst parser to enable cool markdown features
@@ -70,7 +74,24 @@ templates_path = ["_templates"]
 
 # Automatically generate stub pages for API
 autosummary_generate = True
-autodoc_default_flags = ["members", "inherited-members"]
+numpydoc_class_members_toctree = False  # stops stubs warning
+#toc_object_entries_show_parents = "all"
+html_show_sourcelink = False
+
+#html_sidebars = {  this is not working...
+#  "index": [],
+#  "**": [],
+#}
+
+autodoc_default_options = {
+    'members': True,
+    "member-order": "bysource",
+    'special-members': False,
+    'private-members': False,
+    'inherited-members': False,
+    'undoc-members': True,
+    'exclude-members': "",
+}
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.

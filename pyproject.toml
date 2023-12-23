@@ -19,6 +19,20 @@ classifiers = [
     "License :: OSI Approved :: BSD License",
 ]
 
+dependencies = [
+    "numpy",
+    "tiffile",
+    "matplotlib",
+    "scipy",
+    "PyYAML",
+    "fancylog",
+    "matplotlib",
+    "pandas",
+    "tqdm",
+    "scikit-learn",
+    "scikit-image",
+]
+
 [project.urls]
 "Homepage" = "https://github.com/neuroinformatics-unit/derotation"
 "Bug Tracker" = "https://github.com/neuroinformatics-unit/derotation/issues"

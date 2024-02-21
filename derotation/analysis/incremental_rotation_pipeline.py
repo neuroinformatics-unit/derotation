@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Dict, Tuple
 
 import numpy as np
+import pandas as pd
 from matplotlib import pyplot as plt
 from scipy.ndimage import rotate
 from tqdm import tqdm
@@ -141,6 +142,52 @@ class IncrementalPipeline(FullPipeline):
 
         return interpolated_angles * -1
 
+    def plot_rotation_on_and_ticks(self):
+        """Plots the rotation ticks and the rotation on signal.
+        This plot will be saved in the debug_plots folder.
+        Please inspect it to check that the rotation ticks are correctly
+        placed during the times in which the motor is rotating.
+        """
+
+        logging.info("Plotting rotation ticks and rotation on signal...")
+
+        fig, ax = plt.subplots(1, 1, figsize=(20, 5))
+
+        ax.scatter(
+            self.rotation_ticks_peaks,
+            self.full_rotation[self.rotation_ticks_peaks]
+            / np.max(self.full_rotation),
+            label="rotation ticks",
+            marker="o",
+            alpha=0.5,
+            color="orange",
+        )
+
+        ax.plot(
+            self.full_rotation / np.max(self.full_rotation),
+            label="rotation ticks",
+            color="black",
+        )
+
+        ax.set_title("Rotation ticks and rotation on signal")
+
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+
+        Path(self.config["paths_write"]["debug_plots_folder"]).mkdir(
+            parents=True, exist_ok=True
+        )
+        plt.savefig(
+            Path(self.config["paths_write"]["debug_plots_folder"])
+            / "rotation_ticks_and_rotation_on.png"
+        )
+
+    def create_signed_rotation_array(self) -> np.ndarray:
+        pass
+
+    def remove_artifacts_from_interpolated_angles(self) -> np.ndarray:
+        pass
+
     def roatate_by_frame(self) -> np.ndarray:
         """Rotate the image stack by frame.
 
@@ -219,6 +266,9 @@ class IncrementalPipeline(FullPipeline):
         handles, labels = ax.get_legend_handles_labels()
         fig.legend(handles, labels, loc="upper right")
 
+        Path(self.config["paths_write"]["debug_plots_folder"]).mkdir(
+            parents=True, exist_ok=True
+        )
         plt.savefig(
             Path(self.config["paths_write"]["debug_plots_folder"])
             / "rotation_angles.png"
@@ -371,3 +421,31 @@ class IncrementalPipeline(FullPipeline):
         registered_images = np.array(registered_images)
 
         return registered_images
+
+    def save_csv_with_derotation_data(self):
+        """Saves a csv file with the rotation angles by line and frame,
+        and the rotation on signal.
+        It is saved in the saving folder specified in the config file.
+        """
+        df = pd.DataFrame(
+            columns=[
+                "frame",
+                "rotation_angle",
+                "clock",
+            ]
+        )
+
+        df["frame"] = np.arange(self.num_frames)
+        df["rotation_angle"] = self.rot_deg_frame[: self.num_frames]
+        df["clock"] = self.frame_start[: self.num_frames]
+
+        Path(self.config["paths_write"]["derotated_tiff_folder"]).mkdir(
+            parents=True, exist_ok=True
+        )
+
+        df.to_csv(
+            self.config["paths_write"]["derotated_tiff_folder"]
+            + self.config["paths_write"]["saving_name"]
+            + ".csv",
+            index=False,
+        )

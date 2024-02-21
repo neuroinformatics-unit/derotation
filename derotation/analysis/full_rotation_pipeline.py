@@ -723,6 +723,9 @@ class FullPipeline:
         ax.spines["top"].set_visible(False)
         ax.spines["right"].set_visible(False)
 
+        Path(self.config["paths_write"]["debug_plots_folder"]).mkdir(
+            parents=True, exist_ok=True
+        )
         plt.savefig(
             Path(self.config["paths_write"]["debug_plots_folder"])
             / "rotation_ticks_and_rotation_on.png"
@@ -789,6 +792,9 @@ class FullPipeline:
         handles, labels = ax.get_legend_handles_labels()
         fig.legend(handles, labels, loc="upper right")
 
+        Path(self.config["paths_write"]["debug_plots_folder"]).mkdir(
+            parents=True, exist_ok=True
+        )
         plt.savefig(
             Path(self.config["paths_write"]["debug_plots_folder"])
             / "rotation_angles.png"
@@ -932,6 +938,7 @@ class FullPipeline:
             The masked derotated image stack.
         """
         path = self.config["paths_write"]["derotated_tiff_folder"]
+        Path(path).mkdir(parents=True, exist_ok=True)
 
         imsave(
             path + self.config["paths_write"]["saving_name"] + ".tif",
@@ -978,6 +985,10 @@ class FullPipeline:
             ):
                 rotation_counter += 1
                 adding_roatation = False
+
+        Path(self.config["paths_write"]["derotated_tiff_folder"]).mkdir(
+            parents=True, exist_ok=True
+        )
 
         df.to_csv(
             self.config["paths_write"]["derotated_tiff_folder"]

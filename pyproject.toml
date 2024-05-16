@@ -29,6 +29,7 @@ dependencies = [
     "matplotlib",
     "pandas",
     "tqdm",
+    "scikit-image",
 ]
 
 [project.urls]

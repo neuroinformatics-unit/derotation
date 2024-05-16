@@ -47,7 +47,9 @@ class IncrementalPipeline(FullPipeline):
             mean_images, target_image
         )
         x_fitted, y_fitted = self.polinomial_fit(shifts)
-        self.register_rotated_images(masked_unregistered, x_fitted, y_fitted)
+        self.registered_images = self.register_rotated_images(
+            masked_unregistered, x_fitted, y_fitted
+        )
 
         self.new_diameter = self.num_lines_per_frame - 2 * max(
             max(np.abs(shifts["x"])), max(np.abs(shifts["y"]))

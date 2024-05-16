@@ -47,16 +47,15 @@ class IncrementalPipeline(FullPipeline):
             mean_images, target_image
         )
         x_fitted, y_fitted = self.polinomial_fit(shifts)
-        registered_images = self.register_rotated_images(
-            masked_unregistered, x_fitted, y_fitted
-        )
+        self.register_rotated_images(masked_unregistered, x_fitted, y_fitted)
 
         self.new_diameter = self.num_lines_per_frame - 2 * max(
             max(np.abs(shifts["x"])), max(np.abs(shifts["y"]))
         )
-        masked = self.add_circle_mask(registered_images, self.new_diameter)
-
-        self.save(masked)
+        self.masked = self.add_circle_mask(
+            self.registered_images, self.new_diameter
+        )
+        self.save(self.masked)
         self.save_csv_with_derotation_data()
 
     def is_number_of_ticks_correct(self) -> bool:

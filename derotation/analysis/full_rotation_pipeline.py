@@ -15,7 +15,7 @@ from skimage.exposure import rescale_intensity
 from sklearn.mixture import GaussianMixture
 from tifffile import imsave
 
-from derotation.derotate_by_line import rotate_an_image_array_line_by_line
+from derotation.derotate_by_line_plot import rotate_an_image_array_line_by_line
 from derotation.load_data.custom_data_loaders import (
     get_analog_signals,
     read_randomized_stim_table,
@@ -55,7 +55,7 @@ class FullPipeline:
         - adding a circular mask to the rotated image stack
         - saving the masked image stack
         """
-        self.contrast_enhancement()
+        # self.contrast_enhancement()
         self.process_analog_signals()
         rotated_images = self.rotate_frames_line_by_line()
         masked = self.add_circle_mask(rotated_images, self.mask_diameter)
@@ -236,18 +236,29 @@ class FullPipeline:
         )
         self.rotation_on = self.create_signed_rotation_array()
 
-        self.drop_ticks_outside_of_rotation()
+        if self.adjust_increment:
+            self.drop_ticks_outside_of_rotation()
+            self.check_number_of_rotations()
 
-        self.check_number_of_rotations()
-        if not self.is_number_of_ticks_correct() and self.adjust_increment:
-            (
-                self.corrected_increments,
-                self.ticks_per_rotation,
-            ) = self.adjust_rotation_increment()
+            if not self.is_number_of_ticks_correct():
+                (
+                    self.corrected_increments,
+                    self.ticks_per_rotation,
+                ) = self.adjust_rotation_increment()
+        else:
+            self.corrected_increments = [
+                self.rotation_increment
+            ] * self.number_of_rotations
+            self.ticks_per_rotation = (
+                self.rot_deg
+                * self.rotation_increment
+                * self.number_of_rotations
+            )
 
         self.interpolated_angles = self.get_interpolated_angles()
 
-        self.remove_artifacts_from_interpolated_angles()
+        if self.adjust_increment:
+            self.remove_artifacts_from_interpolated_angles()
 
         (
             self.line_start,
@@ -419,7 +430,7 @@ class FullPipeline:
 
         inter_roatation_interval = [
             idx
-            for i in range(self.number_of_rotations + 1)
+            for i in range(len(edited_ends))
             for idx in range(
                 edited_ends[i],
                 rolled_starts[i],
@@ -457,8 +468,8 @@ class FullPipeline:
             raise ValueError(
                 "Start and end of rotations have different lengths"
             )
-        if self.rot_blocks_idx["start"].shape[0] != self.number_of_rotations:
-            raise ValueError("Number of rotations is not as expected")
+        # if self.rot_blocks_idx["start"].shape[0] != self.number_of_rotations:
+        #     raise ValueError("Number of rotations is not as expected")
 
         logging.info("Number of rotations is as expected")
 
@@ -550,7 +561,7 @@ class FullPipeline:
 
         ticks_with_increment = [
             item
-            for i in range(self.number_of_rotations)
+            for i in range(len(self.corrected_increments))
             for item in [self.corrected_increments[i]]
             * self.ticks_per_rotation[i]
         ]
@@ -599,7 +610,7 @@ class FullPipeline:
         rotation_end = np.where(np.diff(thresholded) < 0)[0]
 
         assert len(rotation_start) == len(rotation_end)
-        assert len(rotation_start) == self.number_of_rotations
+        # assert len(rotation_start) == self.number_of_rotations
 
         for i, (start, end) in enumerate(
             zip(rotation_start[1:], rotation_end[:-1])

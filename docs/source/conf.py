@@ -75,22 +75,22 @@ templates_path = ["_templates"]
 # Automatically generate stub pages for API
 autosummary_generate = True
 numpydoc_class_members_toctree = False  # stops stubs warning
-#toc_object_entries_show_parents = "all"
+# toc_object_entries_show_parents = "all"
 html_show_sourcelink = False
 
-#html_sidebars = {  this is not working...
+# html_sidebars = {  this is not working...
 #  "index": [],
 #  "**": [],
-#}
+# }
 
 autodoc_default_options = {
-    'members': True,
+    "members": True,
     "member-order": "bysource",
-    'special-members': False,
-    'private-members': False,
-    'inherited-members': False,
-    'undoc-members': True,
-    'exclude-members': "",
+    "special-members": False,
+    "private-members": False,
+    "inherited-members": False,
+    "undoc-members": True,
+    "exclude-members": "",
 }
 
 # List of patterns, relative to source directory, that match files and

@@ -6,35 +6,62 @@ from sklearn.decomposition import PCA
 from suite2p.io import BinaryFile
 from suite2p.registration.nonrigid import make_blocks, spatial_taper
 
-from derotation.analysis.incremental_rotation_pipeline import (
-    IncrementalPipeline,
-)
-
-derotator = IncrementalPipeline("incremental_rotation")
-derotator()
+# derotator = IncrementalPipeline("incremental_rotation")
+# derotator()
 
 
-# extract luminance variations across angles
-zero_rotation_mean_image = derotator.get_target_image(derotator.masked)
-mean_images_across_angles = derotator.calculate_mean_images(derotator.masked)
+# # extract luminance variations across angles
+# zero_rotation_mean_image = derotator.get_target_image(derotator.masked)
+# mean_images_across_angles = derotator.calculate_mean_images(derotator.masked)
 
 
 #  load registered bin file of suite2p
 path_to_bin_file = Path(
     "/Users/lauraporta/local_data/rotation/230802_CAA_1120182/incremental/derotated/suite2p/plane0/data.bin"
 )
-shape_image = zero_rotation_mean_image.shape
+shape_image = [256, 256]
 registered = BinaryFile(
     Ly=shape_image[0], Lx=shape_image[0], filename=path_to_bin_file
-)
-plt.imshow(registered[0])
-plt.show()
+).file
 
-# load options
+time, x, y = registered.shape
+registered = registered.reshape(time, x * y)
+model = PCA(n_components=10, random_state=0).fit(registered)
+
+
+print("debug")
+
+
 path_options = Path("/Users/lauraporta/local_data/laura_ops.npy")
-ops = np.load(path_options)
+ops = np.load(path_options, allow_pickle=True).item()
 
-# use PCA as in the suite2p code
+bin_size = int(
+    max(1, ops["nframes"] // ops["nbinned"], np.round(ops["tau"] * ops["fs"]))
+)
+
+with BinaryFile(filename=path_to_bin_file, Ly=ops["Ly"], Lx=ops["Lx"]) as f:
+    registered = f.bin_movie(
+        bin_size=bin_size,
+        bad_frames=ops.get("badframes"),
+        y_range=ops["yrange"],
+        x_range=ops["xrange"],
+    )
+
+mov_mean = registered.mean(axis=0)
+registered -= mov_mean
+model = PCA(n_components=8, random_state=0).fit(registered)
+
+result = (registered @ model.components_.T) @ model.components_
+
+
+# use PCA as in the suite2p code - this takes in account for non rigid
+# registration, that we are not going to do
+path_options = Path("/Users/lauraporta/local_data/laura_ops.npy")
+ops = np.load(path_options, allow_pickle=True).item()
+
+mov_mean = registered.mean(axis=0)
+registered -= mov_mean
+
 block_size = [ops["block_size"][0] // 2, ops["block_size"][1] // 2]
 nframes, Ly, Lx = registered.shape
 yblock, xblock, _, block_size, _ = make_blocks(Ly, Lx, block_size=block_size)
@@ -53,6 +80,20 @@ for i in range(nblocks):
     model = PCA(n_components=n_comps, random_state=0).fit(block)
     block_re[i] = (block @ model.components_.T) @ model.components_
     norm[yblock[i][0] : yblock[i][-1], xblock[i][0] : xblock[i][-1]] += maskMul
+
+reconstruction = np.zeros_like(registered)
+
+block_re = block_re.reshape(nblocks, nframes, Lyb, Lxb)
+block_re *= maskMul
+for i in range(nblocks):
+    reconstruction[
+        :, yblock[i][0] : yblock[i][-1], xblock[i][0] : xblock[i][-1]
+    ] += block_re[i]
+reconstruction /= norm
+reconstruction += mov_mean
+
+plt.imshow(norm)
+plt.show()
 
 
 print("debug")

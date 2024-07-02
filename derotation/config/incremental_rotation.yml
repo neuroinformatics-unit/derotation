@@ -1,12 +1,12 @@
 paths_read:
-  path_to_randperm: "your_path_to/stimlus_randperm.mat"
-  path_to_aux: "your_path_to/rotation.bin"
-  path_to_tif: "your_path_to/rotation.tif"
+  path_to_randperm: "/Users/lauraporta/local_data/rotation/stimlus_randperm.mat"
+  path_to_aux: "/Users/lauraporta/local_data/rotation/230802_CAA_1120182/aux_stim/230802_CAA_1120182_rotationincrement_1_001.bin"
+  path_to_tif: "/Users/lauraporta/local_data/rotation/230802_CAA_1120182/imaging/rotation_increment_00001.tif"
 paths_write:
-  debug_plots_folder: "your_path_to/debug_plots/"
-  logs_folder: "your_path_to/logs/"
-  derotated_tiff_folder: "your_path_to/data_folder/"
-  saving_name: "derotated_image_stack"
+  debug_plots_folder: "/Users/lauraporta/local_data/rotation/230802_CAA_1120182/incremental/debug_plots/"
+  logs_folder: "/Users/lauraporta/local_data/rotation/230802_CAA_1120182/incremental/logs/"
+  derotated_tiff_folder: "/Users/lauraporta/local_data/rotation/230802_CAA_1120182/incremental/derotated/"
+  saving_name: "derotated_incremental_image_stack_NO_ce"
 
 
 channel_names: [
@@ -22,7 +22,7 @@ rotation_increment: 0.2
 adjust_increment: True
 rot_deg: 360
 
-debugging_plots: True
+debugging_plots: False
 
 contrast_enhancement: 0.35
 

@@ -36,7 +36,7 @@ class IncrementalPipeline(FullPipeline):
         After processing the analog signals, the image stack is rotated by
         frame and then registered using phase cross correlation.
         """
-        self.contrast_enhancement()
+        # self.contrast_enhancement()
         super().process_analog_signals()
         rotated_images = self.roatate_by_frame()
         masked_unregistered = self.add_circle_mask(rotated_images)

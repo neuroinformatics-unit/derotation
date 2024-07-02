@@ -1,28 +1,35 @@
 paths_read:
-  path_to_randperm: "your_path_to/stimlus_randperm.mat"
-  path_to_aux: "your_path_to/rotation.bin"
-  path_to_tif: "your_path_to/rotation.tif"
+  path_to_randperm: /Users/lauraporta/local_data/rotation/stimlus_randperm.mat
+  path_to_aux: /Users/lauraporta/local_data/rotation/230731_25_micron_grid/aux_stim/230731_grid_1_001.bin
+  path_to_tif: /Users/lauraporta/local_data/rotation/230731_25_micron_grid/imaging/rotation_zf2_all_speeds_00002_enhanced.tif
 paths_write:
-  debug_plots_folder: "your_path_to/debug_plots/"
-  logs_folder: "your_path_to/logs/"
-  derotated_tiff_folder: "your_path_to/data_folder/"
-  saving_name: "derotated_image_stack"
+  debug_plots_folder: /Users/lauraporta/local_data/rotation/230731_25_micron_grid/full/debug_plots/
+  logs_folder: /Users/lauraporta/local_data/rotation/230731_25_micron_grid/full/logs/
+  derotated_tiff_folder: /Users/lauraporta/local_data/rotation/230731_25_micron_grid/full/derotated/
+  saving_name: derotated_image_stack_CE
+# paths_read:
+#   path_to_randperm: /Users/lauraporta/local_data/rotation/stimlus_randperm.mat
+#   path_to_aux: /Users/lauraporta/local_data/rotation/230802_CAA_1120182/aux_stim/230802_CAA_1120182_rotation_1_001.bin
+#   path_to_tif: /Users/lauraporta/local_data/rotation/230802_CAA_1120182/imaging/rotation_00001.tif
+# paths_write:
+#   debug_plots_folder: /Users/lauraporta/local_data/rotation/230802_CAA_1120182/full/debug_plots/
+#   logs_folder: /Users/lauraporta/local_data/rotation/230802_CAA_1120182/full/logs/
+#   derotated_tiff_folder: /Users/lauraporta/local_data/rotation/230802_CAA_1120182/full/derotated/
+#   saving_name: derotated_image_stack_NO_ce
 
-
-channel_names: [
-    "camera",
-    "scanimage_frameclock",
-    "scanimage_lineclock",
-    "photodiode2",
-    "PI_rotON",
-    "PI_rotticks",
-]
+channel_names:
+  - camera
+  - scanimage_frameclock
+  - scanimage_lineclock
+  - photodiode2
+  - PI_rotON
+  - PI_rotticks
 
 rotation_increment: 0.2
-adjust_increment: True
+adjust_increment: false
 rot_deg: 360
 
-debugging_plots: True
+debugging_plots: false
 
 contrast_enhancement: 0.35
 
@@ -35,5 +42,5 @@ analog_signals_processing:
   angle_interpolation_artifact_threshold: 0.15
 
 interpolation:
-  line_use_start: True
-  frame_use_start: True
+  line_use_start: true
+  frame_use_start: true

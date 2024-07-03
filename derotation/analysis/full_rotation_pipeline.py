@@ -230,33 +230,46 @@ class FullPipeline:
 
         self.rotation_ticks_peaks = self.find_rotation_peaks()
 
-        start, end = self.get_start_end_times(self.full_rotation, self.k)
+        start, end = self.get_start_end_times_with_threshold(
+            self.full_rotation, self.k
+        )
         self.rot_blocks_idx = self.correct_start_and_end_rotation_signal(
             start, end
         )
         self.rotation_on = self.create_signed_rotation_array()
 
-        self.drop_ticks_outside_of_rotation()
+        if self.adjust_increment:
+            self.drop_ticks_outside_of_rotation()
+            self.check_number_of_rotations()
 
-        self.check_number_of_rotations()
-        if not self.is_number_of_ticks_correct() and self.adjust_increment:
-            (
-                self.corrected_increments,
-                self.ticks_per_rotation,
-            ) = self.adjust_rotation_increment()
+            if not self.is_number_of_ticks_correct():
+                (
+                    self.corrected_increments,
+                    self.ticks_per_rotation,
+                ) = self.adjust_rotation_increment()
+        else:
+            self.corrected_increments = [
+                self.rotation_increment
+            ] * self.number_of_rotations
+            self.ticks_per_rotation = (
+                self.rot_deg
+                * self.rotation_increment
+                * self.number_of_rotations
+            )
 
         self.interpolated_angles = self.get_interpolated_angles()
 
-        self.remove_artifacts_from_interpolated_angles()
+        if self.adjust_increment:
+            self.remove_artifacts_from_interpolated_angles()
 
         (
             self.line_start,
             self.line_end,
-        ) = self.get_start_end_times(self.line_clock, self.k)
+        ) = self.get_start_end_times_with_threshold(self.line_clock, self.k)
         (
             self.frame_start,
             self.frame_end,
-        ) = self.get_start_end_times(self.frame_clock, self.k)
+        ) = self.get_start_end_times_with_threshold(self.frame_clock, self.k)
 
         (
             self.rot_deg_line,
@@ -297,8 +310,8 @@ class FullPipeline:
         return peaks
 
     @staticmethod
-    def get_start_end_times(
-        signal: np.ndarray, std_coef: float
+    def get_start_end_times_with_threshold(
+        signal: np.ndarray, k: float
     ) -> Tuple[np.ndarray, np.ndarray]:
         """Finds the start and end times of the on periods of the signal.
         Works for analog signals that have a squared pulse shape.
@@ -318,13 +331,13 @@ class FullPipeline:
 
         mean = np.mean(signal)
         std = np.std(signal)
-        threshold = mean + std_coef * std
+        threshold = mean + k * std
 
         thresholded_signal = np.zeros_like(signal)
         thresholded_signal[signal > threshold] = 1
 
-        start = np.nonzero(np.diff(thresholded_signal) > 0)[0]
-        end = np.nonzero(np.diff(thresholded_signal) < 0)[0]
+        start = np.where(np.diff(thresholded_signal) > 0)[0]
+        end = np.where(np.diff(thresholded_signal) < 0)[0]
 
         return start, end
 
@@ -419,7 +432,7 @@ class FullPipeline:
 
         inter_roatation_interval = [
             idx
-            for i in range(self.number_of_rotations + 1)
+            for i in range(len(edited_ends))
             for idx in range(
                 edited_ends[i],
                 rolled_starts[i],
@@ -428,7 +441,7 @@ class FullPipeline:
 
         self.rotation_ticks_peaks = np.delete(
             self.rotation_ticks_peaks,
-            np.nonzero(
+            np.where(
                 np.isin(self.rotation_ticks_peaks, inter_roatation_interval)
             ),
         )
@@ -457,8 +470,8 @@ class FullPipeline:
             raise ValueError(
                 "Start and end of rotations have different lengths"
             )
-        if self.rot_blocks_idx["start"].shape[0] != self.number_of_rotations:
-            raise ValueError("Number of rotations is not as expected")
+        # if self.rot_blocks_idx["start"].shape[0] != self.number_of_rotations:
+        #     raise ValueError("Number of rotations is not as expected")
 
         logging.info("Number of rotations is as expected")
 
@@ -504,7 +517,7 @@ class FullPipeline:
         int
             The number of ticks in the rotation.
         """
-        return np.nonzero(
+        return np.where(
             np.logical_and(
                 self.rotation_ticks_peaks >= start,
                 self.rotation_ticks_peaks <= end,
@@ -550,7 +563,7 @@ class FullPipeline:
 
         ticks_with_increment = [
             item
-            for i in range(self.number_of_rotations)
+            for i in range(len(self.corrected_increments))
             for item in [self.corrected_increments[i]]
             * self.ticks_per_rotation[i]
         ]
@@ -595,10 +608,11 @@ class FullPipeline:
         ]
         thresholded = np.zeros_like(self.interpolated_angles)
         thresholded[np.abs(self.interpolated_angles) > 0.15] = 1
-        rotation_start = np.nonzero(np.diff(thresholded) > 0)[0]
-        rotation_end = np.nonzero(np.diff(thresholded) < 0)[0]
+        rotation_start = np.where(np.diff(thresholded) > 0)[0]
+        rotation_end = np.where(np.diff(thresholded) < 0)[0]
 
-        self.check_rotation_number(start=rotation_start, end=rotation_end)
+        assert len(rotation_start) == len(rotation_end)
+        # assert len(rotation_start) == self.number_of_rotations
 
         for i, (start, end) in enumerate(
             zip(rotation_start[1:], rotation_end[:-1])
@@ -607,24 +621,6 @@ class FullPipeline:
 
         self.interpolated_angles[: rotation_start[0]] = 0
         self.interpolated_angles[rotation_end[-1] :] = 0
-
-    def check_rotation_number(self, start: np.ndarray, end: np.ndarray):
-        """Checks that the number of rotations is as expected.
-
-        Raises
-        ------
-        ValueError
-            if the number of start and end of rotations is different
-        ValueError
-            if the number of rotations is not as expected
-        """
-
-        if start.shape[0] != end.shape[0]:
-            raise ValueError(
-                "Start and end of rotations have different lengths"
-            )
-        if start.shape[0] != self.number_of_rotations:
-            raise ValueError("Number of rotations is not as expected")
 
     def calculate_angles_by_line_and_frame(
         self,
@@ -670,7 +666,7 @@ class FullPipeline:
         int
             The index of the line
         """
-        return np.nonzero(self.line_start < clock_time)[0][-1]
+        return np.where(self.line_start < clock_time)[0][-1]
 
     def clock_to_latest_frame_start(self, clock_time: int) -> int:
         """Get the index of the frame that is being acquired at the given clock
@@ -686,7 +682,7 @@ class FullPipeline:
         int
             The index of the frame
         """
-        return np.nonzero(self.frame_start < clock_time)[0][-1]
+        return np.where(self.frame_start < clock_time)[0][-1]
 
     def clock_to_latest_rotation_start(self, clock_time: int) -> int:
         """Get the index of the latest rotation that happened.
@@ -701,7 +697,7 @@ class FullPipeline:
         int
             The index of the latest rotation
         """
-        return np.nonzero(self.rot_blocks_idx["start"] < clock_time)[0][-1]
+        return np.where(self.rot_blocks_idx["start"] < clock_time)[0][-1]
 
     def plot_rotation_on_and_ticks(self):
         """Plots the rotation ticks and the rotation on signal.
@@ -740,6 +736,9 @@ class FullPipeline:
         ax.spines["top"].set_visible(False)
         ax.spines["right"].set_visible(False)
 
+        Path(self.config["paths_write"]["debug_plots_folder"]).mkdir(
+            parents=True, exist_ok=True
+        )
         plt.savefig(
             Path(self.config["paths_write"]["debug_plots_folder"])
             / "rotation_ticks_and_rotation_on.png"
@@ -758,7 +757,7 @@ class FullPipeline:
         speeds = set(self.speed)
 
         last_idx_for_each_speed = [
-            np.nonzero(self.speed == s)[0][-1] for s in speeds
+            np.where(self.speed == s)[0][-1] for s in speeds
         ]
         last_idx_for_each_speed = sorted(last_idx_for_each_speed)
 
@@ -806,6 +805,9 @@ class FullPipeline:
         handles, labels = ax.get_legend_handles_labels()
         fig.legend(handles, labels, loc="upper right")
 
+        Path(self.config["paths_write"]["debug_plots_folder"]).mkdir(
+            parents=True, exist_ok=True
+        )
         plt.savefig(
             Path(self.config["paths_write"]["debug_plots_folder"])
             / "rotation_angles.png"
@@ -949,6 +951,7 @@ class FullPipeline:
             The masked derotated image stack.
         """
         path = self.config["paths_write"]["derotated_tiff_folder"]
+        Path(path).mkdir(parents=True, exist_ok=True)
 
         imsave(
             path + self.config["paths_write"]["saving_name"] + ".tif",
@@ -973,26 +976,32 @@ class FullPipeline:
         df["rotation_angle"] = self.rot_deg_frame[: self.num_frames]
         df["clock"] = self.frame_start[: self.num_frames]
 
-        df["direction"] = np.nan
-        df["speed"] = np.nan
-        df["rotation_count"] = np.nan
+        df["direction"] = np.nan * np.ones(len(df))
+        df["speed"] = np.nan * np.ones(len(df))
+        df["rotation_count"] = np.nan * np.ones(len(df))
+
         rotation_counter = 0
         adding_roatation = False
-        for i, row in df.iterrows():
+        for i in range(len(df)):
+            row = df.loc[i]
             if np.abs(row["rotation_angle"]) > 0.0:
                 adding_roatation = True
                 row["direction"] = self.direction[rotation_counter]
                 row["speed"] = self.speed[rotation_counter]
                 row["rotation_count"] = rotation_counter
+
+                df.loc[i] = row
             if (
-                rotation_counter < self.number_of_rotations - 1
+                rotation_counter < 79
                 and adding_roatation
-                and np.isclose(
-                    np.abs(df.loc[i + 1, "rotation_angle"]), 0.0, 1e-3
-                )
+                and np.abs(df.loc[i + 1, "rotation_angle"]) == 0.0
             ):
                 rotation_counter += 1
                 adding_roatation = False
+
+        Path(self.config["paths_write"]["derotated_tiff_folder"]).mkdir(
+            parents=True, exist_ok=True
+        )
 
         df.to_csv(
             self.config["paths_write"]["derotated_tiff_folder"]

@@ -191,36 +191,26 @@ class FullPipeline:
         self.rotation_ticks_peaks = self.find_rotation_peaks()
 
         start, end = self.get_start_end_times_with_threshold(
-            self.full_rotation, self.k
+            self.full_rotation, self.std_coef
         )
         self.rot_blocks_idx = self.correct_start_and_end_rotation_signal(
             start, end
         )
         self.rotation_on = self.create_signed_rotation_array()
 
-        if self.adjust_increment:
-            self.drop_ticks_outside_of_rotation()
-            self.check_number_of_rotations()
+        self.drop_ticks_outside_of_rotation()
+        self.check_number_of_rotations()
 
-            if not self.is_number_of_ticks_correct():
-                (
-                    self.corrected_increments,
-                    self.ticks_per_rotation,
-                ) = self.adjust_rotation_increment()
-        else:
-            self.corrected_increments = [
-                self.rotation_increment
-            ] * self.number_of_rotations
-            self.ticks_per_rotation = (
-                self.rot_deg
-                * self.rotation_increment
-                * self.number_of_rotations
-            )
+        if not self.is_number_of_ticks_correct():
+            (
+                self.corrected_increments,
+                self.ticks_per_rotation,
+            ) = self.adjust_rotation_increment()
+        
 
         self.interpolated_angles = self.get_interpolated_angles()
 
-        if self.adjust_increment:
-            self.remove_artifacts_from_interpolated_angles()
+        self.remove_artifacts_from_interpolated_angles()
 
         (
             self.line_start,
@@ -271,7 +261,7 @@ class FullPipeline:
 
     @staticmethod
     def get_start_end_times_with_threshold(
-        signal: np.ndarray, k: float
+        signal: np.ndarray, std_coef: float
     ) -> Tuple[np.ndarray, np.ndarray]:
         """Finds the start and end times of the on periods of the signal.
         Works for analog signals that have a squared pulse shape.
@@ -280,7 +270,7 @@ class FullPipeline:
         ----------
         signal : np.ndarray
             An analog signal.
-        k : float
+        std_coef : float
             The factor used to quantify the threshold.
 
         Returns
@@ -291,7 +281,7 @@ class FullPipeline:
 
         mean = np.mean(signal)
         std = np.std(signal)
-        threshold = mean + k * std
+        threshold = mean + std_coef * std
 
         thresholded_signal = np.zeros_like(signal)
         thresholded_signal[signal > threshold] = 1
@@ -431,7 +421,8 @@ class FullPipeline:
                 "Start and end of rotations have different lengths"
             )
         if self.rot_blocks_idx["start"].shape[0] != self.number_of_rotations:
-            raise ValueError("Number of rotations is not as expected")
+            logging.info("Number of rotations is not as expected. Adjusting...")
+            self.number_of_rotations = self.rot_blocks_idx["start"].shape[0]
 
         logging.info("Number of rotations is as expected")
 
@@ -561,8 +552,6 @@ class FullPipeline:
         """
         logging.info("Cleaning interpolated angles...")
 
-        # find very short rotation periods in self.interpolated_angles
-
         self.config["analog_signals_processing"][
             "angle_interpolation_artifact_threshold"
         ]
@@ -571,16 +560,30 @@ class FullPipeline:
         rotation_start = np.where(np.diff(thresholded) > 0)[0]
         rotation_end = np.where(np.diff(thresholded) < 0)[0]
 
-        assert len(rotation_start) == len(rotation_end)
-        assert len(rotation_start) == self.number_of_rotations
+        self.check_rotation_number_after_interpolation(rotation_start, rotation_end)    
 
-        for i, (start, end) in enumerate(
-            zip(rotation_start[1:], rotation_end[:-1])
-        ):
+        for start, end in zip(rotation_start[1:], rotation_end[:-1]):
             self.interpolated_angles[end:start] = 0
 
         self.interpolated_angles[: rotation_start[0]] = 0
         self.interpolated_angles[rotation_end[-1] :] = 0
+    
+    def check_rotation_number_after_interpolation(self, start: np.ndarray, end: np.ndarray):
+        """Checks that the number of rotations is as expected.
+        Raises
+        ------
+        ValueError
+            if the number of start and end of rotations is different
+        ValueError
+            if the number of rotations is not as expected
+        """
+
+        if start.shape[0] != end.shape[0]:
+            raise ValueError(
+                "Start and end of rotations have different lengths"
+            )
+        if start.shape[0] != self.number_of_rotations:
+            raise ValueError("Number of rotations is not as expected")
 
     def calculate_angles_by_line_and_frame(
         self,

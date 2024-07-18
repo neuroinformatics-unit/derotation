@@ -11,7 +11,6 @@ import tifffile as tiff
 import yaml
 from fancylog import fancylog
 from scipy.signal import find_peaks
-from skimage.exposure import rescale_intensity
 from sklearn.mixture import GaussianMixture
 from tifffile import imsave
 
@@ -27,6 +26,7 @@ class FullPipeline:
     acquired with a rotating sample under a microscope.
     """
 
+    ### ----------------- Main pipeline ----------------- ###
     def __init__(self, config_name):
         """DerotationPipeline is a class that derotates an image stack
         acquired with a rotating sample under a microscope.
@@ -56,6 +56,7 @@ class FullPipeline:
         - saving the masked image stack
         """
         self.process_analog_signals()
+        self.find_center_of_rotation()
         rotated_images = self.rotate_frames_line_by_line()
         masked = self.add_circle_mask(rotated_images, self.mask_diameter)
         self.save(masked)
@@ -152,7 +153,6 @@ class FullPipeline:
 
         self.rotation_increment = self.config["rotation_increment"]
         self.rot_deg = self.config["rot_deg"]
-        self.adjust_increment = self.config["adjust_increment"]
 
         self.filename_raw = Path(
             self.config["paths_read"]["path_to_tif"]
@@ -171,6 +171,7 @@ class FullPipeline:
         logging.info(f"Dataset {self.filename_raw} loaded")
         logging.info(f"Filename: {self.filename}")
 
+    ### ----------------- Analog signals processing pipeline ------------- ###
     def process_analog_signals(self):
         """From the analog signals (frame clock, line clock, full rotation,
         rotation ticks) calculates the rotation angles by line and frame.
@@ -206,7 +207,6 @@ class FullPipeline:
                 self.corrected_increments,
                 self.ticks_per_rotation,
             ) = self.adjust_rotation_increment()
-        
 
         self.interpolated_angles = self.get_interpolated_angles()
 
@@ -215,11 +215,15 @@ class FullPipeline:
         (
             self.line_start,
             self.line_end,
-        ) = self.get_start_end_times_with_threshold(self.line_clock, self.k)
+        ) = self.get_start_end_times_with_threshold(
+            self.line_clock, self.std_coef
+        )
         (
             self.frame_start,
             self.frame_end,
-        ) = self.get_start_end_times_with_threshold(self.frame_clock, self.k)
+        ) = self.get_start_end_times_with_threshold(
+            self.frame_clock, self.std_coef
+        )
 
         (
             self.rot_deg_line,
@@ -421,7 +425,9 @@ class FullPipeline:
                 "Start and end of rotations have different lengths"
             )
         if self.rot_blocks_idx["start"].shape[0] != self.number_of_rotations:
-            logging.info("Number of rotations is not as expected. Adjusting...")
+            logging.info(
+                "Number of rotations is not as expected. Adjusting..."
+            )
             self.number_of_rotations = self.rot_blocks_idx["start"].shape[0]
 
         logging.info("Number of rotations is as expected")
@@ -560,15 +566,19 @@ class FullPipeline:
         rotation_start = np.where(np.diff(thresholded) > 0)[0]
         rotation_end = np.where(np.diff(thresholded) < 0)[0]
 
-        self.check_rotation_number_after_interpolation(rotation_start, rotation_end)    
+        self.check_rotation_number_after_interpolation(
+            rotation_start, rotation_end
+        )
 
         for start, end in zip(rotation_start[1:], rotation_end[:-1]):
             self.interpolated_angles[end:start] = 0
 
         self.interpolated_angles[: rotation_start[0]] = 0
         self.interpolated_angles[rotation_end[-1] :] = 0
-    
-    def check_rotation_number_after_interpolation(self, start: np.ndarray, end: np.ndarray):
+
+    def check_rotation_number_after_interpolation(
+        self, start: np.ndarray, end: np.ndarray
+    ):
         """Checks that the number of rotations is as expected.
         Raises
         ------
@@ -583,7 +593,10 @@ class FullPipeline:
                 "Start and end of rotations have different lengths"
             )
         if start.shape[0] != self.number_of_rotations:
-            raise ValueError("Number of rotations is not as expected")
+            raise ValueError(
+                f"Number of rotations is not as expected, {start.shape[0]}"
+                + "instead of {self.number_of_rotations}"
+            )
 
     def calculate_angles_by_line_and_frame(
         self,
@@ -776,6 +789,33 @@ class FullPipeline:
             / "rotation_angles.png"
         )
 
+    ### ----------------- Derotation ----------------- ###
+    def find_center_of_rotation(self):
+        # concentric_circles = np.max(self.image_stack, axis=0)
+        # pc_95 = np.percentile(concentric_circles, 95)
+        # circles_binary = concentric_circles > pc_95
+
+        # #  detect outermost circle
+        # from skimage.transform import hough_ellipse
+
+        # result = hough_ellipse(circles_binary, accuracy=20,
+        # threshold=250, min_size=100, max_size=265)
+        # result.sort(order="accumulator")
+
+        # best = list(result)
+        # yc, xc, a, b = [int(round(x)) for x in best[1:5]]
+
+        # #  draw the ellipse
+        # from skimage.draw import ellipse_perimeter
+
+        # rr, cc = ellipse_perimeter(yc, xc, a, b, orientation=best[5])
+        # concentric_circles[rr, cc] = 1
+
+        # plt.imshow(concentric_circles)
+
+        # return yc, xc
+        pass
+
     def rotate_frames_line_by_line(self) -> np.ndarray:
         """Rotates the image stack line by line, using the rotation angles
         by line calculated from the analog signals.
@@ -835,6 +875,7 @@ class FullPipeline:
         offset = np.min(gm.means_)
         return offset
 
+    ### ----------------- Saving ----------------- ###
     @staticmethod
     def add_circle_mask(
         image_stack: np.ndarray,
@@ -946,14 +987,11 @@ class FullPipeline:
         rotation_counter = 0
         adding_roatation = False
         for i in range(len(df)):
-            row = df.loc[i]
-            if np.abs(row["rotation_angle"]) > 0.0:
+            if np.abs(df.loc[i, "rotation_angle"]) > 0.0:
                 adding_roatation = True
-                row["direction"] = self.direction[rotation_counter]
-                row["speed"] = self.speed[rotation_counter]
-                row["rotation_count"] = rotation_counter
-
-                df.loc[i] = row
+                df.loc[i, "direction"] = self.direction[rotation_counter]
+                df.loc[i, "speed"] = self.speed[rotation_counter]
+                df.loc[i, "rotation_count"] = rotation_counter
             if (
                 rotation_counter < 79
                 and adding_roatation

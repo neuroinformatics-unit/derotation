@@ -29,19 +29,6 @@ dependencies = [
     "matplotlib",
     "pandas",
     "tqdm",
-    "scikit-image",
-]
-
-dependencies = [
-    "numpy",
-    "tiffile",
-    "matplotlib",
-    "scipy",
-    "PyYAML",
-    "fancylog",
-    "matplotlib",
-    "pandas",
-    "tqdm",
     "scikit-learn",
     "scikit-image",
 ]

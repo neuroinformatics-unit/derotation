@@ -790,32 +790,6 @@ class FullPipeline:
         )
 
     ### ----------------- Derotation ----------------- ###
-    def find_center_of_rotation(self):
-        # concentric_circles = np.max(self.image_stack, axis=0)
-        # pc_95 = np.percentile(concentric_circles, 95)
-        # circles_binary = concentric_circles > pc_95
-
-        # #  detect outermost circle
-        # from skimage.transform import hough_ellipse
-
-        # result = hough_ellipse(circles_binary, accuracy=20,
-        # threshold=250, min_size=100, max_size=265)
-        # result.sort(order="accumulator")
-
-        # best = list(result)
-        # yc, xc, a, b = [int(round(x)) for x in best[1:5]]
-
-        # #  draw the ellipse
-        # from skimage.draw import ellipse_perimeter
-
-        # rr, cc = ellipse_perimeter(yc, xc, a, b, orientation=best[5])
-        # concentric_circles[rr, cc] = 1
-
-        # plt.imshow(concentric_circles)
-
-        # return yc, xc
-        pass
-
     def rotate_frames_line_by_line(self) -> np.ndarray:
         """Rotates the image stack line by line, using the rotation angles
         by line calculated from the analog signals.

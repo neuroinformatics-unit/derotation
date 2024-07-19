@@ -56,7 +56,6 @@ class FullPipeline:
         - saving the masked image stack
         """
         self.process_analog_signals()
-        self.find_center_of_rotation()
         rotated_images = self.rotate_frames_line_by_line()
         masked = self.add_circle_mask(rotated_images, self.mask_diameter)
         self.save(masked)

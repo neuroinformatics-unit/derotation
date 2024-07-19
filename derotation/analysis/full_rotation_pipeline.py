@@ -386,6 +386,10 @@ class FullPipeline:
 
         inter_roatation_interval = [
             idx
+            # Effective number of rotations can be different than the one
+            # assumed in the config file. Therefore at this stage it is
+            # estimated by the number of start and end of rotations
+            # calculated from the rotation signal.
             for i in range(len(edited_ends))
             for idx in range(
                 edited_ends[i],

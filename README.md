@@ -60,7 +60,6 @@ Here's a quick rundown of the configuration parameters you'll need to adjust:
 
 * `channel_names`: List the names of the signals in the aux_stim file.
 * `rotation_increment`: Set the motor's angle increment.
-* `adjust_increment`: Enable this to adjust the rotation_increment if the motor ticks don't sum to exactly 360 degrees.
 * `rot_deg`: Define a full rotation degree count.
 * `debugging_plots`: Toggle this to save debugging plots.
 * `analog_signals_processing`: Configure parameters for analog signal processing, including peak finding and pulse processing.

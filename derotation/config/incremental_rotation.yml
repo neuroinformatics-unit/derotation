@@ -24,8 +24,6 @@ rot_deg: 360
 
 debugging_plots: True
 
-contrast_enhancement: 0.35
-
 analog_signals_processing:
   find_rotation_ticks_peaks:
     height: 4

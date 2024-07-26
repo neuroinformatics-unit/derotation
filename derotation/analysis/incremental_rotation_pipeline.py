@@ -6,7 +6,6 @@ from typing import Dict, Tuple
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
-from numpy import ndarray
 from scipy.ndimage import rotate
 from tqdm import tqdm
 
@@ -37,7 +36,6 @@ class IncrementalPipeline(FullPipeline):
         After processing the analog signals, the image stack is rotated by
         frame and then registered using phase cross correlation.
         """
-        self.contrast_enhancement()
         super().process_analog_signals()
         rotated_images = self.roatate_by_frame()
         masked_unregistered = self.add_circle_mask(rotated_images)
@@ -60,7 +58,7 @@ class IncrementalPipeline(FullPipeline):
         self.save(masked)
         self.save_csv_with_derotation_data()
 
-    def create_signed_rotation_array(self) -> ndarray:
+    def create_signed_rotation_array(self) -> np.ndarray:
         logging.info("Creating signed rotation array...")
         rotation_on = np.zeros(self.total_clock_time)
         for i, (start, end) in enumerate(
@@ -155,6 +153,29 @@ class IncrementalPipeline(FullPipeline):
             )
 
         return interpolated_angles * -1
+
+    def check_rotation_number_after_interpolation(
+        self, start: np.ndarray, end: np.ndarray
+    ):
+        """Checks that the number of rotations is as expected.
+        Raises
+        ------
+        ValueError
+            if the number of start and end of rotations is different
+        ValueError
+            if the number of rotations is not as expected
+        """
+
+        if start.shape[0] != end.shape[0]:
+            raise ValueError(
+                "Start and end of rotations have different lengths"
+            )
+        if (
+            start.shape[0] != 1
+        ):  # The incremental rotation is a unique rotation
+            raise ValueError(
+                f"Number of rotations is not as expected: {start.shape[0]}"
+            )
 
     def roatate_by_frame(self) -> np.ndarray:
         """Rotate the image stack by frame.
@@ -252,6 +273,9 @@ class IncrementalPipeline(FullPipeline):
         handles, labels = ax.get_legend_handles_labels()
         fig.legend(handles, labels, loc="upper right")
 
+        Path(self.config["paths_write"]["debug_plots_folder"]).mkdir(
+            parents=True, exist_ok=True
+        )
         plt.savefig(
             Path(self.config["paths_write"]["debug_plots_folder"])
             / "rotation_angles.png"
@@ -421,6 +445,10 @@ class IncrementalPipeline(FullPipeline):
         df["frame"] = np.arange(self.num_frames)
         df["rotation_angle"] = self.rot_deg_frame[: self.num_frames]
         df["clock"] = self.frame_start[: self.num_frames]
+
+        Path(self.config["paths_write"]["derotated_tiff_folder"]).mkdir(
+            parents=True, exist_ok=True
+        )
 
         df.to_csv(
             self.config["paths_write"]["derotated_tiff_folder"]

@@ -67,7 +67,8 @@ def get_analog_signals(path_to_aux: str, channel_names: list) -> tuple:
         _description_
     """
 
-    data = np.fromfile(path_to_aux, dtype=np.int16)
+    data = np.fromfile(path_to_aux, dtype=np.int16)  # Has to be read as int16
+    data = data.astype(np.int32)  # cast data to int32 to avoid overflow
     data = data.reshape((-1, len(channel_names)))
     data = convert_to_volts(data)
 

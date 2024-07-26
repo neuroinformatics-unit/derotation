@@ -18,13 +18,11 @@ channel_names: [
     "PI_rotticks",
 ]
 
+
 rotation_increment: 0.2
-adjust_increment: True
 rot_deg: 360
 
 debugging_plots: True
-
-contrast_enhancement: 0.35
 
 analog_signals_processing:
   find_rotation_ticks_peaks:

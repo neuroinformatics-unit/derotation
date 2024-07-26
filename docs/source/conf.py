@@ -43,6 +43,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "myst_parser",
     "numpydoc",
+    "numpydoc",
     "nbsphinx",
     "sphinx_autodoc_typehints",
     "sphinx_design",

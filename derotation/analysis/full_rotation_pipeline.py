@@ -167,6 +167,12 @@ class FullPipeline:
 
         self.debugging_plots = self.config["debugging_plots"]
 
+        if self.debugging_plots:
+            self.debug_plots_folder = self.config["paths_write"][
+                "debug_plots_folder"
+            ]
+            Path(self.debug_plots_folder).mkdir(parents=True, exist_ok=True)
+
         logging.info(f"Dataset {self.filename_raw} loaded")
         logging.info(f"Filename: {self.filename}")
 
@@ -384,11 +390,11 @@ class FullPipeline:
         rolled_starts[-1] = self.total_clock_time
 
         inter_roatation_interval = [
-            idx
             # Effective number of rotations can be different than the one
             # assumed in the config file. Therefore at this stage it is
             # estimated by the number of start and end of rotations
             # calculated from the rotation signal.
+            idx
             for i in range(len(edited_ends))
             for idx in range(
                 edited_ends[i],
@@ -429,7 +435,8 @@ class FullPipeline:
             )
         if self.rot_blocks_idx["start"].shape[0] != self.number_of_rotations:
             logging.info(
-                "Number of rotations is not as expected. Adjusting..."
+                f"Number of rotations is {self.number_of_rotations}."
+                + f"Adjusting to {self.rot_blocks_idx['start'].shape[0]}"
             )
             self.number_of_rotations = self.rot_blocks_idx["start"].shape[0]
 
@@ -597,8 +604,8 @@ class FullPipeline:
             )
         if start.shape[0] != self.number_of_rotations:
             raise ValueError(
-                f"Number of rotations is not as expected, {start.shape[0]}"
-                + "instead of {self.number_of_rotations}"
+                "Number of rotations is not as expected after interpolation, "
+                + f"{start.shape[0]} instead of {self.number_of_rotations}"
             )
 
     def calculate_angles_by_line_and_frame(
@@ -715,12 +722,8 @@ class FullPipeline:
         ax.spines["top"].set_visible(False)
         ax.spines["right"].set_visible(False)
 
-        Path(self.config["paths_write"]["debug_plots_folder"]).mkdir(
-            parents=True, exist_ok=True
-        )
         plt.savefig(
-            Path(self.config["paths_write"]["debug_plots_folder"])
-            / "rotation_ticks_and_rotation_on.png"
+            self.debug_plots_folder / "rotation_ticks_and_rotation_on.png"
         )
 
     def plot_rotation_angles(self):
@@ -784,13 +787,7 @@ class FullPipeline:
         handles, labels = ax.get_legend_handles_labels()
         fig.legend(handles, labels, loc="upper right")
 
-        Path(self.config["paths_write"]["debug_plots_folder"]).mkdir(
-            parents=True, exist_ok=True
-        )
-        plt.savefig(
-            Path(self.config["paths_write"]["debug_plots_folder"])
-            / "rotation_angles.png"
-        )
+        plt.savefig(self.debug_plots_folder / "rotation_angles.png")
 
     ### ----------------- Derotation ----------------- ###
     def rotate_frames_line_by_line(self) -> np.ndarray:
@@ -963,16 +960,16 @@ class FullPipeline:
 
         rotation_counter = 0
         adding_roatation = False
-        for i in range(len(df)):
-            if np.abs(df.loc[i, "rotation_angle"]) > 0.0:
+        for row_idx in range(len(df)):
+            if np.abs(df.loc[row_idx, "rotation_angle"]) > 0.0:
                 adding_roatation = True
-                df.loc[i, "direction"] = self.direction[rotation_counter]
-                df.loc[i, "speed"] = self.speed[rotation_counter]
-                df.loc[i, "rotation_count"] = rotation_counter
+                df.loc[row_idx, "direction"] = self.direction[rotation_counter]
+                df.loc[row_idx, "speed"] = self.speed[rotation_counter]
+                df.loc[row_idx, "rotation_count"] = rotation_counter
             if (
-                rotation_counter < 79
+                rotation_counter < self.number_of_rotations - 1
                 and adding_roatation
-                and np.abs(df.loc[i + 1, "rotation_angle"]) == 0.0
+                and np.abs(df.loc[row_idx + 1, "rotation_angle"]) == 0.0
             ):
                 rotation_counter += 1
                 adding_roatation = False

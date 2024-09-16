@@ -58,6 +58,8 @@ class IncrementalPipeline(FullPipeline):
         self.save(masked)
         self.save_csv_with_derotation_data()
 
+        self.find_center_of_rotation()
+
     def create_signed_rotation_array(self) -> np.ndarray:
         logging.info("Creating signed rotation array...")
         rotation_on = np.zeros(self.total_clock_time)
@@ -456,3 +458,6 @@ class IncrementalPipeline(FullPipeline):
             + ".csv",
             index=False,
         )
+
+    def find_center_of_rotation(self):
+        pass

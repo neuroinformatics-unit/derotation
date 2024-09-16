@@ -17,6 +17,7 @@ class IncrementalPipeline(FullPipeline):
     rotation method.
     """
 
+    ### ------- Methods to overwrite from the parent class ------------ ###
     def __init__(self, *args, **kwargs):
         """Derotate the image stack that was acquired using the incremental
         rotation method.
@@ -179,40 +180,6 @@ class IncrementalPipeline(FullPipeline):
                 f"Number of rotations is not as expected: {start.shape[0]}"
             )
 
-    def roatate_by_frame(self) -> np.ndarray:
-        """Rotate the image stack by frame.
-
-        Returns
-        -------
-        np.ndarray
-            Description of returned object.
-        """
-        logging.info("Starting derotation by frame...")
-        min_value_img = np.min(self.image_stack)
-        new_rotated_image_stack = (
-            np.ones_like(self.image_stack) * min_value_img
-        )
-
-        for idx, frame in tqdm(
-            enumerate(self.image_stack), total=self.num_frames
-        ):
-            rotated_img = rotate(
-                frame,
-                self.rot_deg_frame[idx],
-                reshape=False,
-                order=0,
-                mode="constant",
-            )
-            rotated_img = np.where(
-                rotated_img == 0, min_value_img, rotated_img
-            )
-
-            new_rotated_image_stack[idx] = rotated_img
-
-        logging.info("Finished rotating the image stack")
-
-        return new_rotated_image_stack
-
     def check_number_of_frame_angles(self):
         """Check if the number of rotation angles by frame is equal to the
         number of frames in the image stack.
@@ -314,6 +281,69 @@ class IncrementalPipeline(FullPipeline):
             mean_images.append(mean_image)
 
         return mean_images
+
+    def save_csv_with_derotation_data(self):
+        """Saves a csv file with the rotation angles by line and frame,
+        and the rotation on signal.
+        It is saved in the saving folder specified in the config file.
+        """
+        df = pd.DataFrame(
+            columns=[
+                "frame",
+                "rotation_angle",
+                "clock",
+            ]
+        )
+
+        df["frame"] = np.arange(self.num_frames)
+        df["rotation_angle"] = self.rot_deg_frame[: self.num_frames]
+        df["clock"] = self.frame_start[: self.num_frames]
+
+        Path(self.config["paths_write"]["derotated_tiff_folder"]).mkdir(
+            parents=True, exist_ok=True
+        )
+
+        df.to_csv(
+            self.config["paths_write"]["derotated_tiff_folder"]
+            + self.config["paths_write"]["saving_name"]
+            + ".csv",
+            index=False,
+        )
+
+    ### ------- Methods unique to IncrementalPipeline ----------------- ###
+    def roatate_by_frame(self) -> np.ndarray:
+        """Rotate the image stack by frame.
+
+        Returns
+        -------
+        np.ndarray
+            Description of returned object.
+        """
+        logging.info("Starting derotation by frame...")
+        min_value_img = np.min(self.image_stack)
+        new_rotated_image_stack = (
+            np.ones_like(self.image_stack) * min_value_img
+        )
+
+        for idx, frame in tqdm(
+            enumerate(self.image_stack), total=self.num_frames
+        ):
+            rotated_img = rotate(
+                frame,
+                self.rot_deg_frame[idx],
+                reshape=False,
+                order=0,
+                mode="constant",
+            )
+            rotated_img = np.where(
+                rotated_img == 0, min_value_img, rotated_img
+            )
+
+            new_rotated_image_stack[idx] = rotated_img
+
+        logging.info("Finished rotating the image stack")
+
+        return new_rotated_image_stack
 
     @staticmethod
     def get_target_image(rotated_image_stack: np.ndarray) -> np.ndarray:
@@ -430,34 +460,6 @@ class IncrementalPipeline(FullPipeline):
         registered_images = np.array(registered_images)
 
         return registered_images
-
-    def save_csv_with_derotation_data(self):
-        """Saves a csv file with the rotation angles by line and frame,
-        and the rotation on signal.
-        It is saved in the saving folder specified in the config file.
-        """
-        df = pd.DataFrame(
-            columns=[
-                "frame",
-                "rotation_angle",
-                "clock",
-            ]
-        )
-
-        df["frame"] = np.arange(self.num_frames)
-        df["rotation_angle"] = self.rot_deg_frame[: self.num_frames]
-        df["clock"] = self.frame_start[: self.num_frames]
-
-        Path(self.config["paths_write"]["derotated_tiff_folder"]).mkdir(
-            parents=True, exist_ok=True
-        )
-
-        df.to_csv(
-            self.config["paths_write"]["derotated_tiff_folder"]
-            + self.config["paths_write"]["saving_name"]
-            + ".csv",
-            index=False,
-        )
 
     def find_center_of_rotation(self):
         pass

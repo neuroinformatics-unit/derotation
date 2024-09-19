@@ -168,13 +168,15 @@ class FullPipeline:
         self.debugging_plots = self.config["debugging_plots"]
 
         if self.debugging_plots:
-            self.debug_plots_folder = self.config["paths_write"][
-                "debug_plots_folder"
-            ]
+            self.debug_plots_folder = Path(
+                self.config["paths_write"]["debug_plots_folder"]
+            )
             Path(self.debug_plots_folder).mkdir(parents=True, exist_ok=True)
 
         logging.info(f"Dataset {self.filename_raw} loaded")
         logging.info(f"Filename: {self.filename}")
+
+        self.center_of_rotation = None
 
     ### ----------------- Analog signals processing pipeline ------------- ###
     def process_analog_signals(self):
@@ -790,6 +792,37 @@ class FullPipeline:
         plt.savefig(self.debug_plots_folder / "rotation_angles.png")
 
     ### ----------------- Derotation ----------------- ###
+    def shift_image_given_different_center_of_rotation(
+        self, image: np.ndarray, center_of_rotation: Tuple[int, int]
+    ) -> np.ndarray:
+        """Shifts the image to the center of rotation.
+        It is useful when the center of rotation is not at the center of the
+        image.
+
+        Parameters
+        ----------
+        image : np.ndarray
+            The image to be shifted.
+        center_of_rotation : Tuple[int, int]
+            The center of rotation.
+
+        Returns
+        -------
+        np.ndarray
+            The shifted image.
+        """
+        x_center, y_center = center_of_rotation
+        x_center = int(x_center)
+        y_center = int(y_center)
+
+        x_shift = x_center - image.shape[0] // 2
+        y_shift = y_center - image.shape[1] // 2
+
+        shifted_image = np.roll(image, x_shift, axis=0)
+        shifted_image = np.roll(shifted_image, y_shift, axis=1)
+
+        return shifted_image
+
     def rotate_frames_line_by_line(self) -> np.ndarray:
         """Rotates the image stack line by line, using the rotation angles
         by line calculated from the analog signals.
@@ -819,6 +852,20 @@ class FullPipeline:
         logging.info("Starting derotation by line...")
 
         offset = self.find_image_offset(self.image_stack[0])
+
+        if self.center_of_rotation:
+            self.image_stack = (
+                self.shift_image_given_different_center_of_rotation(
+                    self.image_stack, self.center_of_rotation
+                )
+            )
+            # save shifted array
+            tiff.imsave(
+                self.config["paths_write"]["derotated_tiff_folder"]
+                + self.config["paths_write"]["saving_name"]
+                + "_shifted_raw.tif",
+                self.image_stack,
+            )
 
         rotated_image_stack = rotate_an_image_array_line_by_line(
             self.image_stack,

@@ -3,10 +3,11 @@ import logging
 from pathlib import Path
 from typing import Dict, Tuple
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from matplotlib import pyplot as plt
 from scipy.ndimage import rotate
+from skimage.feature import blob_log
 from tqdm import tqdm
 
 from derotation.analysis.full_rotation_pipeline import FullPipeline
@@ -59,7 +60,7 @@ class IncrementalPipeline(FullPipeline):
         self.save(masked)
         self.save_csv_with_derotation_data()
 
-        self.find_center_of_rotation()
+        self.center_of_rotation = self.find_center_of_rotation()
 
     def create_signed_rotation_array(self) -> np.ndarray:
         logging.info("Creating signed rotation array...")
@@ -462,4 +463,128 @@ class IncrementalPipeline(FullPipeline):
         return registered_images
 
     def find_center_of_rotation(self):
-        pass
+        logging.info("Finding the center of rotation...")
+        sample_number = 12
+        mean_images = self.calculate_mean_images(self.image_stack)
+
+        subgroup = mean_images[:sample_number]
+
+        logging.info("Finding blobs...")
+        blobs = [
+            blob_log(img, max_sigma=12, min_sigma=7, threshold=0.95, overlap=0)
+            for img in tqdm(subgroup[:sample_number])
+        ]
+
+        # sort blobs by size
+        blobs = [
+            blobs[i][blobs[i][:, 2].argsort()] for i in range(sample_number)
+        ]
+
+        # plot blobs on top of every frame
+        if self.config["debug_plots"]:
+            self.plot_blob_detection(blobs, subgroup)
+
+        coord_first_blob_of_every_image = [
+            blobs[i][0][:2].astype(int) for i in range(6)
+        ]
+        centre = self.find_centre_with_bisector(
+            coord_first_blob_of_every_image
+        )
+
+        logging.info(f"Centre of rotation: {centre}")
+        logging.info(
+            "Difference with the expected centre:"
+            + f"{np.array([256 // 2, 256 // 2]) - centre}"
+        )
+        return centre
+
+    def plot_blob_detection(self, blobs, subgroup):
+        fig, ax = plt.subplots(4, 3, figsize=(10, 10))
+        for i, a in tqdm(enumerate(ax.flatten())):
+            a.imshow(subgroup[i])
+            a.set_title(f"{i*5} degrees")
+            a.axis("off")
+
+            for j, blob in enumerate(blobs[i][:4]):
+                y, x, r = blob
+                c = plt.Circle((x, y), r, color="red", linewidth=2, fill=False)
+                a.add_patch(c)
+                a.text(x, y, str(j), color="red")
+
+        # save the plot
+        plt.savefig(
+            Path(self.config["paths_write"]["debug_plots_folder"])
+            / "blobs.png"
+        )
+
+    def find_centre_with_bisector(self, coords):
+        # Find the line bisector between coords1 and coords2
+        def find_bisector_between_two_coords(coords1, coords2):
+            x1, y1 = coords1
+            x2, y2 = coords2
+            m1 = -((x1 - x2) / (y1 - y2))
+            mx1, my1 = (x1 + x2) / 2, (y1 + y2) / 2
+            c1 = my1 - (m1 * mx1)
+            return m1, c1
+
+        def find_the_center(m1, c1, m2, c2):
+            cx = (c2 - c1) / (m1 - m2)
+            cy = (m1 * cx) + c1
+            return cx, cy
+
+        # coords is an array of N coordinates
+        # for each combination of coordinates, find the bisector
+        # and the corresponding center
+        centers = []
+        for i in range(len(coords)):
+            for j in range(i + 1, len(coords)):
+                m1, c1 = find_bisector_between_two_coords(coords[i], coords[j])
+                for k in range(j + 1, len(coords)):
+                    m2, c2 = find_bisector_between_two_coords(
+                        coords[j], coords[k]
+                    )
+                    cx, cy = find_the_center(m1, c1, m2, c2)
+                    centers.append((cx, cy))
+
+        centers = np.array(centers)
+        # centers to integers
+        centers = np.round(centers).astype(int)
+
+        mean_center = np.mean(centers, axis=0)
+        median_center = np.median(centers, axis=0)
+        mode_center = np.mean(centers, axis=0)
+        print(
+            f"Mean center: {mean_center}, Median center: {median_center},"
+            + f"Mode center: {mode_center}"
+        )
+
+        # plot all centers, plot mean, median, mode
+        if self.config["debug_plots"]:
+            self.plot_center_distribution(
+                centers, mean_center, median_center, mode_center
+            )
+
+        # mode to integer
+        mode_center = mode_center.astype(int)
+        return mode_center
+
+    def plot_center_distribution(
+        self, centers, mean_center, median_center, mode_center
+    ):
+        fig, ax = plt.subplots(figsize=(10, 7))
+        ax.imshow(self.image_stack[0])
+        for center in centers:
+            ax.scatter(center[0], center[1], color="red", marker="x")
+        ax.scatter(mean_center[0], mean_center[1], color="green", label="Mean")
+        ax.scatter(
+            median_center[0], median_center[1], color="blue", label="Median"
+        )
+        ax.scatter(
+            mode_center[0], mode_center[1], color="purple", label="Mode"
+        )
+        ax.legend()
+
+        plt.savefig(
+            Path(self.config["paths_write"]["debug_plots_folder"])
+            / "center_distribution.png"
+        )

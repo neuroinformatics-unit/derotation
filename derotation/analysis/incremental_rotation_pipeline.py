@@ -464,15 +464,15 @@ class IncrementalPipeline(FullPipeline):
 
     def find_center_of_rotation(self):
         logging.info("Finding the center of rotation...")
-        sample_number = 12
-        mean_images = self.calculate_mean_images(self.image_stack)
 
+        mean_images = self.calculate_mean_images(self.image_stack)
+        sample_number = len(mean_images)
         subgroup = mean_images[:sample_number]
 
         logging.info("Finding blobs...")
         blobs = [
             blob_log(img, max_sigma=12, min_sigma=7, threshold=0.95, overlap=0)
-            for img in tqdm(subgroup[:sample_number])
+            for img in tqdm(subgroup)
         ]
 
         # sort blobs by size
@@ -481,7 +481,7 @@ class IncrementalPipeline(FullPipeline):
         ]
 
         # plot blobs on top of every frame
-        if self.config["debug_plots"]:
+        if self.debugging_plots:
             self.plot_blob_detection(blobs, subgroup)
 
         coord_first_blob_of_every_image = [
@@ -553,13 +553,13 @@ class IncrementalPipeline(FullPipeline):
         mean_center = np.mean(centers, axis=0)
         median_center = np.median(centers, axis=0)
         mode_center = np.mean(centers, axis=0)
-        print(
+        logging.info(
             f"Mean center: {mean_center}, Median center: {median_center},"
             + f"Mode center: {mode_center}"
         )
 
         # plot all centers, plot mean, median, mode
-        if self.config["debug_plots"]:
+        if self.debugging_plots:
             self.plot_center_distribution(
                 centers, mean_center, median_center, mode_center
             )

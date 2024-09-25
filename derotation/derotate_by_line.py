@@ -9,6 +9,9 @@ def rotate_an_image_array_line_by_line(
     image_stack: np.ndarray,
     rot_deg_line: np.ndarray,
     blank_pixels_value: float = 0,
+    num_lines_per_frame=None,
+    plotting_hook_line_addition=None,
+    plotting_hook_image_completed=None,
 ) -> np.ndarray:
     """Rotates the image stack line by line, using the rotation angles
     provided.
@@ -38,8 +41,8 @@ def rotate_an_image_array_line_by_line(
     np.ndarray
         The rotated image stack.
     """
-
-    num_lines_per_frame = image_stack.shape[1]
+    if num_lines_per_frame is None:
+        num_lines_per_frame = image_stack.shape[1]
     rotated_image_stack = copy.deepcopy(image_stack)
     previous_image_completed = True
     rotation_completed = True
@@ -95,6 +98,15 @@ def rotate_an_image_array_line_by_line(
                 rotated_line == 0, rotated_filled_image, rotated_line
             )
             previous_image_completed = False
+
+            if plotting_hook_line_addition is not None:
+                plotting_hook_line_addition(
+                    rotated_filled_image,
+                    rotated_line,
+                    image_counter,
+                    line_counter,
+                    rotation,
+                )
         if (
             image_scanning_completed and not rotation_completed
         ) or rotation_just_finished:
@@ -107,5 +119,10 @@ def rotate_an_image_array_line_by_line(
 
             rotated_image_stack[image_counter] = rotated_filled_image
             previous_image_completed = True
+
+            if plotting_hook_image_completed is not None:
+                plotting_hook_image_completed(
+                    rotated_image_stack, image_counter
+                )
 
     return rotated_image_stack

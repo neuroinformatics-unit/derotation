@@ -5,7 +5,22 @@ from scipy.ndimage import rotate
 
 
 class Rotator:
-    def __init__(self, angles, image_stack):
+    def __init__(self, angles: np.ndarray, image_stack: np.ndarray) -> None:
+        """Initializes the Rotator object.
+
+        Parameters
+        ----------
+        angles : np.ndarray
+            The rotation angles by line per frame
+        image_stack : np.ndarray
+            The image stack to be rotated
+
+        Raises
+        ------
+        AssertionError
+            If the number of angles is not equal to the number of lines
+            per frame multiplied by the number of frames
+        """
         #  there should be one angle per line pe frame
         assert len(angles) == image_stack.shape[0] * image_stack.shape[1]
 
@@ -13,10 +28,15 @@ class Rotator:
         self.image_stack = image_stack
         self.num_lines_per_frame = image_stack.shape[1]
 
-    previous_image_completed = True
-    rotation_completed = True
+    def rotate_by_line(self) -> np.ndarray:
+        """Rotates the image stack line by line, using the rotation angles
+        provided.
 
-    def rotate_by_line(self):
+        Returns
+        -------
+        np.ndarray
+            The rotated image stack.
+        """
         rotated_image_stack = copy.deepcopy(self.image_stack)
         blank_pixel = self.get_blank_pixels_value()
 
@@ -54,5 +74,12 @@ class Rotator:
 
         return rotated_image_stack
 
-    def get_blank_pixels_value(self):
+    def get_blank_pixels_value(self) -> float:
+        """Returns the minimum value of the image stack.
+
+        Returns
+        -------
+        float
+            The minimum value of the image stack.
+        """
         return np.min(self.image_stack)

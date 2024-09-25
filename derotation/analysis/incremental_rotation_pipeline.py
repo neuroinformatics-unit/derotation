@@ -575,6 +575,13 @@ class IncrementalPipeline(FullPipeline):
         ax.imshow(self.image_stack[0])
         for center in centers:
             ax.scatter(center[0], center[1], color="red", marker="x")
+        #  plot theoretical center in green
+        ax.scatter(
+            len(self.image_stack[0]) // 2,
+            len(self.image_stack[0]) // 2,
+            color="green",
+            marker="x",
+        )
         ax.scatter(mean_center[0], mean_center[1], color="green", label="Mean")
         ax.scatter(
             median_center[0], median_center[1], color="blue", label="Median"
@@ -582,6 +589,7 @@ class IncrementalPipeline(FullPipeline):
         ax.scatter(
             mode_center[0], mode_center[1], color="purple", label="Mode"
         )
+        ax.axis("off")
         ax.legend()
 
         plt.savefig(

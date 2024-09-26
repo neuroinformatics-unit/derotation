@@ -84,8 +84,6 @@ def regenerate_images_for_testing(image_stack, n_lines, n_total_lines):
 
 
 if __name__ == "__main__":
-    # Please comment the fixture decorators in order to regenerate the images
-
     stack_len = 10
     stack = image_stack(stack_len)
     lines_n = stack.shape[1]

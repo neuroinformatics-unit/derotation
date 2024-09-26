@@ -5,7 +5,7 @@ import tqdm
 from scipy.ndimage import rotate
 
 
-def rotate_an_image_array_line_by_line(
+def derotate_an_image_array_line_by_line(
     image_stack: np.ndarray,
     rot_deg_line: np.ndarray,
     blank_pixels_value: float = 0,

@@ -14,7 +14,7 @@ from scipy.signal import find_peaks
 from sklearn.mixture import GaussianMixture
 from tifffile import imsave
 
-from derotation.derotate_by_line import rotate_an_image_array_line_by_line
+from derotation.derotate_by_line import derotate_an_image_array_line_by_line
 from derotation.load_data.custom_data_loaders import (
     get_analog_signals,
     read_randomized_stim_table,
@@ -941,7 +941,7 @@ class FullPipeline:
             self.padded_image_stack = (
                 self.shift_image_given_different_center_of_rotation(offset)
             )
-            rotated_image_stack = rotate_an_image_array_line_by_line(
+            rotated_image_stack = derotate_an_image_array_line_by_line(
                 self.padded_image_stack,
                 self.rot_deg_line,
                 blank_pixels_value=offset,
@@ -950,7 +950,7 @@ class FullPipeline:
                 plotting_hook_image_completed=self.plotting_hook_for_derotation_image_completed,
             )
         else:
-            rotated_image_stack = rotate_an_image_array_line_by_line(
+            rotated_image_stack = derotate_an_image_array_line_by_line(
                 self.image_stack,
                 self.rot_deg_line,
                 blank_pixels_value=offset,

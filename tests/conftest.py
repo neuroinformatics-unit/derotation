@@ -166,3 +166,35 @@ def derotation_pipeline(
     pipeline.rotation_on = dummy_signal
 
     return pipeline
+
+
+@pytest.fixture
+def len_stack():
+    return 3  # Number of frames in the stack
+
+
+@pytest.fixture
+def test_image():
+    """Create a single frame image with a gradient square."""
+    image = np.zeros((100, 100))
+    for i in range(100):
+        image[i] = i
+    # Add black borders (20 pixels)
+    image[:20] = 0
+    image[-20:] = 0
+    image[:, :20] = 0
+    image[:, -20:] = 0
+    return image
+
+
+@pytest.fixture
+def image_stack(len_stack, test_image):
+    """Create a stack of frames with the same test image."""
+    return np.array([test_image for _ in range(len_stack)])
+
+
+@pytest.fixture
+def angles(image_stack):
+    """Generate a simple set of rotation angles."""
+    n_total_lines = image_stack.shape[0] * image_stack.shape[1]
+    return np.arange(n_total_lines)

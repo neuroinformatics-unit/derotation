@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from PIL import Image
 
-from derotation.analysis.full_rotation_pipeline import FullPipeline
+from derotation.analysis.full_derotation_pipeline import FullPipeline
 
 dog = Image.open("images/dog.png").convert("L")
 
@@ -41,7 +41,7 @@ def get_angles(kind, n_lines, n_total_lines):
     return all_angles
 
 
-def test_rotation_by_line(image_stack, n_lines, n_total_lines, len_stack):
+def test_derotation_by_line(image_stack, n_lines, n_total_lines, len_stack):
     pipeline = FullPipeline.__new__(FullPipeline)
     pipeline.image_stack = image_stack
 
@@ -49,12 +49,12 @@ def test_rotation_by_line(image_stack, n_lines, n_total_lines, len_stack):
         pipeline.rot_deg_line = get_angles(kind, n_lines, n_total_lines)
         pipeline.num_lines_per_frame = n_lines
 
-        rotated_images = pipeline.rotate_frames_line_by_line()
+        derotated_images = pipeline.derotate_frames_line_by_line()
 
-        assert len(rotated_images) == len_stack
-        assert rotated_images[0].shape == (n_lines, n_lines)
+        assert len(derotated_images) == len_stack
+        assert derotated_images[0].shape == (n_lines, n_lines)
 
-        for i, image in enumerate(rotated_images):
+        for i, image in enumerate(derotated_images):
             target_image = Image.open(
                 "tests/test_regression/images/"
                 + f"{kind}_rotation/rotated_dog_{i + 1}.png"
@@ -73,9 +73,9 @@ def regenerate_images_for_testing(image_stack, n_lines, n_total_lines):
         pipeline.rot_deg_line = get_angles(kind, n_lines, n_total_lines)
         pipeline.num_lines_per_frame = n_lines
 
-        rotated_images = pipeline.rotate_frames_line_by_line()
+        derotated_images = pipeline.derotate_frames_line_by_line()
 
-        for i, image in enumerate(rotated_images):
+        for i, image in enumerate(derotated_images):
             image = Image.fromarray(image.astype("uint8"))
             image.save(
                 "tests/test_regression/images/"

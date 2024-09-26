@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from derotation.analysis.full_rotation_pipeline import FullPipeline
+from derotation.analysis.full_derotation_pipeline import FullPipeline
 
 
 @pytest.fixture(autouse=True)

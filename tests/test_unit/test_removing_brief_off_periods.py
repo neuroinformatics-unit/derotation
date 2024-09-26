@@ -1,6 +1,6 @@
 import numpy as np
 
-from derotation.analysis.full_rotation_pipeline import FullPipeline
+from derotation.analysis.full_derotation_pipeline import FullPipeline
 
 
 def test_removing_brief_off_periods(

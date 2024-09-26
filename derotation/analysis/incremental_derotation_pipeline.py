@@ -6,11 +6,10 @@ from typing import Dict, Tuple
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from full_derotation_pipeline import FullPipeline
 from scipy.ndimage import rotate
 from skimage.feature import blob_log
 from tqdm import tqdm
-
-from derotation.analysis.full_rotation_pipeline import FullPipeline
 
 
 class IncrementalPipeline(FullPipeline):

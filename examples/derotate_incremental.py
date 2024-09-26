@@ -1,4 +1,4 @@
-from derotation.analysis.incremental_rotation_pipeline import (
+from incremental_derotation_pipeline import (
     IncrementalPipeline,
 )
 

@@ -22,21 +22,28 @@ def derotate_an_image_array_line_by_line(
     - creates a new image with only that line
     - rotates the line by the given angle without interpolation
     - substitutes the line in the new image
-    - adds the new image to the rotated image stack
+    - adds the new image to the derotated image stack
+
+    Edge cases and how they are handled:
+    - the rotation starts in the middle of the image -> the previous lines
+    are copied from the first frame
+    - the rotation ends in the middle of the image -> the remaining lines
+    are copied from the last frame
 
     Parameters
     ----------
     image_stack : np.ndarray
-        The image stack to be rotated.
+        The image stack to be derotated.
     rot_deg_line : np.ndarray
         The rotation angles by line.
     center : tuple, optional
-        The center of rotation (y, x). If not provided, defaults to the center of the image.
+        The center of rotation (y, x). If not provided, defaults to the
+        center of the image.
 
     Returns
     -------
     np.ndarray
-        The rotated image stack.
+        The derotated image stack.
     """
     if num_lines_per_frame is None:
         num_lines_per_frame = image_stack.shape[1]
@@ -47,37 +54,37 @@ def derotate_an_image_array_line_by_line(
             image_stack.shape[1] // 2,
         )  # Default center
 
-    rotated_image_stack = copy.deepcopy(image_stack)
+    derotated_image_stack = copy.deepcopy(image_stack)
     previous_image_completed = True
     rotation_completed = True
 
-    for i, rotation in tqdm.tqdm(
+    for i, angle in tqdm.tqdm(
         enumerate(rot_deg_line), total=len(rot_deg_line)
     ):
         line_counter = i % num_lines_per_frame
         image_counter = i // num_lines_per_frame
 
-        is_rotating = np.absolute(rotation) > 0.00001
+        is_rotating = np.absolute(angle) > 0.00001
         image_scanning_completed = line_counter == (num_lines_per_frame - 1)
         if i == 0:
             rotation_just_finished = False
         else:
             rotation_just_finished = not is_rotating and (
-                np.absolute(rot_deg_line[i - 1]) > np.absolute(rotation)
+                np.absolute(rot_deg_line[i - 1]) > np.absolute(angle)
             )
 
         if is_rotating:
             if rotation_completed and (line_counter != 0):
                 # when starting a new rotation in the middle of the image
-                rotated_filled_image = (
+                derotated_filled_image = (
                     np.ones_like(image_stack[image_counter])
                     * blank_pixels_value
-                )  # non-sampled pixels are set to the min val of the image
-                rotated_filled_image[:line_counter] = image_stack[
+                )  # non sampled pixels are set to the min val of the image
+                derotated_filled_image[:line_counter] = image_stack[
                     image_counter
                 ][:line_counter]
             elif previous_image_completed:
-                rotated_filled_image = (
+                derotated_filled_image = (
                     np.ones_like(image_stack[image_counter])
                     * blank_pixels_value
                 )
@@ -91,7 +98,7 @@ def derotate_an_image_array_line_by_line(
             image_with_only_line[line_counter] = line
 
             # Rotate the line as a whole vector without interpolation
-            angle_rad = np.deg2rad(rotation)
+            angle_rad = np.deg2rad(angle)
             cos_angle, sin_angle = np.cos(angle_rad), np.sin(angle_rad)
 
             # Calculate rotation matrix
@@ -130,7 +137,7 @@ def derotate_an_image_array_line_by_line(
             )
 
             # Place the rotated line in the output image without interpolation
-            rotated_filled_image[
+            derotated_filled_image[
                 final_coords[0][valid_mask], final_coords[1][valid_mask]
             ] = line[valid_mask]
 
@@ -138,11 +145,11 @@ def derotate_an_image_array_line_by_line(
 
             if plotting_hook_line_addition is not None:
                 plotting_hook_line_addition(
-                    rotated_filled_image,
+                    derotated_filled_image,
                     image_with_only_line,
                     image_counter,
                     line_counter,
-                    rotation,
+                    angle,
                 )
 
         if (
@@ -151,16 +158,11 @@ def derotate_an_image_array_line_by_line(
             if rotation_just_finished:
                 rotation_completed = True
 
-                rotated_filled_image[line_counter + 1 :] = image_stack[
+                derotated_filled_image[line_counter + 1 :] = image_stack[
                     image_counter
                 ][line_counter + 1 :]
 
-            rotated_image_stack[image_counter] = rotated_filled_image
+            derotated_image_stack[image_counter] = derotated_filled_image
             previous_image_completed = True
 
-            if plotting_hook_image_completed is not None:
-                plotting_hook_image_completed(
-                    rotated_image_stack, image_counter
-                )
-
-    return rotated_image_stack
+    return derotated_image_stack

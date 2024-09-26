@@ -1,5 +1,5 @@
-from derotation.analysis.full_rotation_pipeline import FullPipeline
-from derotation.analysis.incremental_rotation_pipeline import (
+from derotation.analysis.full_derotation_pipeline import FullPipeline
+from derotation.analysis.incremental_derotation_pipeline import (
     IncrementalPipeline,
 )
 

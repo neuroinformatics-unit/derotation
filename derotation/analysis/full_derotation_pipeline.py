@@ -56,7 +56,7 @@ class FullPipeline:
         - saving the masked image stack
         """
         self.process_analog_signals()
-        rotated_images = self.rotate_frames_line_by_line()
+        rotated_images = self.derotate_frames_line_by_line()
         masked = self.add_circle_mask(rotated_images, self.mask_diameter)
         self.save(masked)
         self.save_csv_with_derotation_data()
@@ -907,7 +907,7 @@ class FullPipeline:
 
         return self.padded_image_stack
 
-    def rotate_frames_line_by_line(self) -> np.ndarray:
+    def derotate_frames_line_by_line(self) -> np.ndarray:
         """Rotates the image stack line by line, using the rotation angles
         by line calculated from the analog signals.
 

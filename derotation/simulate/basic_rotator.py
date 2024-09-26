@@ -1,11 +1,17 @@
 import copy
+from typing import Optional, Tuple
 
 import numpy as np
 from scipy.ndimage import affine_transform
 
 
 class Rotator:
-    def __init__(self, angles: np.ndarray, image_stack: np.ndarray) -> None:
+    def __init__(
+        self,
+        angles: np.ndarray,
+        image_stack: np.ndarray,
+        center: Optional[Tuple[int, int]] = None,
+    ) -> None:
         """Initializes the Rotator object.
 
         Parameters
@@ -27,6 +33,11 @@ class Rotator:
         self.angles = angles
         self.image_stack = image_stack
         self.num_lines_per_frame = image_stack.shape[1]
+
+        if center is None:
+            self.center = np.array(image_stack.shape[1:]) / 2
+        else:
+            self.center = np.array(center)
 
     def rotate_by_line(self) -> np.ndarray:
         """Rotates the image stack line by line, using the rotation angles
@@ -66,9 +77,6 @@ class Rotator:
         angle_rad = np.deg2rad(angle)
         cos, sin = np.cos(angle_rad), np.sin(angle_rad)
 
-        # Calculate center of the image
-        center_y, center_x = np.array(image.shape) / 2
-
         # Rotation matrix
         rotation_matrix = np.array(
             [
@@ -78,9 +86,7 @@ class Rotator:
         )
 
         # Compute offset so rotation is around the center
-        offset = np.array([center_y, center_x]) - rotation_matrix @ np.array(
-            [center_y, center_x]
-        )
+        offset = self.center - rotation_matrix @ self.center
 
         # Apply affine transformation
         rotated_image = affine_transform(

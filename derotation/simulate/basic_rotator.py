@@ -1,7 +1,7 @@
 import copy
 
 import numpy as np
-from scipy.ndimage import rotate
+from scipy.ndimage import affine_transform
 
 
 class Rotator:
@@ -38,41 +38,62 @@ class Rotator:
             The rotated image stack.
         """
         rotated_image_stack = copy.deepcopy(self.image_stack)
-        blank_pixel = self.get_blank_pixels_value()
+        self.get_blank_pixels_value()
 
         for i, image in enumerate(self.image_stack):
-            start_angle_idx = self.angles[i]
+            start_angle_idx = self.angles[i * self.num_lines_per_frame]
             end_angle_idx = self.angles[self.num_lines_per_frame * (i + 1) - 1]
 
             is_this_frame_rotating = np.any(
                 np.abs(self.angles[start_angle_idx:end_angle_idx]) > 0.00001
             )
             if is_this_frame_rotating:
-                rotated_frame = np.ones_like(image) * blank_pixel
-
-                for j, line in enumerate(image):
-                    angle = self.angles[i * self.num_lines_per_frame + j]
-                    if np.abs(angle) > 0.00001:
-                        image_with_only_line = np.zeros_like(image)
-                        image_with_only_line[j] = line
-
-                        rotated_line = rotate(
-                            image_with_only_line,
-                            angle,
-                            reshape=False,
-                            order=0,
-                            mode="constant",
-                        )
-
-                        rotated_frame = np.where(
-                            rotated_line == 0, rotated_frame, rotated_line
-                        )
+                frame = copy.deepcopy(image)
+                for j, angle in enumerate(
+                    range(start_angle_idx, end_angle_idx)
+                ):
+                    if angle == 0:
+                        continue
                     else:
-                        rotated_frame[j] = line
-
-                rotated_image_stack[i] = rotated_frame
+                        rotated_frame = self.rotate(image, angle)
+                        frame[j] = rotated_frame[j]
+                rotated_image_stack[i] = frame
 
         return rotated_image_stack
+
+    def rotate(self, image: np.ndarray, angle: float) -> np.ndarray:
+        # Compute rotation in radians
+        angle_rad = np.deg2rad(angle)
+        cos, sin = np.cos(angle_rad), np.sin(angle_rad)
+
+        # Calculate center of the image
+        center_y, center_x = np.array(image.shape) / 2
+
+        # Rotation matrix
+        rotation_matrix = np.array(
+            [
+                [cos, -sin],
+                [sin, cos],
+            ]
+        )
+
+        # Compute offset so rotation is around the center
+        offset = np.array([center_y, center_x]) - rotation_matrix @ np.array(
+            [center_y, center_x]
+        )
+
+        # Apply affine transformation
+        rotated_image = affine_transform(
+            image,
+            rotation_matrix,
+            offset=offset,
+            output_shape=image.shape,  # Keep original shape
+            order=1,  # Linear interpolation
+            mode="constant",
+            cval=0,  # Fill empty values with 0 (black)
+        )
+
+        return rotated_image
 
     def get_blank_pixels_value(self) -> float:
         """Returns the minimum value of the image stack.

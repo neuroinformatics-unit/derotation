@@ -37,6 +37,13 @@ def test_derotator_by_line(angles):
             #  which indexes are different
             indexes = np.where(diff > 1)
 
+            # save wrong image
+            wrong_image = Image.fromarray(derotated_frame.astype("uint8"))
+            wrong_image.save(
+                Path("tests/test_regression/images/rotator_derotator")
+                / f"wrong_derotated_frame_{i + 1}.png"
+            )
+
             assert (
                 False
             ), f"Index where it is different: {indexes}, Total: {len(indexes)}"

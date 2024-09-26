@@ -937,7 +937,7 @@ class FullPipeline:
 
         offset = self.find_image_offset(self.image_stack[0])
 
-        if self.center_of_rotation is not None:
+        if hasattr(self, "center_of_rotation"):
             self.padded_image_stack = (
                 self.shift_image_given_different_center_of_rotation(offset)
             )

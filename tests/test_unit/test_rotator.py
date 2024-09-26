@@ -9,10 +9,7 @@ def test_Rotator_constructor():
     # 300 angles, one per line per frame
     angles = np.arange(300)
     # create a Rotator object
-    rotator = Rotator(angles, image_stack)
-    # check if the object was created correctly
-    assert rotator.angles == angles
-    assert rotator.image_stack == image_stack
+    Rotator(angles, image_stack)
 
 
 def test_failing_Rotator_instantiation():

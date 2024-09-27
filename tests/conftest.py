@@ -177,13 +177,14 @@ def len_stack():
 def test_image():
     """Create a single frame image with a gradient square."""
     image = np.zeros((100, 100))
+    gray_values = [i % 5 * 60 + 15 for i in range(100)]
     for i in range(100):
-        image[i] = i
-    # Add black borders (20 pixels)
+        image[i] = gray_values[i]
     image[:20] = 0
     image[-20:] = 0
     image[:, :20] = 0
     image[:, -20:] = 0
+
     return image
 
 

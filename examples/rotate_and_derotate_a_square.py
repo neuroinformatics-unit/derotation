@@ -6,8 +6,9 @@ from derotation.simulate.basic_rotator import Rotator
 
 #  make a simple image, a square in a black background
 image = np.zeros((100, 100))
+gray_values = [i % 5 * 100 + 155 for i in range(100)]
 for i in range(100):
-    image[i] = i
+    image[i] = gray_values[i]
 image[:20] = 0
 image[-20:] = 0
 image[:, :20] = 0

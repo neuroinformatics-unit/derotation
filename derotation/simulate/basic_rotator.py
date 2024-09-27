@@ -88,7 +88,7 @@ class Rotator:
             rotation_matrix,
             offset=offset,
             output_shape=image.shape,  # Keep original shape
-            order=1,  # Linear interpolation
+            order=0,  # NO interpolation
             mode="constant",
             cval=0,  # Fill empty values with 0 (black)
         )

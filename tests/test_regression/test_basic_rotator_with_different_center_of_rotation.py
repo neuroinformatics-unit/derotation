@@ -63,8 +63,9 @@ def regenerate_rotator_images_for_testing(image_stack, angles, center=None):
 if __name__ == "__main__":
     # Set up an image stack and angles
     image = np.zeros((100, 100))
+    gray_values = [i % 5 * 60 + 15 for i in range(100)]
     for i in range(100):
-        image[i] = i
+        image[i] = gray_values[i]
     image[:20] = 0
     image[-20:] = 0
     image[:, :20] = 0

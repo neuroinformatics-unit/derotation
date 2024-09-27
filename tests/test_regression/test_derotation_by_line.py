@@ -48,6 +48,8 @@ def test_derotation_by_line(image_stack, n_lines, n_total_lines, len_stack):
     for kind in ["uniform", "sinusoidal"]:
         pipeline.rot_deg_line = get_angles(kind, n_lines, n_total_lines)
         pipeline.num_lines_per_frame = n_lines
+        pipeline.center_of_rotation = (n_lines // 2, n_lines // 2)
+        pipeline.hooks = {}
 
         derotated_images = pipeline.derotate_frames_line_by_line()
 

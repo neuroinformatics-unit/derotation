@@ -9,7 +9,6 @@ def derotate_an_image_array_line_by_line(
     image_stack: np.ndarray,
     rot_deg_line: np.ndarray,
     blank_pixels_value: float = 0,
-    num_lines_per_frame=None,
     center: Optional[Tuple[int, int]] = None,
     plotting_hook_line_addition=None,
     plotting_hook_image_completed=None,
@@ -45,8 +44,8 @@ def derotate_an_image_array_line_by_line(
     np.ndarray
         The derotated image stack.
     """
-    if num_lines_per_frame is None:
-        num_lines_per_frame = image_stack.shape[1]
+
+    num_lines_per_frame = image_stack.shape[1]
 
     if center is None:
         center = (

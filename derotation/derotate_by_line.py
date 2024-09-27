@@ -165,4 +165,9 @@ def derotate_an_image_array_line_by_line(
             derotated_image_stack[image_counter] = derotated_filled_image
             previous_image_completed = True
 
+            if plotting_hook_image_completed is not None:
+                plotting_hook_image_completed(
+                    derotated_filled_image, image_counter
+                )
+
     return derotated_image_stack

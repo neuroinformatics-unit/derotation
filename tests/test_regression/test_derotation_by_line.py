@@ -60,9 +60,24 @@ def test_derotation_by_line(image_stack, n_lines, n_total_lines, len_stack):
                 + f"{kind}_rotation/rotated_dog_{i + 1}.png"
             )
             target_image = np.array(target_image.convert("L"))
-            assert np.allclose(
-                image, target_image, atol=1
-            ), f"Failed for {kind} rotation, image {i + 1}"
+            try:
+                assert np.allclose(
+                    image, target_image, atol=1
+                ), f"Failed for {kind} rotation, image {i + 1}"
+            except AssertionError:
+                diff = np.abs(image - target_image)
+                indexes = np.where(diff > 1)
+
+                wrong_image = Image.fromarray(image.astype("uint8"))
+                wrong_image.save(
+                    "tests/test_regression/images/"
+                    + f"{kind}_rotation/wrong_derotated_dog_{i + 1}.png"
+                )
+
+                assert False, (
+                    f"Index where it is different: {indexes},"
+                    + f" Total: {len(indexes)}"
+                )
 
 
 def regenerate_images_for_testing(image_stack, n_lines, n_total_lines):
@@ -72,6 +87,7 @@ def regenerate_images_for_testing(image_stack, n_lines, n_total_lines):
     for kind in ["uniform", "sinusoidal"]:
         pipeline.rot_deg_line = get_angles(kind, n_lines, n_total_lines)
         pipeline.num_lines_per_frame = n_lines
+        pipeline.center_of_rotation = (n_lines // 2, n_lines // 2)
 
         derotated_images = pipeline.derotate_frames_line_by_line()
 

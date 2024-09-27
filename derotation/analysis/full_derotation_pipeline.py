@@ -176,7 +176,10 @@ class FullPipeline:
         logging.info(f"Dataset {self.filename_raw} loaded")
         logging.info(f"Filename: {self.filename}")
 
-        self.center_of_rotation = None
+        self.center_of_rotation = (
+            self.num_lines_per_frame // 2,
+            self.num_lines_per_frame // 2,
+        )
 
     ### ----------------- Analog signals processing pipeline ------------- ###
     def process_analog_signals(self):

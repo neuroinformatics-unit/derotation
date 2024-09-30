@@ -492,6 +492,10 @@ class IncrementalPipeline(FullPipeline):
         coord_first_blob_of_every_image = [
             blobs[i][0][:2].astype(int) for i in range(sample_number)
         ]
+        #  invert x, y order
+        coord_first_blob_of_every_image = [
+            (coord[1], coord[0]) for coord in coord_first_blob_of_every_image
+        ]
 
         # Fit an ellipse to the brightest blob centers and get its center
         center_x, center_y, a, b, theta = self.fit_ellipse_to_points(
@@ -508,7 +512,7 @@ class IncrementalPipeline(FullPipeline):
         )
         logging.info(f"Variation from a perfect circle: {a - b:.2f}")
 
-        return int(center_y), int(center_x)
+        return int(center_x), int(center_y)
 
     def plot_blob_detection(self, blobs, subgroup):
         fig, ax = plt.subplots(4, 3, figsize=(10, 10))

@@ -22,7 +22,7 @@ def create_test_image():
     white_value = 255  # white color for the circle
 
     #  add an extra gray circle at the bottom right
-    center2 = (80, 80)
+    center2 = (60, 60)
     radius2 = 5
     gray_value = 128
 
@@ -50,7 +50,6 @@ def create_rotation_angles(image_stack):
         incremental_angles, num_lines_total // len(incremental_angles)
     )
 
-    # if len incremental angles is not equal to num_lines_total, repeat the last angle
     if len(incremental_angles) < num_lines_total:
         incremental_angles = np.concatenate(
             (
@@ -81,7 +80,8 @@ def get_center_of_rotation(rotated_stack_incremental, incremental_angles):
             self.debug_plots_folder = Path("debug/")
 
         def calculate_mean_images(self, image_stack: np.ndarray) -> list:
-            #  Overwrite original method as it is too bound to signal coming from a real motor
+            #  Overwrite original method as it is too bound
+            #  to signal coming from a real motor
             angles_subset = copy.deepcopy(self.rot_deg_frame)
             rounded_angles = np.round(angles_subset)
 
@@ -101,6 +101,8 @@ def get_center_of_rotation(rotated_stack_incremental, incremental_angles):
 
 
 def main():
+    center_of_rotation_initial = (44, 51)
+
     # Create the test image
     test_image = create_test_image()
     # save the test image
@@ -136,10 +138,14 @@ def main():
     plt.close()
 
     # Use the Rotator to create the rotated image stacks
-    rotator_incremental = Rotator(incremental_angles, image_stack)
+    rotator_incremental = Rotator(
+        incremental_angles, image_stack, center_of_rotation_initial
+    )
     rotated_stack_incremental = rotator_incremental.rotate_by_line()
 
-    rotator_sinusoidal = Rotator(sinusoidal_angles, image_stack)
+    rotator_sinusoidal = Rotator(
+        sinusoidal_angles, image_stack, center_of_rotation_initial
+    )
     rotated_stack_sinusoidal = rotator_sinusoidal.rotate_by_line()
 
     #  save the two stacka as tiffs

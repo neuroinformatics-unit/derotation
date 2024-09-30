@@ -52,6 +52,9 @@ def derotate_an_image_array_line_by_line(
             image_stack.shape[2] // 2,
             image_stack.shape[1] // 2,
         )  # Default center
+    else:
+        # invert order
+        center = (center[1], center[0])
 
     derotated_image_stack = copy.deepcopy(image_stack)
     previous_image_completed = True

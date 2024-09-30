@@ -42,7 +42,7 @@ class Rotator:
             The rotated image stack.
         """
         rotated_image_stack = copy.deepcopy(self.image_stack)
-        self.get_blank_pixels_value()
+        blank_pixel = self.get_blank_pixels_value()
 
         for i, image in enumerate(self.image_stack):
             start_angle_idx = i * self.num_lines_per_frame
@@ -59,13 +59,15 @@ class Rotator:
                     if angle == 0:
                         continue
                     else:
-                        rotated_frame = self.rotate(image, angle)
+                        rotated_frame = self.rotate(image, angle, blank_pixel)
                         frame[j] = rotated_frame[j]
                 rotated_image_stack[i] = frame
 
         return rotated_image_stack
 
-    def rotate(self, image: np.ndarray, angle: float) -> np.ndarray:
+    def rotate(
+        self, image: np.ndarray, angle: float, blank_pixel: float
+    ) -> np.ndarray:
         # Compute rotation in radians
         angle_rad = np.deg2rad(angle)
         cos, sin = np.cos(angle_rad), np.sin(angle_rad)
@@ -94,7 +96,7 @@ class Rotator:
             output_shape=image.shape,  # Keep original shape
             order=0,  # NO interpolation
             mode="constant",
-            cval=0,  # Fill empty values with 0 (black)
+            cval=blank_pixel,
         )
 
         return rotated_image

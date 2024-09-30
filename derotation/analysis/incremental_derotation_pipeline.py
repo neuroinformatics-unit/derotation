@@ -6,10 +6,13 @@ from typing import Dict, Tuple
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from full_derotation_pipeline import FullPipeline
+from matplotlib.patches import Ellipse
 from scipy.ndimage import rotate
+from scipy.optimize import least_squares
 from skimage.feature import blob_log
 from tqdm import tqdm
+
+from derotation.analysis.full_derotation_pipeline import FullPipeline
 
 
 class IncrementalPipeline(FullPipeline):
@@ -38,8 +41,8 @@ class IncrementalPipeline(FullPipeline):
         frame and then registered using phase cross correlation.
         """
         super().process_analog_signals()
-        rotated_images = self.roatate_by_frame()
-        masked_unregistered = self.add_circle_mask(rotated_images)
+        derotated_images = self.deroatate_by_frame()
+        masked_unregistered = self.add_circle_mask(derotated_images)
 
         mean_images = self.calculate_mean_images(masked_unregistered)
         target_image = self.get_target_image(masked_unregistered)
@@ -250,7 +253,7 @@ class IncrementalPipeline(FullPipeline):
             / "rotation_angles.png"
         )
 
-    def calculate_mean_images(self, rotated_image_stack: np.ndarray) -> list:
+    def calculate_mean_images(self, image_stack: np.ndarray) -> list:
         """Calculate the mean images for each rotation angle. This required
         to calculate the shifts using phase cross correlation.
 
@@ -275,7 +278,7 @@ class IncrementalPipeline(FullPipeline):
 
         mean_images = []
         for i in np.arange(10, 360, 10):
-            images = rotated_image_stack[rounded_angles == i]
+            images = image_stack[rounded_angles == i]
             mean_image = np.mean(images, axis=0)
 
             mean_images.append(mean_image)
@@ -311,7 +314,7 @@ class IncrementalPipeline(FullPipeline):
         )
 
     ### ------- Methods unique to IncrementalPipeline ----------------- ###
-    def roatate_by_frame(self) -> np.ndarray:
+    def deroatate_by_frame(self) -> np.ndarray:
         """Rotate the image stack by frame.
 
         Returns
@@ -462,7 +465,10 @@ class IncrementalPipeline(FullPipeline):
         return registered_images
 
     def find_center_of_rotation(self):
-        logging.info("Finding the center of rotation...")
+        logging.info(
+            "Fitting an ellipse to the brightest blob centers "
+            + "to find the center of rotation..."
+        )
 
         mean_images = self.calculate_mean_images(self.image_stack)
         sample_number = len(mean_images)
@@ -484,18 +490,25 @@ class IncrementalPipeline(FullPipeline):
             self.plot_blob_detection(blobs, subgroup)
 
         coord_first_blob_of_every_image = [
-            blobs[i][0][:2].astype(int) for i in range(6)
+            blobs[i][0][:2].astype(int) for i in range(sample_number)
         ]
-        centre = self.find_centre_with_bisector(
+
+        # Fit an ellipse to the brightest blob centers and get its center
+        center_x, center_y, a, b, theta = self.fit_ellipse_to_points(
             coord_first_blob_of_every_image
         )
 
-        logging.info(f"Centre of rotation: {centre}")
         logging.info(
-            "Difference with the expected centre:"
-            + f"{np.array([256 // 2, 256 // 2]) - centre}"
+            f"Center of ellipse: ({center_x:.2f}, {center_y:.2f}), "
+            f"semi-major axis: {a:.2f}, semi-minor axis: {b:.2f}"
         )
-        return centre
+        logging.info(
+            "Variation from the center of the image: "
+            + f"({center_x - 128:.2f}, {center_y - 128:.2f})"
+        )
+        logging.info(f"Variation from a perfect circle: {a - b:.2f}")
+
+        return int(center_y), int(center_x)
 
     def plot_blob_detection(self, blobs, subgroup):
         fig, ax = plt.subplots(4, 3, figsize=(10, 10))
@@ -511,87 +524,111 @@ class IncrementalPipeline(FullPipeline):
                 a.text(x, y, str(j), color="red")
 
         # save the plot
-        plt.savefig(
-            Path(self.config["paths_write"]["debug_plots_folder"])
-            / "blobs.png"
-        )
+        plt.savefig(self.debug_plots_folder / "blobs.png")
 
-    def find_centre_with_bisector(self, coords):
-        # Find the line bisector between coords1 and coords2
-        def find_bisector_between_two_coords(coords1, coords2):
-            x1, y1 = coords1
-            x2, y2 = coords2
-            m1 = -((x1 - x2) / (y1 - y2))
-            mx1, my1 = (x1 + x2) / 2, (y1 + y2) / 2
-            c1 = my1 - (m1 * mx1)
-            return m1, c1
-
-        def find_the_center(m1, c1, m2, c2):
-            cx = (c2 - c1) / (m1 - m2)
-            cy = (m1 * cx) + c1
-            return cx, cy
-
-        # coords is an array of N coordinates
-        # for each combination of coordinates, find the bisector
-        # and the corresponding center
-        centers = []
-        for i in range(len(coords)):
-            for j in range(i + 1, len(coords)):
-                m1, c1 = find_bisector_between_two_coords(coords[i], coords[j])
-                for k in range(j + 1, len(coords)):
-                    m2, c2 = find_bisector_between_two_coords(
-                        coords[j], coords[k]
-                    )
-                    cx, cy = find_the_center(m1, c1, m2, c2)
-                    centers.append((cx, cy))
-
+    def fit_ellipse_to_points(self, centers):
+        # Convert centers to numpy array
         centers = np.array(centers)
-        # centers to integers
-        centers = np.round(centers).astype(int)
+        x = centers[:, 0]
+        y = centers[:, 1]
 
-        mean_center = np.mean(centers, axis=0)
-        median_center = np.median(centers, axis=0)
-        mode_center = np.mean(centers, axis=0)
-        logging.info(
-            f"Mean center: {mean_center}, Median center: {median_center},"
-            + f"Mode center: {mode_center}"
+        # Find the extreme points for the initial ellipse estimate
+        topmost = centers[np.argmin(y)]
+        rightmost = centers[np.argmax(x)]
+        bottommost = centers[np.argmax(y)]
+        leftmost = centers[np.argmin(x)]
+
+        # Initial parameters: (center_x, center_y, semi_major_axis,
+        # semi_minor_axis, rotation_angle)
+        initial_center = np.mean(
+            [topmost, bottommost, leftmost, rightmost], axis=0
         )
+        semi_major_axis = np.linalg.norm(rightmost - leftmost) / 2
+        semi_minor_axis = np.linalg.norm(topmost - bottommost) / 2
+        rotation_angle = 0  # Start with no rotation
 
-        # plot all centers, plot mean, median, mode
+        initial_params = [
+            initial_center[0],
+            initial_center[1],
+            semi_major_axis,
+            semi_minor_axis,
+            rotation_angle,
+        ]
+
+        logging.info("Fitting ellipse to points...")
+
+        # Objective function to minimize: sum of squared distances to ellipse
+        def ellipse_residuals(params, x, y):
+            center_x, center_y, a, b, theta = params
+            cos_angle = np.cos(theta)
+            sin_angle = np.sin(theta)
+
+            # Rotate the points to align with the ellipse axes
+            x_rot = cos_angle * (x - center_x) + sin_angle * (y - center_y)
+            y_rot = -sin_angle * (x - center_x) + cos_angle * (y - center_y)
+
+            # Ellipse equation: (x_rot^2 / a^2) + (y_rot^2 / b^2) = 1
+            return (x_rot / a) ** 2 + (y_rot / b) ** 2 - 1
+
+        # Use least squares optimization to fit the ellipse to the points
+        result = least_squares(ellipse_residuals, initial_params, args=(x, y))
+
+        # Extract optimized parameters
+        center_x, center_y, a, b, theta = result.x
+
         if self.debugging_plots:
-            self.plot_center_distribution(
-                centers, mean_center, median_center, mode_center
+            self.plot_ellipse_fit_and_centers(
+                centers, center_x, center_y, a, b, theta
             )
 
-        # mode to integer
-        mode_center = mode_center.astype(int)
-        return mode_center
+        return center_x, center_y, a, b, theta
 
-    def plot_center_distribution(
-        self, centers, mean_center, median_center, mode_center
+    def plot_ellipse_fit_and_centers(
+        self, centers, center_x, center_y, a, b, theta
     ):
-        fig, ax = plt.subplots(figsize=(10, 7))
-        ax.imshow(self.image_stack[0])
-        for center in centers:
-            ax.scatter(center[0], center[1], color="red", marker="x")
-        #  plot theoretical center in green
+        # Convert centers to numpy array
+        centers = np.array(centers)
+        x = centers[:, 0]
+        y = centers[:, 1]
+
+        # Create the plot
+        fig, ax = plt.subplots(figsize=(8, 8))
+        #  plot behind a frame of the original image
+        ax.imshow(self.image_stack[0], cmap="gray")
+        ax.scatter(x, y, label="Brightest Blob Centers", color="red")
+
+        # Plot fitted ellipse
+        ellipse = Ellipse(
+            (center_x, center_y),
+            width=2 * a,
+            height=2 * b,
+            angle=np.degrees(theta),
+            edgecolor="blue",
+            facecolor="none",
+            label="Fitted Ellipse",
+        )
+        ax.add_patch(ellipse)
+
+        # Plot center of fitted ellipse
         ax.scatter(
-            len(self.image_stack[0]) // 2,
-            len(self.image_stack[0]) // 2,
+            center_x,
+            center_y,
             color="green",
             marker="x",
+            s=100,
+            label="Ellipse Center",
         )
-        ax.scatter(mean_center[0], mean_center[1], color="green", label="Mean")
-        ax.scatter(
-            median_center[0], median_center[1], color="blue", label="Median"
-        )
-        ax.scatter(
-            mode_center[0], mode_center[1], color="purple", label="Mode"
-        )
-        ax.axis("off")
-        ax.legend()
 
-        plt.savefig(
-            Path(self.config["paths_write"]["debug_plots_folder"])
-            / "center_distribution.png"
-        )
+        # Add some plot formatting
+        ax.set_xlim(0, self.image_stack.shape[1])
+        ax.set_ylim(
+            self.image_stack.shape[1], 0
+        )  # Invert y-axis to match image coordinate system
+        ax.set_aspect("equal")
+        ax.legend()
+        ax.grid(True)
+        ax.set_title("Fitted Ellipse on brightest blob centers")
+        ax.axis("off")
+
+        #  save
+        plt.savefig(self.debug_plots_folder / "ellipse_fit.png")

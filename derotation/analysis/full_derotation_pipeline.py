@@ -797,6 +797,34 @@ class FullPipeline:
 
     ### ----------------- Derotation ----------------- ###
 
+    def plot_max_projection_with_center(self):
+        """Plots the maximum projection of the image stack with the center
+        of rotation.
+        This plot will be saved in the debug_plots folder.
+        Please inspect it to check that the center of rotation is correctly
+        placed.
+        """
+        logging.info("Plotting max projection with center...")
+
+        max_projection = np.max(self.image_stack, axis=0)
+
+        fig, ax = plt.subplots(1, 1, figsize=(5, 5))
+
+        ax.imshow(max_projection, cmap="gray")
+        ax.scatter(
+            self.center_of_rotation[0],
+            self.center_of_rotation[1],
+            color="red",
+            marker="x",
+        )
+
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+
+        ax.axis("off")
+
+        plt.savefig(self.debug_plots_folder / "max_projection_with_center.png")
+
     def derotate_frames_line_by_line(self) -> np.ndarray:
         """Rotates the image stack line by line, using the rotation angles
         by line calculated from the analog signals.
@@ -824,6 +852,9 @@ class FullPipeline:
             The rotated image stack.
         """
         logging.info("Starting derotation by line...")
+
+        if self.debugging_plots:
+            self.plot_max_projection_with_center()
 
         offset = self.find_image_offset(self.image_stack[0])
 

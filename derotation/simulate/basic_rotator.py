@@ -28,7 +28,11 @@ class Rotator:
             per frame multiplied by the number of frames
         """
         #  there should be one angle per line pe frame
-        assert len(angles) == image_stack.shape[0] * image_stack.shape[1]
+        assert len(angles) == image_stack.shape[0] * image_stack.shape[1], (
+            f"Number of angles ({len(angles)}) should be equal to the number "
+            + "of lines per frame multiplied by the number of frames "
+            + f"({image_stack.shape[0] * image_stack.shape[1]})"
+        )
 
         self.angles = angles
         self.image_stack = image_stack
@@ -52,8 +56,8 @@ class Rotator:
         self.get_blank_pixels_value()
 
         for i, image in enumerate(self.image_stack):
-            start_angle_idx = self.angles[i * self.num_lines_per_frame]
-            end_angle_idx = self.angles[self.num_lines_per_frame * (i + 1) - 1]
+            start_angle_idx = i * self.num_lines_per_frame
+            end_angle_idx = self.num_lines_per_frame * (i + 1)
 
             is_this_frame_rotating = np.any(
                 np.abs(self.angles[start_angle_idx:end_angle_idx]) > 0.00001
@@ -61,7 +65,7 @@ class Rotator:
             if is_this_frame_rotating:
                 frame = copy.deepcopy(image)
                 for j, angle in enumerate(
-                    range(start_angle_idx, end_angle_idx)
+                    self.angles[start_angle_idx:end_angle_idx]
                 ):
                     if angle == 0:
                         continue

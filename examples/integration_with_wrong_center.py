@@ -100,22 +100,7 @@ def get_center_of_rotation(rotated_stack_incremental, incremental_angles):
     return center_of_rotation
 
 
-def main():
-    center_of_rotation_initial = (44, 51)
-
-    # Create the test image
-    test_image = create_test_image()
-    # save the test image
-    plt.imsave("debug/test_image.png", test_image, cmap="gray")
-
-    # Create a stack of identical frames
-    num_frames = 1000
-    image_stack = create_image_stack(test_image, num_frames)
-
-    # Generate rotation angles
-    incremental_angles, sinusoidal_angles = create_rotation_angles(image_stack)
-
-    # plot the angles
+def plot_angles(incremental_angles, sinusoidal_angles):
     fig, axs = plt.subplots(2, 1, figsize=(10, 5))
     fig.suptitle("Rotation Angles")
 
@@ -136,6 +121,66 @@ def main():
     plt.savefig("debug/rotation_angles.png")
 
     plt.close()
+
+
+def plot_a_few_rotated_frames(
+    rotated_stack_incremental, rotated_stack_sinusoidal
+):
+    fig, axs = plt.subplots(2, 5, figsize=(15, 6))
+    #  show incremental and sinusoidal rotation
+
+    for i, ax in enumerate(axs[0]):
+        ax.imshow(rotated_stack_incremental[i * 50], cmap="gray")
+        ax.set_title(f"Frame {i * 24}")
+        ax.axis("off")
+
+    for i, ax in enumerate(axs[1]):
+        ax.imshow(rotated_stack_sinusoidal[i * 50], cmap="gray")
+        ax.set_title(f"Frame {i * 24}")
+        ax.axis("off")
+
+    # Save the plot
+    plt.savefig("debug/rotated_stacks.png")
+
+    plt.close()
+
+
+def plot_derotated_frames(derotated_sinusoidal):
+    fig, axs = plt.subplots(2, 5, figsize=(15, 6))
+
+    for i, ax in enumerate(axs[0]):
+        ax.imshow(derotated_sinusoidal[i * 50], cmap="gray")
+        ax.set_title(f"Frame {i * 24}")
+        ax.axis("off")
+
+    for i, ax in enumerate(axs[1]):
+        ax.imshow(derotated_sinusoidal[i * 50 + 1], cmap="gray")
+        ax.set_title(f"Frame {i * 24 + 1}")
+        ax.axis("off")
+
+    # Save the plot
+    plt.savefig("debug/derotated_sinusoidal.png")
+
+    plt.close()
+
+
+def main():
+    center_of_rotation_initial = (44, 51)
+
+    # Create the test image
+    test_image = create_test_image()
+    # save the test image
+    plt.imsave("debug/test_image.png", test_image, cmap="gray")
+
+    # Create a stack of identical frames
+    num_frames = 1000
+    image_stack = create_image_stack(test_image, num_frames)
+
+    # Generate rotation angles
+    incremental_angles, sinusoidal_angles = create_rotation_angles(image_stack)
+
+    # plot the angles
+    plot_angles(incremental_angles, sinusoidal_angles)
 
     # Use the Rotator to create the rotated image stacks
     rotator_incremental = Rotator(
@@ -169,42 +214,13 @@ def main():
     #  save the derotated stack as tiff
     tiff.imwrite("debug/derotated_sinusoidal.tiff", derotated_sinusoidal)
 
-    # Optional: Visualize synthetic stacks for verification in a few frames
-    fig, axs = plt.subplots(2, 5, figsize=(15, 6))
-    #  show incremental and sinusoidal rotation
-
-    for i, ax in enumerate(axs[0]):
-        ax.imshow(rotated_stack_incremental[i * 50], cmap="gray")
-        ax.set_title(f"Frame {i * 24}")
-        ax.axis("off")
-
-    for i, ax in enumerate(axs[1]):
-        ax.imshow(rotated_stack_sinusoidal[i * 50], cmap="gray")
-        ax.set_title(f"Frame {i * 24}")
-        ax.axis("off")
-
-    # Save the plot
-    plt.savefig("debug/rotated_stacks.png")
-
-    plt.close()
+    # plot a few rotated frames
+    plot_a_few_rotated_frames(
+        rotated_stack_incremental, rotated_stack_sinusoidal
+    )
 
     # Let's look at 10 frames of the derotated sinusoidal stack
-    fig, axs = plt.subplots(2, 5, figsize=(15, 6))
-
-    for i, ax in enumerate(axs[0]):
-        ax.imshow(derotated_sinusoidal[i * 50], cmap="gray")
-        ax.set_title(f"Frame {i * 24}")
-        ax.axis("off")
-
-    for i, ax in enumerate(axs[1]):
-        ax.imshow(derotated_sinusoidal[i * 50 + 1], cmap="gray")
-        ax.set_title(f"Frame {i * 24 + 1}")
-        ax.axis("off")
-
-    # Save the plot
-    plt.savefig("debug/derotated_sinusoidal.png")
-
-    plt.close()
+    plot_derotated_frames(derotated_sinusoidal)
 
 
 if __name__ == "__main__":

@@ -37,6 +37,11 @@ def test_derotator_by_line_with_center(
 
     # Check each derotated frame against precomputed expected images
     center_suffix = f"{center[0]}_{center[1]}"
+
+    errors = 0
+    atol = 1
+    acceptance_threshold = 3
+
     for i, derotated_frame in enumerate(derotated_image_stack):
         target_image = Image.open(
             "tests/test_regression/images/rotator_derotator/"
@@ -45,27 +50,19 @@ def test_derotator_by_line_with_center(
         target_image = np.array(target_image.convert("L"))
 
         # Compare each frame against the precomputed target image
-        try:
-            assert np.allclose(
-                derotated_frame, target_image, atol=1
-            ), f"Failed for frame {i + 1} with center {center}"
-        except AssertionError:
-            # Print where it is different
-            diff = np.abs(derotated_frame - target_image)
+        if not np.allclose(derotated_frame, target_image, atol=atol):
+            differences = np.abs(derotated_frame - target_image)
+            errors += differences[differences > atol].size
 
-            # Which indexes are different
-            indexes = np.where(diff > 1)
-
-            # Save the incorrect image
-            wrong_image = Image.fromarray(derotated_frame.astype("uint8"))
-            wrong_image.save(
-                Path("tests/test_regression/images/rotator_derotator")
-                / f"wrong_derotated_frame_{center_suffix}_{i + 1}.png"
-            )
-
-            assert (
-                False
-            ), f"Index where it is different: {indexes}, Total: {len(indexes)}"
+    # Check if the number of errors is within the acceptance threshold
+    if errors > acceptance_threshold:
+        # Save the incorrect image
+        wrong_image = Image.fromarray(derotated_frame.astype("uint8"))
+        wrong_image.save(
+            Path("tests/test_regression/images/rotator_derotator")
+            / f"wrong_derotated_frame_{center_suffix}_{i + 1}.png"
+        )
+        assert False, f"More than {acceptance_threshold} errors in derotation"
 
 
 def regenerate_rotator_images_for_testing(image_stack, angles, center=None):

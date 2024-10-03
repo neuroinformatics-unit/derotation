@@ -1,3 +1,11 @@
+"""
+This module contains hooks for making plots while the derotation is running.
+The hooks are called at specific points in the derotation process, specifically
+when a line is added to the derotated image and when a frame is completed.
+Also, a maximum projection plot is generated at the end of the first rotation.
+They are useful for debugging purposes and for generating figures.
+"""
+
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -5,8 +13,15 @@ import numpy as np
 
 
 def line_addition(
-    derotated_filled_image, rotated_line, image_counter, line_counter, angle
+    derotated_filled_image: np.ndarray,
+    rotated_line: np.ndarray,
+    image_counter: int,
+    line_counter: int,
+    angle: float,
 ):
+    """
+    Hook for plotting the derotated image and the current rotated line.
+    """
     fig, ax = plt.subplots(1, 2, figsize=(10, 10))
 
     ax[0].imshow(derotated_filled_image, cmap="viridis")
@@ -26,8 +41,9 @@ def line_addition(
 
 
 def image_completed(derotated_image_stack, image_counter):
-    """Hook for plotting the image stack after derotation.
-    It is useful for debugging purposes.
+    """Hook for plotting the maximum projection of the derotated image stack
+    after the first rotation (which ends ~149th frame) and the current
+    derotated image.
     """
     if image_counter == 149:
         fig, ax = plt.subplots(1, 1, figsize=(10, 10))

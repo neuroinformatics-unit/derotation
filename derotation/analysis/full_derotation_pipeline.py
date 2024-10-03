@@ -826,25 +826,9 @@ class FullPipeline:
         plt.savefig(self.debug_plots_folder / "max_projection_with_center.png")
 
     def derotate_frames_line_by_line(self) -> np.ndarray:
-        """Rotates the image stack line by line, using the rotation angles
-        by line calculated from the analog signals.
-
-        Description of the algorithm:
-        - takes one line from the image stack
-        - creates a new image with only that line
-        - rotates the line by the given angle
-        - substitutes the line in the new image
-        - adds the new image to the rotated image stack
-
-        Edge cases and how they are handled:
-        - the rotation starts in the middle of the image -> the previous lines
-        are copied from the first frame
-        - the rotation ends in the middle of the image -> the remaining lines
-        are copied from the last frame
-
-        Before derotation, it finds the image offset, which is the peak of
-        the gaussian mixture model fitted to the image histogram. It is
-        useful to fill in the blank pixels that appear during the derotation.
+        """Wrapper for the function `derotate_an_image_array_line_by_line`.
+        Before calling the function, it finds the F0 image offset with
+        `find_image_offset`.
 
         Returns
         -------

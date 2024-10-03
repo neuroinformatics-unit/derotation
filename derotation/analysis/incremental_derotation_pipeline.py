@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from matplotlib.patches import Ellipse
 from scipy.ndimage import rotate
-from scipy.optimize import least_squares
+from scipy.optimize import least_squares, OptimizeResult
 from skimage.feature import blob_log
 from tqdm import tqdm
 
@@ -464,23 +464,31 @@ class IncrementalPipeline(FullPipeline):
 
         return registered_images
 
-    def find_center_of_rotation(self):
+    def find_center_of_rotation(self) -> Tuple[int, int]:
+        """Find the center of rotation by fitting an ellipse to the largest
+        blob centers.
+
+        Step 1: Calculate the mean images for each rotation increment.
+        Step 2: Find the blobs in the mean images.
+        Step 3: Fit an ellipse to the largest blob centers and get its center.
+
+        Returns
+        -------
+        Tuple[int, int]
+            The coordinates center of rotation (x, y).
+        """
         logging.info(
-            "Fitting an ellipse to the brightest blob centers "
+            "Fitting an ellipse to the largest blob centers "
             + "to find the center of rotation..."
         )
         mean_images = self.calculate_mean_images(self.image_stack)
 
         logging.info("Finding blobs...")
-        (
-            blobs,
-            coord_first_blob_of_every_image,
-        ) = self.get_coords_of_largest_blob(mean_images)
-        # plot blobs on top of every frame
-        if self.debugging_plots:
-            self.plot_blob_detection(blobs, mean_images)
+        coord_first_blob_of_every_image = self.get_coords_of_largest_blob(
+            mean_images
+        )
 
-        # Fit an ellipse to the brightest blob centers and get its center
+        # Fit an ellipse to the largest blob centers and get its center
         center_x, center_y, a, b, theta = self.fit_ellipse_to_points(
             coord_first_blob_of_every_image
         )
@@ -497,8 +505,20 @@ class IncrementalPipeline(FullPipeline):
 
         return int(center_x), int(center_y)
 
-    @staticmethod
-    def get_coords_of_largest_blob(image_stack):
+    def get_coords_of_largest_blob(self, image_stack: np.ndarray) -> list:
+        """Get the coordinates of the largest blob in each image.
+
+        Parameters
+        ----------
+        image_stack : np.ndarray
+            The image stack.
+
+        Returns
+        -------
+        list
+            The coordinates of the largest blob in each image.
+        """
+
         blobs = [
             blob_log(img, max_sigma=12, min_sigma=7, threshold=0.95, overlap=0)
             for img in tqdm(image_stack)
@@ -512,17 +532,34 @@ class IncrementalPipeline(FullPipeline):
         coord_first_blob_of_every_image = [
             blobs[i][0][:2].astype(int) for i in range(len(image_stack))
         ]
+
         #  invert x, y order
         coord_first_blob_of_every_image = [
             (coord[1], coord[0]) for coord in coord_first_blob_of_every_image
         ]
 
-        return blobs, coord_first_blob_of_every_image
+        # plot blobs on top of every frame
+        if self.debugging_plots:
+            self.plot_blob_detection(blobs, image_stack)
 
-    def plot_blob_detection(self, blobs, subgroup):
+        return coord_first_blob_of_every_image
+
+    def plot_blob_detection(self, blobs: list, image_stack: np.ndarray):
+        """Plot the first 4 blobs in each image. This is useful to check if
+        the blob detection is working correctly and to see if the identity of
+        the largest blob is consistent across the images.
+
+        Parameters
+        ----------
+        blobs : list
+            The list of blobs in each image.
+        image_stack : np.ndarray
+            The image stack.
+        """
+
         fig, ax = plt.subplots(4, 3, figsize=(10, 10))
         for i, a in tqdm(enumerate(ax.flatten())):
-            a.imshow(subgroup[i])
+            a.imshow(image_stack[i])
             a.set_title(f"{i*5} degrees")
             a.axis("off")
 
@@ -535,7 +572,22 @@ class IncrementalPipeline(FullPipeline):
         # save the plot
         plt.savefig(self.debug_plots_folder / "blobs.png")
 
-    def fit_ellipse_to_points(self, centers):
+    def fit_ellipse_to_points(
+        self, centers: list
+    ) -> Tuple[int, int, int, int, int]:
+        """Fit an ellipse to the points using least squares optimization.
+
+        Parameters
+        ----------
+        centers : list
+            The centers of the largest blob in each image.
+
+        Returns
+        -------
+        Tuple[int, int, int, int, int]
+            The center of the ellipse (center_x, center_y), the semi-major
+            axis (a), the semi-minor axis (b), and the rotation angle (theta).
+        """
         # Convert centers to numpy array
         centers = np.array(centers)
         x = centers[:, 0]
@@ -580,7 +632,7 @@ class IncrementalPipeline(FullPipeline):
             return (x_rot / a) ** 2 + (y_rot / b) ** 2 - 1
 
         # Use least squares optimization to fit the ellipse to the points
-        result = least_squares(ellipse_residuals, initial_params, args=(x, y))
+        result: OptimizeResult = least_squares(ellipse_residuals, initial_params, args=(x, y))
 
         # Extract optimized parameters
         center_x, center_y, a, b, theta = result.x
@@ -593,8 +645,31 @@ class IncrementalPipeline(FullPipeline):
         return center_x, center_y, a, b, theta
 
     def plot_ellipse_fit_and_centers(
-        self, centers, center_x, center_y, a, b, theta
+        self,
+        centers: list,
+        center_x: int,
+        center_y: int,
+        a: int,
+        b: int,
+        theta: int,
     ):
+        """Plot the fitted ellipse on the largest blob centers.
+
+        Parameters
+        ----------
+        centers : list
+            The centers of the largest blob in each image.
+        center_x : int
+            The x-coordinate of the center of the ellipse
+        center_y : int
+            The y-coordinate of the center of the ellipse
+        a : int
+            The semi-major axis of the ellipse
+        b : int
+            The semi-minor axis of the ellipse
+        theta : int
+            The rotation angle of the ellipse
+        """
         # Convert centers to numpy array
         centers = np.array(centers)
         x = centers[:, 0]
@@ -604,7 +679,7 @@ class IncrementalPipeline(FullPipeline):
         fig, ax = plt.subplots(figsize=(8, 8))
         #  plot behind a frame of the original image
         ax.imshow(self.image_stack[0], cmap="gray")
-        ax.scatter(x, y, label="Brightest Blob Centers", color="red")
+        ax.scatter(x, y, label="Largest Blob Centers", color="red")
 
         # Plot fitted ellipse
         ellipse = Ellipse(
@@ -636,7 +711,7 @@ class IncrementalPipeline(FullPipeline):
         ax.set_aspect("equal")
         ax.legend()
         ax.grid(True)
-        ax.set_title("Fitted Ellipse on brightest blob centers")
+        ax.set_title("Fitted Ellipse on largest blob centers")
         ax.axis("off")
 
         #  save

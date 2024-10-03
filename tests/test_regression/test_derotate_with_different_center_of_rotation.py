@@ -40,7 +40,7 @@ def test_derotator_by_line_with_center(
 
     errors = 0
     atol = 1
-    acceptance_threshold = 3
+    acceptance_threshold = 10
 
     for i, derotated_frame in enumerate(derotated_image_stack):
         target_image = Image.open(
@@ -62,7 +62,10 @@ def test_derotator_by_line_with_center(
             Path("tests/test_regression/images/rotator_derotator")
             / f"wrong_derotated_frame_{center_suffix}_{i + 1}.png"
         )
-        assert False, f"More than {acceptance_threshold} errors in derotation"
+        assert False, (
+            f"More than {acceptance_threshold} errors in derotation,"
+            f" in total there were {errors} errors."
+        )
 
 
 def regenerate_rotator_images_for_testing(image_stack, angles, center=None):

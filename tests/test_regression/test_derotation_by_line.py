@@ -50,6 +50,7 @@ def test_derotation_by_line(image_stack, n_lines, n_total_lines, len_stack):
         pipeline.num_lines_per_frame = n_lines
         pipeline.center_of_rotation = (n_lines // 2, n_lines // 2)
         pipeline.hooks = {}
+        pipeline.debugging_plots = False
 
         derotated_images = pipeline.derotate_frames_line_by_line()
 

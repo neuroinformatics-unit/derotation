@@ -74,7 +74,7 @@ def get_center_of_rotation(rotated_stack_incremental, incremental_angles):
                 :: rotated_stack_incremental.shape[1]
             ]
             self.num_frames = rotated_stack_incremental.shape[0]
-            self.debugging_plots = True
+            self.debugging_plots = False
             self.debug_plots_folder = Path("debug/")
 
         def calculate_mean_images(self, image_stack: np.ndarray) -> list:

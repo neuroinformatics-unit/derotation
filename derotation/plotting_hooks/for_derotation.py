@@ -31,7 +31,6 @@ def image_completed(derotated_image_stack, image_counter):
     """
     if image_counter == 149:
         fig, ax = plt.subplots(1, 1, figsize=(10, 10))
-        #  plot maximum projection of the image stack
         ax.imshow(
             np.max(derotated_image_stack[:image_counter], axis=0),
             cmap="viridis",
@@ -41,9 +40,9 @@ def image_completed(derotated_image_stack, image_counter):
         plt.savefig("debug/max_projection.png", dpi=300)
         plt.close()
 
-    # fig, ax = plt.subplots(1, 1, figsize=(10, 10))
-    # ax.imshow(derotated_image_stack[image_counter], cmap="viridis")
-    # ax.axis("off")
-    # Path(f"debug/frames/").mkdir(parents=True, exist_ok=True)
-    # plt.savefig(f"debug/frames/derotated_image_{image_counter}.png", dpi=300)
-    # plt.close()
+    fig, ax = plt.subplots(1, 1, figsize=(10, 10))
+    ax.imshow(derotated_image_stack[image_counter], cmap="viridis")
+    ax.axis("off")
+    Path("debug/frames/").mkdir(parents=True, exist_ok=True)
+    plt.savefig(f"debug/frames/derotated_image_{image_counter}.png", dpi=300)
+    plt.close()

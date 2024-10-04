@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from matplotlib.patches import Ellipse
 from scipy.ndimage import rotate
-from scipy.optimize import least_squares, OptimizeResult
+from scipy.optimize import OptimizeResult, least_squares
 from skimage.feature import blob_log
 from tqdm import tqdm
 
@@ -505,7 +505,9 @@ class IncrementalPipeline(FullPipeline):
 
         return int(center_x), int(center_y)
 
-    def get_coords_of_largest_blob(self, image_stack: np.ndarray) -> list:
+    def get_coords_of_largest_blob(
+        self, image_stack: np.ndarray
+    ) -> np.ndarray:
         """Get the coordinates of the largest blob in each image.
 
         Parameters
@@ -515,7 +517,7 @@ class IncrementalPipeline(FullPipeline):
 
         Returns
         -------
-        list
+        np.ndarray
             The coordinates of the largest blob in each image.
         """
 
@@ -542,7 +544,7 @@ class IncrementalPipeline(FullPipeline):
         if self.debugging_plots:
             self.plot_blob_detection(blobs, image_stack)
 
-        return coord_first_blob_of_every_image
+        return np.asarray(coord_first_blob_of_every_image)
 
     def plot_blob_detection(self, blobs: list, image_stack: np.ndarray):
         """Plot the first 4 blobs in each image. This is useful to check if
@@ -573,13 +575,13 @@ class IncrementalPipeline(FullPipeline):
         plt.savefig(self.debug_plots_folder / "blobs.png")
 
     def fit_ellipse_to_points(
-        self, centers: list
+        self, centers: np.ndarray
     ) -> Tuple[int, int, int, int, int]:
         """Fit an ellipse to the points using least squares optimization.
 
         Parameters
         ----------
-        centers : list
+        centers : np.ndarray
             The centers of the largest blob in each image.
 
         Returns
@@ -632,7 +634,9 @@ class IncrementalPipeline(FullPipeline):
             return (x_rot / a) ** 2 + (y_rot / b) ** 2 - 1
 
         # Use least squares optimization to fit the ellipse to the points
-        result: OptimizeResult = least_squares(ellipse_residuals, initial_params, args=(x, y))
+        result: OptimizeResult = least_squares(
+            ellipse_residuals, initial_params, args=(x, y)
+        )
 
         # Extract optimized parameters
         center_x, center_y, a, b, theta = result.x
@@ -646,7 +650,7 @@ class IncrementalPipeline(FullPipeline):
 
     def plot_ellipse_fit_and_centers(
         self,
-        centers: list,
+        centers: np.ndarray,
         center_x: int,
         center_y: int,
         a: int,
@@ -657,7 +661,7 @@ class IncrementalPipeline(FullPipeline):
 
         Parameters
         ----------
-        centers : list
+        centers : np.ndarray
             The centers of the largest blob in each image.
         center_x : int
             The x-coordinate of the center of the ellipse

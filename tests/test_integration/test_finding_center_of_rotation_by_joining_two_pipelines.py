@@ -1,5 +1,7 @@
 import copy
+from pathlib import Path
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 from skimage.feature import blob_log
@@ -73,7 +75,12 @@ def get_center_of_rotation(rotated_stack_incremental, incremental_angles):
                 :: rotated_stack_incremental.shape[1]
             ]
             self.num_frames = rotated_stack_incremental.shape[0]
-            self.debugging_plots = False
+
+            if __name__ == "__main__":
+                self.debugging_plots = True
+                self.debug_plots_folder = Path("debug/")
+            else:
+                self.debugging_plots = False
 
         def calculate_mean_images(self, image_stack: np.ndarray) -> list:
             #  Overwrite original method as it is too bound
@@ -123,7 +130,78 @@ def integration_pipeline(test_image, center_of_rotation_initial, num_frames):
         center=center_of_rotation,
     )
 
+    if __name__ == "__main__":
+        plot_angles(incremental_angles, sinusoidal_angles)
+        plot_a_few_rotated_frames(
+            rotated_stack_incremental, rotated_stack_sinusoidal
+        )
+        plot_derotated_frames(derotated_sinusoidal)
+
     return derotated_sinusoidal
+
+
+def plot_angles(incremental_angles, sinusoidal_angles):
+    fig, axs = plt.subplots(2, 1, figsize=(10, 5))
+    fig.suptitle("Rotation Angles")
+
+    axs[0].plot(incremental_angles, label="Incremental Rotation")
+    axs[0].set_title("Incremental Rotation Angles")
+    axs[0].set_ylabel("Angle (degrees)")
+    axs[0].set_xlabel("Line Number")
+    axs[0].legend()
+
+    axs[1].plot(sinusoidal_angles, label="Sinusoidal Rotation")
+    axs[1].set_title("Sinusoidal Rotation Angles")
+    axs[1].set_ylabel("Angle (degrees)")
+    axs[1].set_xlabel("Line Number")
+    axs[1].legend()
+
+    plt.tight_layout()
+    #  save plot
+    plt.savefig("debug/rotation_angles.png")
+
+    plt.close()
+
+
+def plot_a_few_rotated_frames(
+    rotated_stack_incremental, rotated_stack_sinusoidal
+):
+    fig, axs = plt.subplots(2, 5, figsize=(15, 6))
+    #  show incremental and sinusoidal rotation
+
+    for i, ax in enumerate(axs[0]):
+        ax.imshow(rotated_stack_incremental[i * 5], cmap="gray")
+        ax.set_title(f"Frame {i * 5}")
+        ax.axis("off")
+
+    for i, ax in enumerate(axs[1]):
+        ax.imshow(rotated_stack_sinusoidal[i * 5], cmap="gray")
+        ax.set_title(f"Frame {i * 5}")
+        ax.axis("off")
+
+    # Save the plot
+    plt.savefig("debug/rotated_stacks.png")
+
+    plt.close()
+
+
+def plot_derotated_frames(derotated_sinusoidal):
+    fig, axs = plt.subplots(2, 5, figsize=(15, 6))
+
+    for i, ax in enumerate(axs[0]):
+        ax.imshow(derotated_sinusoidal[i * 5], cmap="gray")
+        ax.set_title(f"Frame {i * 5}")
+        ax.axis("off")
+
+    for i, ax in enumerate(axs[1]):
+        ax.imshow(derotated_sinusoidal[i * 5 + 1], cmap="gray")
+        ax.set_title(f"Frame {i * 5 + 1}")
+        ax.axis("off")
+
+    # Save the plot
+    plt.savefig("debug/derotated_sinusoidal.png")
+
+    plt.close()
 
 
 #  parametrize the test
@@ -160,3 +238,7 @@ def test_blob_detection_on_derotated_stack(center_of_rotation_initial):
         f"More than 5% errors ({errors}) in derotation "
         + f" with wrong center of rotation {center_of_rotation_initial}"
     )
+
+
+if __name__ == "__main__":
+    test_blob_detection_on_derotated_stack((44, 51))

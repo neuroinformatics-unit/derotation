@@ -3,7 +3,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 
-from derotation.derotate_by_line import rotate_an_image_array_line_by_line
+from derotation.derotate_by_line import derotate_an_image_array_line_by_line
 
 path = Path(__file__).parent.parent / "images/dog.png"
 img = plt.imread(path)
@@ -14,7 +14,7 @@ img_stack = np.array([[img, img, img]]).squeeze()
 img_len = img.shape[0]
 rotation_angles = np.linspace(0, 180, img_len * 3)
 
-img_rotated = rotate_an_image_array_line_by_line(img_stack, rotation_angles)
+img_rotated = derotate_an_image_array_line_by_line(img_stack, rotation_angles)
 
 fig, ax = plt.subplots(1, 4, figsize=(10, 5))
 

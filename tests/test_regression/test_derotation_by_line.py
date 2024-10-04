@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from PIL import Image
 
-from derotation.analysis.full_rotation_pipeline import FullPipeline
+from derotation.analysis.full_derotation_pipeline import FullPipeline
 
 dog = Image.open("images/dog.png").convert("L")
 
@@ -41,28 +41,46 @@ def get_angles(kind, n_lines, n_total_lines):
     return all_angles
 
 
-def test_rotation_by_line(image_stack, n_lines, n_total_lines, len_stack):
+def test_derotation_by_line(image_stack, n_lines, n_total_lines, len_stack):
     pipeline = FullPipeline.__new__(FullPipeline)
     pipeline.image_stack = image_stack
 
     for kind in ["uniform", "sinusoidal"]:
         pipeline.rot_deg_line = get_angles(kind, n_lines, n_total_lines)
         pipeline.num_lines_per_frame = n_lines
+        pipeline.center_of_rotation = (n_lines // 2, n_lines // 2)
+        pipeline.hooks = {}
+        pipeline.debugging_plots = False
 
-        rotated_images = pipeline.rotate_frames_line_by_line()
+        derotated_images = pipeline.derotate_frames_line_by_line()
 
-        assert len(rotated_images) == len_stack
-        assert rotated_images[0].shape == (n_lines, n_lines)
+        assert len(derotated_images) == len_stack
+        assert derotated_images[0].shape == (n_lines, n_lines)
 
-        for i, image in enumerate(rotated_images):
+        for i, image in enumerate(derotated_images):
             target_image = Image.open(
                 "tests/test_regression/images/"
                 + f"{kind}_rotation/rotated_dog_{i + 1}.png"
             )
             target_image = np.array(target_image.convert("L"))
-            assert np.allclose(
-                image, target_image, atol=1
-            ), f"Failed for {kind} rotation, image {i + 1}"
+            try:
+                assert np.allclose(
+                    image, target_image, atol=1
+                ), f"Failed for {kind} rotation, image {i + 1}"
+            except AssertionError:
+                diff = np.abs(image - target_image)
+                indexes = np.where(diff > 1)
+
+                wrong_image = Image.fromarray(image.astype("uint8"))
+                wrong_image.save(
+                    "tests/test_regression/images/"
+                    + f"{kind}_rotation/wrong_derotated_dog_{i + 1}.png"
+                )
+
+                assert False, (
+                    f"Index where it is different: {indexes},"
+                    + f" Total: {len(indexes)}"
+                )
 
 
 def regenerate_images_for_testing(image_stack, n_lines, n_total_lines):
@@ -72,10 +90,11 @@ def regenerate_images_for_testing(image_stack, n_lines, n_total_lines):
     for kind in ["uniform", "sinusoidal"]:
         pipeline.rot_deg_line = get_angles(kind, n_lines, n_total_lines)
         pipeline.num_lines_per_frame = n_lines
+        pipeline.center_of_rotation = (n_lines // 2, n_lines // 2)
 
-        rotated_images = pipeline.rotate_frames_line_by_line()
+        derotated_images = pipeline.derotate_frames_line_by_line()
 
-        for i, image in enumerate(rotated_images):
+        for i, image in enumerate(derotated_images):
             image = Image.fromarray(image.astype("uint8"))
             image.save(
                 "tests/test_regression/images/"
@@ -84,8 +103,6 @@ def regenerate_images_for_testing(image_stack, n_lines, n_total_lines):
 
 
 if __name__ == "__main__":
-    # Please comment the fixture decorators in order to regenerate the images
-
     stack_len = 10
     stack = image_stack(stack_len)
     lines_n = stack.shape[1]

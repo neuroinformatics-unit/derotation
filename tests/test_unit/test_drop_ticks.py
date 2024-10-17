@@ -1,4 +1,4 @@
-from derotation.analysis.full_rotation_pipeline import FullPipeline
+from derotation.analysis.full_derotation_pipeline import FullPipeline
 
 
 def test_drop_ticks_generated_randomly(

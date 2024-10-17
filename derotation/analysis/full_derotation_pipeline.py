@@ -14,7 +14,7 @@ from scipy.signal import find_peaks
 from sklearn.mixture import GaussianMixture
 from tifffile import imsave
 
-from derotation.derotate_by_line import rotate_an_image_array_line_by_line
+from derotation.derotate_by_line import derotate_an_image_array_line_by_line
 from derotation.load_data.custom_data_loaders import (
     get_analog_signals,
     read_randomized_stim_table,
@@ -56,7 +56,7 @@ class FullPipeline:
         - saving the masked image stack
         """
         self.process_analog_signals()
-        rotated_images = self.rotate_frames_line_by_line()
+        rotated_images = self.derotate_frames_line_by_line()
         masked = self.add_circle_mask(rotated_images, self.mask_diameter)
         self.save(masked)
         self.save_csv_with_derotation_data()
@@ -790,7 +790,7 @@ class FullPipeline:
         plt.savefig(self.debug_plots_folder / "rotation_angles.png")
 
     ### ----------------- Derotation ----------------- ###
-    def rotate_frames_line_by_line(self) -> np.ndarray:
+    def derotate_frames_line_by_line(self) -> np.ndarray:
         """Rotates the image stack line by line, using the rotation angles
         by line calculated from the analog signals.
 
@@ -820,7 +820,7 @@ class FullPipeline:
 
         offset = self.find_image_offset(self.image_stack[0])
 
-        rotated_image_stack = rotate_an_image_array_line_by_line(
+        rotated_image_stack = derotate_an_image_array_line_by_line(
             self.image_stack,
             self.rot_deg_line,
             blank_pixels_value=offset,

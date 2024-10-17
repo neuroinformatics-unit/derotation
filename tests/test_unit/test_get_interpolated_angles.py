@@ -1,6 +1,6 @@
 import numpy as np
 
-from derotation.analysis.full_rotation_pipeline import FullPipeline
+from derotation.analysis.full_derotation_pipeline import FullPipeline
 
 
 def test_get_interpolated_angles(derotation_pipeline: FullPipeline):

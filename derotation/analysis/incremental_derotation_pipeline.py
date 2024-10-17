@@ -5,11 +5,10 @@ from typing import Dict, Tuple
 
 import numpy as np
 import pandas as pd
+from full_derotation_pipeline import FullPipeline
 from matplotlib import pyplot as plt
 from scipy.ndimage import rotate
 from tqdm import tqdm
-
-from derotation.analysis.full_rotation_pipeline import FullPipeline
 
 
 class IncrementalPipeline(FullPipeline):

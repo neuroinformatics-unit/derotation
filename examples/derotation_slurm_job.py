@@ -3,9 +3,8 @@ import sys
 from pathlib import Path
 
 import yaml
-
-from derotation.analysis.full_rotation_pipeline import FullPipeline
-from derotation.analysis.incremental_rotation_pipeline import (
+from full_derotation_pipeline import FullPipeline
+from incremental_derotation_pipeline import (
     IncrementalPipeline,
 )
 

@@ -5,7 +5,7 @@ import tqdm
 from scipy.ndimage import rotate
 
 
-def rotate_an_image_array_line_by_line(
+def derotate_an_image_array_line_by_line(
     image_stack: np.ndarray,
     rot_deg_line: np.ndarray,
     blank_pixels_value: float = 0,
@@ -18,7 +18,7 @@ def rotate_an_image_array_line_by_line(
     - creates a new image with only that line
     - rotates the line by the given angle
     - substitutes the line in the new image
-    - adds the new image to the rotated image stack
+    - adds the new image to the derotated image stack
 
     Edge cases and how they are handled:
     - the rotation starts in the middle of the image -> the previous lines
@@ -29,48 +29,48 @@ def rotate_an_image_array_line_by_line(
     Parameters
     ----------
     image_stack : np.ndarray
-        The image stack to be rotated.
+        The image stack to be derotated.
     rot_deg_line : np.ndarray
         The rotation angles by line.
 
     Returns
     -------
     np.ndarray
-        The rotated image stack.
+        The derotated image stack.
     """
 
     num_lines_per_frame = image_stack.shape[1]
-    rotated_image_stack = copy.deepcopy(image_stack)
+    derotated_image_stack = copy.deepcopy(image_stack)
     previous_image_completed = True
     rotation_completed = True
 
-    for i, rotation in tqdm.tqdm(
+    for i, angle in tqdm.tqdm(
         enumerate(rot_deg_line), total=len(rot_deg_line)
     ):
         line_counter = i % num_lines_per_frame
         image_counter = i // num_lines_per_frame
 
-        is_rotating = np.absolute(rotation) > 0.00001
+        is_rotating = np.absolute(angle) > 0.00001
         image_scanning_completed = line_counter == (num_lines_per_frame - 1)
         if i == 0:
             rotation_just_finished = False
         else:
             rotation_just_finished = not is_rotating and (
-                np.absolute(rot_deg_line[i - 1]) > np.absolute(rotation)
+                np.absolute(rot_deg_line[i - 1]) > np.absolute(angle)
             )
 
         if is_rotating:
             if rotation_completed and (line_counter != 0):
                 # when starting a new rotation in the middle of the image
-                rotated_filled_image = (
+                derotated_filled_image = (
                     np.ones_like(image_stack[image_counter])
                     * blank_pixels_value
                 )  # non sampled pixels are set to the min val of the image
-                rotated_filled_image[:line_counter] = image_stack[
+                derotated_filled_image[:line_counter] = image_stack[
                     image_counter
                 ][:line_counter]
             elif previous_image_completed:
-                rotated_filled_image = (
+                derotated_filled_image = (
                     np.ones_like(image_stack[image_counter])
                     * blank_pixels_value
                 )
@@ -83,16 +83,16 @@ def rotate_an_image_array_line_by_line(
             image_with_only_line = np.zeros_like(img_with_new_lines)
             image_with_only_line[line_counter] = line
 
-            rotated_line = rotate(
+            derotated_line = rotate(
                 image_with_only_line,
-                rotation,
+                angle,
                 reshape=False,
                 order=0,
                 mode="constant",
             )
 
-            rotated_filled_image = np.where(
-                rotated_line == 0, rotated_filled_image, rotated_line
+            derotated_filled_image = np.where(
+                derotated_line == 0, derotated_filled_image, derotated_line
             )
             previous_image_completed = False
         if (
@@ -101,11 +101,11 @@ def rotate_an_image_array_line_by_line(
             if rotation_just_finished:
                 rotation_completed = True
 
-                rotated_filled_image[line_counter + 1 :] = image_stack[
+                derotated_filled_image[line_counter + 1 :] = image_stack[
                     image_counter
                 ][line_counter + 1 :]
 
-            rotated_image_stack[image_counter] = rotated_filled_image
+            derotated_image_stack[image_counter] = derotated_filled_image
             previous_image_completed = True
 
-    return rotated_image_stack
+    return derotated_image_stack

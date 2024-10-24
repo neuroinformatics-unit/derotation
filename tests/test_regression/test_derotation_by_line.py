@@ -1,5 +1,8 @@
+from pathlib import Path
+
 import numpy as np
 import pytest
+from assertions import comapre_images
 from PIL import Image
 
 from derotation.analysis.full_derotation_pipeline import FullPipeline
@@ -51,21 +54,11 @@ def test_derotation_by_line(image_stack, n_lines, n_total_lines, len_stack):
                 + f"{kind}_rotation/rotated_dog_{i + 1}.png"
             )
             target_image = np.array(target_image.convert("L"))
-            try:
-                assert np.allclose(
-                    image, target_image, atol=1
-                ), f"Failed for {kind} rotation, image {i + 1}"
-            except AssertionError:
-                diff = np.abs(image - target_image)
-                indexes = np.where(diff > 1)
 
-                wrong_image = Image.fromarray(image.astype("uint8"))
-                wrong_image.save(
-                    "tests/test_regression/images/"
-                    + f"{kind}_rotation/wrong_derotated_dog_{i + 1}.png"
-                )
-
-                assert False, (
-                    f"Index where it is different: {indexes},"
-                    + f" Total: {len(indexes)}"
-                )
+            comapre_images(
+                i,
+                image,
+                target_image,
+                1,
+                Path("tests/test_regression/images/"),
+            )

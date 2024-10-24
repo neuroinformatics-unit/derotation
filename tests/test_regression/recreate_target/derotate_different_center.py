@@ -1,5 +1,6 @@
 from shared import (
-    get_image_stack_and_angles,
+    get_increasing_angles,
+    get_static_video,
     load_rotated_images,
     regenerate_derotated_images_for_testing,
     regenerate_rotator_images_for_testing,
@@ -7,26 +8,20 @@ from shared import (
 
 if __name__ == "__main__":
     # Set up an image stack and angles
-    stack, angles = get_image_stack_and_angles()
+    static_video = get_static_video()
+    angles = get_increasing_angles(static_video)
 
     # Regenerate rotated images for custom center (40, 40)
-    regenerate_rotator_images_for_testing(stack, angles, center=(40, 40))
-
-    # Define paths for saving derotated images
-    rotated_images_directory = "tests/test_regression/images/rotator"
-    derotated_images_directory = (
-        "tests/test_regression/images/rotator_derotator"
+    regenerate_rotator_images_for_testing(
+        static_video, angles, center=(40, 40)
     )
 
     # Load rotated images for center (40, 40)
-    rotated_image_stack = load_rotated_images(
-        rotated_images_directory, stack.shape[0], center=(40, 40)
-    )
+    rotated_image_stack = load_rotated_images(center=(40, 40))
 
     # Regenerate derotated images for center (40, 40)
     regenerate_derotated_images_for_testing(
         rotated_image_stack,
         angles,
-        output_directory="tests/test_regression/images/rotator_derotator",
         center=(40, 40),
     )

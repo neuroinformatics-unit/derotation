@@ -7,10 +7,6 @@ from shared import (
 
 if __name__ == "__main__":
     # Define paths and parameters
-    rotated_images_directory = "tests/test_regression/images/rotator"
-    derotated_images_directory = (
-        "tests/test_regression/images/rotator_derotator"
-    )
 
     # Angles must match those used for the original rotation
     n_total_lines = (
@@ -19,11 +15,7 @@ if __name__ == "__main__":
     angles = np.arange(n_total_lines)
 
     # Load rotated images
-    rotated_image_stack = load_rotated_images(
-        rotated_images_directory, NUMBER_OF_FRAMES
-    )
+    rotated_image_stack = load_rotated_images()
 
     # Regenerate derotated images
-    regenerate_derotated_images_for_testing(
-        rotated_image_stack, angles, derotated_images_directory
-    )
+    regenerate_derotated_images_for_testing(rotated_image_stack, angles)

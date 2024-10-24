@@ -8,6 +8,8 @@ from derotation.derotate_by_line import derotate_an_image_array_line_by_line
 from derotation.simulate.basic_rotator import Rotator
 
 NUMBER_OF_FRAMES = 3
+ROTATED_IMAGES_PATH = Path("tests/test_regression/images/rotator")
+DEROTATED_IMAGES_PATH = Path("tests/test_regression/images/rotator_derotator")
 
 
 def square_with_gray_stripes_in_black_background() -> np.ndarray:
@@ -39,36 +41,48 @@ def square_with_gray_stripes_in_black_background() -> np.ndarray:
     return image
 
 
-def get_image_stack_and_angles() -> Tuple[np.ndarray, np.ndarray]:
+def get_static_video() -> np.ndarray:
     """Take the image of a square with gray stripes in a black background
     and create a stack of 3 images with the same content. This is going to
     emulate a "video" of 3 frames acquired without any rotation.
 
-    Also, create an array of angles that will be used to rotate the images.
-    In this case, the angles are going to be integres from 0 to 299. Each
-    rotation angle will be applied to a line of the image. Therefore, the
-    total number of angles is going to be the number of lines in the image.
-
-    These two arrays are going to be used to test the Rotator class to create
-    the rotated "video".
+    Reads constant variable `NUMBER_OF_FRAMES` from the module, set to 3.
 
     Returns
     -------
-    Tuple[np.ndarray, np.ndarray]
-        A tuple with a static image stack (n_frames x n_lines x
-        n_pixels_in_line) of three frames and the angles (n_frames * n_lines).
+    np.ndarray
+        A static image stack (NUMBER_OF_FRAMES x n_lines x n_pixels_in_line).
     """
     # get the image
     image = square_with_gray_stripes_in_black_background()
 
     # create a stack of 3 images
-    stack = np.array([image for _ in range(NUMBER_OF_FRAMES)])
+    return np.array([image for _ in range(NUMBER_OF_FRAMES)])
 
+
+def get_increasing_angles(image_stack: np.ndarray) -> np.ndarray:
+    """Create an array of angles that will be used to rotate the images.
+    In this case, the angles are going to be integres from 0 to 299. Each
+    rotation angle will be applied to a line of the image. Therefore, the
+    total number of angles is going to be the number of lines in the image.
+
+    This array is going to be used to test the Rotator class to create
+    the rotated "video".
+
+    Parameters
+    ----------
+    image_stack : np.ndarray
+        The stack of images to be rotated. The shape of the stack
+        should be (n_frames x n_lines x n_pixels_in_line).
+
+    Returns
+    -------
+    np.ndarray
+        An array of angles (n_frames * n_lines).
+    """
     # create an array of increasing angles
-    n_total_lines = stack.shape[0] * stack.shape[1]
-    angles = np.arange(n_total_lines)
-
-    return stack, angles
+    n_total_lines = image_stack.shape[0] * image_stack.shape[1]
+    return np.arange(n_total_lines)
 
 
 def rotate_images(
@@ -104,7 +118,7 @@ def rotate_images(
 
 
 def load_rotated_images(
-    directory: str, len_stack: int, center: Optional[Tuple[int, int]] = None
+    center: Optional[Tuple[int, int]] = None
 ) -> np.ndarray:
     """Load pre-computed rotated images from a directory.
     These images are going to be used to compare current
@@ -112,8 +126,6 @@ def load_rotated_images(
 
     Parameters
     ----------
-    directory : str
-        The path where the images are stored.
     len_stack : int
         The number of images in the stack (i.e., the number of frames).
     center : Tuple[int, int], optional
@@ -130,8 +142,10 @@ def load_rotated_images(
 
     #  load pre-computed images one by one
     rotated_image_stack = []
-    for i in range(1, len_stack + 1):
-        image_path = Path(directory) / f"rotated_frame_{center_suffix}{i}.png"
+    for i in range(1, NUMBER_OF_FRAMES + 1):
+        image_path = (
+            ROTATED_IMAGES_PATH / f"rotated_frame_{center_suffix}{i}.png"
+        )
         rotated_image = Image.open(image_path).convert("L")
         rotated_image_stack.append(np.array(rotated_image))
 
@@ -178,7 +192,6 @@ def regenerate_rotator_images_for_testing(
 def regenerate_derotated_images_for_testing(
     rotated_image_stack: np.ndarray,
     angles: np.ndarray,
-    output_directory: str,
     center: Optional[Tuple[int, int]] = None,
 ):
     """Derotate a stack of images by a given set of angles.
@@ -202,12 +215,12 @@ def regenerate_derotated_images_for_testing(
     )
 
     # Save derotated images
-    Path(output_directory).mkdir(parents=True, exist_ok=True)
+    Path(DEROTATED_IMAGES_PATH).mkdir(parents=True, exist_ok=True)
     center_suffix = "" if center is None else f"{center[0]}_{center[1]}_"
 
     for i, derotated_frame in enumerate(derotated_image_stack):
         derotated_image = Image.fromarray(derotated_frame.astype("uint8"))
         derotated_image.save(
-            Path(output_directory)
+            Path(DEROTATED_IMAGES_PATH)
             / f"derotated_frame_{center_suffix}{i + 1}.png"
         )

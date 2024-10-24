@@ -13,14 +13,14 @@ if __name__ == "__main__":
     regenerate_rotator_images_for_testing(stack, angles, center=(40, 40))
 
     # Define paths for saving derotated images
-    _rotated_images_directory = "tests/test_regression/images/rotator"
+    rotated_images_directory = "tests/test_regression/images/rotator"
     derotated_images_directory = (
         "tests/test_regression/images/rotator_derotator"
     )
 
     # Load rotated images for center (40, 40)
     rotated_image_stack = load_rotated_images(
-        _rotated_images_directory, stack.shape[0], center=(40, 40)
+        rotated_images_directory, stack.shape[0], center=(40, 40)
     )
 
     # Regenerate derotated images for center (40, 40)

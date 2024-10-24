@@ -5,7 +5,6 @@ from shared import (
 
 if __name__ == "__main__":
     # Set up an image stack and angles
-
     stack, angles = get_image_stack_and_angles()
 
     # Regenerate images for default center and custom center

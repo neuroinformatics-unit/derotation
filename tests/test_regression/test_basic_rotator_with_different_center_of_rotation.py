@@ -3,7 +3,7 @@ import pytest
 from PIL import Image
 
 from derotation.simulate.basic_rotator import Rotator
-from tests.test_regression.recreate_target.rotator_different_center import (
+from tests.test_regression.recreate_target.shared import (
     rotate_images,
 )
 

@@ -1,7 +1,7 @@
 import numpy as np
 from PIL import Image
 
-from tests.test_regression.recreate_target.basic_rotator import rotate_images
+from tests.test_regression.recreate_target.shared import rotate_images
 
 
 def test_rotator_by_line(image_stack, angles, len_stack):

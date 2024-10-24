@@ -5,7 +5,7 @@ import pytest
 from PIL import Image
 
 from derotation.derotate_by_line import derotate_an_image_array_line_by_line
-from tests.test_regression.recreate_target.derotate_different_center import (
+from tests.test_regression.recreate_target.shared import (
     load_rotated_images,
 )
 

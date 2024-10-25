@@ -6,20 +6,20 @@ from derotation.analysis.full_derotation_pipeline import FullPipeline
 dog = Image.open("images/dog.png").convert("L")
 
 
-def len_stack():
+def get_len_stack():
     return 10
 
 
-def image_stack(len_stack):
+def get_image_stack(len_stack):
     image_stack = np.array([np.array(dog) for _ in range(len_stack)])
     return image_stack
 
 
-def n_lines(image_stack):
+def get_n_lines(image_stack):
     return image_stack.shape[1]
 
 
-def n_total_lines(image_stack, n_lines):
+def get_n_total_lines(image_stack, n_lines):
     return image_stack.shape[0] * n_lines
 
 
@@ -59,7 +59,7 @@ def regenerate_images_for_testing(image_stack, n_lines, n_total_lines):
 
 if __name__ == "__main__":
     stack_len = 10
-    stack = image_stack(stack_len)
+    stack = get_image_stack(stack_len)
     lines_n = stack.shape[1]
     total_lines = stack.shape[0] * lines_n
 

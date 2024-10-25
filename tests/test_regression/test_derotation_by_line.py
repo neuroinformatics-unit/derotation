@@ -6,33 +6,39 @@ from assertions import comapre_images
 from PIL import Image
 
 from derotation.analysis.full_derotation_pipeline import FullPipeline
-from tests.test_regression.recreate_target.derotation_by_line import get_angles
+from tests.test_regression.recreate_target.derotation_by_line import (
+    get_angles,
+    get_image_stack,
+    get_len_stack,
+    get_n_lines,
+    get_n_total_lines,
+)
 
-dog = Image.open("images/dog.png").convert("L")
-
-
-@pytest.fixture
-def len_stack():
-    return 10
+#  These fixtures are used only in this module. They aim to recreate the
+#  conditions used to generate the target images.
 
 
 @pytest.fixture
 def image_stack(len_stack):
-    image_stack = np.array([np.array(dog) for _ in range(len_stack)])
-    return image_stack
+    return get_image_stack(len_stack)
+
+
+@pytest.fixture
+def len_stack():
+    return get_len_stack()
 
 
 @pytest.fixture
 def n_lines(image_stack):
-    return image_stack.shape[1]
+    return get_n_lines(image_stack)
 
 
 @pytest.fixture
-def n_total_lines(image_stack, n_lines):
-    return image_stack.shape[0] * n_lines
+def n_total_lines(n_lines, image_stack):
+    return get_n_total_lines(image_stack, n_lines)
 
 
-def test_derotation_by_line(image_stack, n_lines, n_total_lines, len_stack):
+def test_derotation_by_line(n_lines, n_total_lines, len_stack, image_stack):
     pipeline = FullPipeline.__new__(FullPipeline)
     pipeline.image_stack = image_stack
 

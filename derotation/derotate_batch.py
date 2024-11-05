@@ -11,7 +11,7 @@ def update_config_paths(
 ):
     # Set config paths based on provided arguments
     config["paths_read"]["path_to_randperm"] = str(
-        Path(dataset_path) / "stimlus_randperm.mat"
+        Path(dataset_path).parent / "stimlus_randperm.mat"
     )
     config["paths_read"]["path_to_aux"] = str(bin_path)
     config["paths_read"]["path_to_tif"] = str(tif_path)

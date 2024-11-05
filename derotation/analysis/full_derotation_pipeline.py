@@ -27,7 +27,7 @@ class FullPipeline:
     """
 
     ### ----------------- Main pipeline ----------------- ###
-    def __init__(self, config_name):
+    def __init__(self, _config):
         """DerotationPipeline is a class that derotates an image stack
         acquired with a rotating sample under a microscope.
         In the constructor, it loads the config file, starts the logging
@@ -41,7 +41,11 @@ class FullPipeline:
         config_name : str
             Name of the config file without extension.
         """
-        self.config = self.get_config(config_name)
+        if isinstance(_config, dict):
+            self.config = _config
+        else:
+            self.config = self.get_config(_config)
+
         self.start_logging()
         self.load_data()
 

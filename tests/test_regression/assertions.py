@@ -58,7 +58,7 @@ def comapre_images(
         )
 
         #  If we do not expect any wrong pixels, raise an assertion error
-        if indexes.shape[0] > wrong_pixel_tollerance:
+        if indexes[0].size > wrong_pixel_tollerance:
             assert False, (
                 "Regenerated image is different from the target image. "
                 + "Index where it is different: "

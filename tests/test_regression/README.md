@@ -3,7 +3,7 @@
 This directory contains regression tests for the `derotation` package.
 
 Every test can be run directly via `pytest` and relies on a set of pre-computed images stored in the `images` directory. The current state of the package is compared against them.
-It the computations change substantially and you believe the new results are correct, you can update the reference images by running the scripts in the folder `recreate_target`.
+If the computations change substantially and you think the new results are correct, you can update the reference images by running the scripts in the folder `recreate_target`.
 The `recreate_target` scripts will generate the reference images in the `images` directory.
 
 In this table you can find a summary of the test modules and the corresponding reference images and scripts to recreate them:

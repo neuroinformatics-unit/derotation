@@ -3,12 +3,16 @@ import logging
 from pathlib import Path
 from typing import Dict, Tuple
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from full_derotation_pipeline import FullPipeline
-from matplotlib import pyplot as plt
+from matplotlib.patches import Ellipse
 from scipy.ndimage import rotate
+from scipy.optimize import OptimizeResult, least_squares
+from skimage.feature import blob_log
 from tqdm import tqdm
+
+from derotation.analysis.full_derotation_pipeline import FullPipeline
 
 
 class IncrementalPipeline(FullPipeline):
@@ -16,6 +20,7 @@ class IncrementalPipeline(FullPipeline):
     rotation method.
     """
 
+    ### ------- Methods to overwrite from the parent class ------------ ###
     def __init__(self, *args, **kwargs):
         """Derotate the image stack that was acquired using the incremental
         rotation method.
@@ -36,8 +41,8 @@ class IncrementalPipeline(FullPipeline):
         frame and then registered using phase cross correlation.
         """
         super().process_analog_signals()
-        rotated_images = self.roatate_by_frame()
-        masked_unregistered = self.add_circle_mask(rotated_images)
+        derotated_images = self.deroatate_by_frame()
+        masked_unregistered = self.add_circle_mask(derotated_images)
 
         mean_images = self.calculate_mean_images(masked_unregistered)
         target_image = self.get_target_image(masked_unregistered)
@@ -56,6 +61,8 @@ class IncrementalPipeline(FullPipeline):
 
         self.save(masked)
         self.save_csv_with_derotation_data()
+
+        self.center_of_rotation = self.find_center_of_rotation()
 
     def create_signed_rotation_array(self) -> np.ndarray:
         logging.info("Creating signed rotation array...")
@@ -176,40 +183,6 @@ class IncrementalPipeline(FullPipeline):
                 f"Number of rotations is not as expected: {start.shape[0]}"
             )
 
-    def roatate_by_frame(self) -> np.ndarray:
-        """Rotate the image stack by frame.
-
-        Returns
-        -------
-        np.ndarray
-            Description of returned object.
-        """
-        logging.info("Starting derotation by frame...")
-        min_value_img = np.min(self.image_stack)
-        new_rotated_image_stack = (
-            np.ones_like(self.image_stack) * min_value_img
-        )
-
-        for idx, frame in tqdm(
-            enumerate(self.image_stack), total=self.num_frames
-        ):
-            rotated_img = rotate(
-                frame,
-                self.rot_deg_frame[idx],
-                reshape=False,
-                order=0,
-                mode="constant",
-            )
-            rotated_img = np.where(
-                rotated_img == 0, min_value_img, rotated_img
-            )
-
-            new_rotated_image_stack[idx] = rotated_img
-
-        logging.info("Finished rotating the image stack")
-
-        return new_rotated_image_stack
-
     def check_number_of_frame_angles(self):
         """Check if the number of rotation angles by frame is equal to the
         number of frames in the image stack.
@@ -280,7 +253,7 @@ class IncrementalPipeline(FullPipeline):
             / "rotation_angles.png"
         )
 
-    def calculate_mean_images(self, rotated_image_stack: np.ndarray) -> list:
+    def calculate_mean_images(self, image_stack: np.ndarray) -> list:
         """Calculate the mean images for each rotation angle. This required
         to calculate the shifts using phase cross correlation.
 
@@ -305,12 +278,75 @@ class IncrementalPipeline(FullPipeline):
 
         mean_images = []
         for i in np.arange(10, 360, 10):
-            images = rotated_image_stack[rounded_angles == i]
+            images = image_stack[rounded_angles == i]
             mean_image = np.mean(images, axis=0)
 
             mean_images.append(mean_image)
 
         return mean_images
+
+    def save_csv_with_derotation_data(self):
+        """Saves a csv file with the rotation angles by line and frame,
+        and the rotation on signal.
+        It is saved in the saving folder specified in the config file.
+        """
+        df = pd.DataFrame(
+            columns=[
+                "frame",
+                "rotation_angle",
+                "clock",
+            ]
+        )
+
+        df["frame"] = np.arange(self.num_frames)
+        df["rotation_angle"] = self.rot_deg_frame[: self.num_frames]
+        df["clock"] = self.frame_start[: self.num_frames]
+
+        Path(self.config["paths_write"]["derotated_tiff_folder"]).mkdir(
+            parents=True, exist_ok=True
+        )
+
+        df.to_csv(
+            self.config["paths_write"]["derotated_tiff_folder"]
+            + self.config["paths_write"]["saving_name"]
+            + ".csv",
+            index=False,
+        )
+
+    ### ------- Methods unique to IncrementalPipeline ----------------- ###
+    def deroatate_by_frame(self) -> np.ndarray:
+        """Rotate the image stack by frame.
+
+        Returns
+        -------
+        np.ndarray
+            Description of returned object.
+        """
+        logging.info("Starting derotation by frame...")
+        min_value_img = np.min(self.image_stack)
+        new_rotated_image_stack = (
+            np.ones_like(self.image_stack) * min_value_img
+        )
+
+        for idx, frame in tqdm(
+            enumerate(self.image_stack), total=self.num_frames
+        ):
+            rotated_img = rotate(
+                frame,
+                self.rot_deg_frame[idx],
+                reshape=False,
+                order=0,
+                mode="constant",
+            )
+            rotated_img = np.where(
+                rotated_img == 0, min_value_img, rotated_img
+            )
+
+            new_rotated_image_stack[idx] = rotated_img
+
+        logging.info("Finished rotating the image stack")
+
+        return new_rotated_image_stack
 
     @staticmethod
     def get_target_image(rotated_image_stack: np.ndarray) -> np.ndarray:
@@ -428,30 +464,259 @@ class IncrementalPipeline(FullPipeline):
 
         return registered_images
 
-    def save_csv_with_derotation_data(self):
-        """Saves a csv file with the rotation angles by line and frame,
-        and the rotation on signal.
-        It is saved in the saving folder specified in the config file.
+    def find_center_of_rotation(self) -> Tuple[int, int]:
+        """Find the center of rotation by fitting an ellipse to the largest
+        blob centers.
+
+        Step 1: Calculate the mean images for each rotation increment.
+        Step 2: Find the blobs in the mean images.
+        Step 3: Fit an ellipse to the largest blob centers and get its center.
+
+        Returns
+        -------
+        Tuple[int, int]
+            The coordinates center of rotation (x, y).
         """
-        df = pd.DataFrame(
-            columns=[
-                "frame",
-                "rotation_angle",
-                "clock",
-            ]
+        logging.info(
+            "Fitting an ellipse to the largest blob centers "
+            + "to find the center of rotation..."
+        )
+        mean_images = self.calculate_mean_images(self.image_stack)
+
+        logging.info("Finding blobs...")
+        coord_first_blob_of_every_image = self.get_coords_of_largest_blob(
+            mean_images
         )
 
-        df["frame"] = np.arange(self.num_frames)
-        df["rotation_angle"] = self.rot_deg_frame[: self.num_frames]
-        df["clock"] = self.frame_start[: self.num_frames]
-
-        Path(self.config["paths_write"]["derotated_tiff_folder"]).mkdir(
-            parents=True, exist_ok=True
+        # Fit an ellipse to the largest blob centers and get its center
+        center_x, center_y, a, b, theta = self.fit_ellipse_to_points(
+            coord_first_blob_of_every_image
         )
 
-        df.to_csv(
-            self.config["paths_write"]["derotated_tiff_folder"]
-            + self.config["paths_write"]["saving_name"]
-            + ".csv",
-            index=False,
+        logging.info(
+            f"Center of ellipse: ({center_x:.2f}, {center_y:.2f}), "
+            f"semi-major axis: {a:.2f}, semi-minor axis: {b:.2f}"
         )
+        logging.info(
+            "Variation from the center of the image: "
+            + f"({center_x - 128:.2f}, {center_y - 128:.2f})"
+        )
+        logging.info(f"Variation from a perfect circle: {a - b:.2f}")
+
+        return int(center_x), int(center_y)
+
+    def get_coords_of_largest_blob(
+        self, image_stack: np.ndarray
+    ) -> np.ndarray:
+        """Get the coordinates of the largest blob in each image.
+
+        Parameters
+        ----------
+        image_stack : np.ndarray
+            The image stack.
+
+        Returns
+        -------
+        np.ndarray
+            The coordinates of the largest blob in each image.
+        """
+
+        blobs = [
+            blob_log(img, max_sigma=12, min_sigma=7, threshold=0.95, overlap=0)
+            for img in tqdm(image_stack)
+        ]
+
+        # sort blobs by size
+        blobs = [
+            blobs[i][blobs[i][:, 2].argsort()] for i in range(len(image_stack))
+        ]
+
+        coord_first_blob_of_every_image = [
+            blobs[i][0][:2].astype(int) for i in range(len(image_stack))
+        ]
+
+        #  invert x, y order
+        coord_first_blob_of_every_image = [
+            (coord[1], coord[0]) for coord in coord_first_blob_of_every_image
+        ]
+
+        # plot blobs on top of every frame
+        if self.debugging_plots:
+            self.plot_blob_detection(blobs, image_stack)
+
+        return np.asarray(coord_first_blob_of_every_image)
+
+    def plot_blob_detection(self, blobs: list, image_stack: np.ndarray):
+        """Plot the first 4 blobs in each image. This is useful to check if
+        the blob detection is working correctly and to see if the identity of
+        the largest blob is consistent across the images.
+
+        Parameters
+        ----------
+        blobs : list
+            The list of blobs in each image.
+        image_stack : np.ndarray
+            The image stack.
+        """
+
+        fig, ax = plt.subplots(4, 3, figsize=(10, 10))
+        for i, a in tqdm(enumerate(ax.flatten())):
+            a.imshow(image_stack[i])
+            a.set_title(f"{i*5} degrees")
+            a.axis("off")
+
+            for j, blob in enumerate(blobs[i][:4]):
+                y, x, r = blob
+                c = plt.Circle((x, y), r, color="red", linewidth=2, fill=False)
+                a.add_patch(c)
+                a.text(x, y, str(j), color="red")
+
+        # save the plot
+        plt.savefig(self.debug_plots_folder / "blobs.png")
+
+    def fit_ellipse_to_points(
+        self, centers: np.ndarray
+    ) -> Tuple[int, int, int, int, int]:
+        """Fit an ellipse to the points using least squares optimization.
+
+        Parameters
+        ----------
+        centers : np.ndarray
+            The centers of the largest blob in each image.
+
+        Returns
+        -------
+        Tuple[int, int, int, int, int]
+            The center of the ellipse (center_x, center_y), the semi-major
+            axis (a), the semi-minor axis (b), and the rotation angle (theta).
+        """
+        # Convert centers to numpy array
+        centers = np.array(centers)
+        x = centers[:, 0]
+        y = centers[:, 1]
+
+        # Find the extreme points for the initial ellipse estimate
+        topmost = centers[np.argmin(y)]
+        rightmost = centers[np.argmax(x)]
+        bottommost = centers[np.argmax(y)]
+        leftmost = centers[np.argmin(x)]
+
+        # Initial parameters: (center_x, center_y, semi_major_axis,
+        # semi_minor_axis, rotation_angle)
+        initial_center = np.mean(
+            [topmost, bottommost, leftmost, rightmost], axis=0
+        )
+        semi_major_axis = np.linalg.norm(rightmost - leftmost) / 2
+        semi_minor_axis = np.linalg.norm(topmost - bottommost) / 2
+        rotation_angle = 0  # Start with no rotation
+
+        initial_params = [
+            initial_center[0],
+            initial_center[1],
+            semi_major_axis,
+            semi_minor_axis,
+            rotation_angle,
+        ]
+
+        logging.info("Fitting ellipse to points...")
+
+        # Objective function to minimize: sum of squared distances to ellipse
+        def ellipse_residuals(params, x, y):
+            center_x, center_y, a, b, theta = params
+            cos_angle = np.cos(theta)
+            sin_angle = np.sin(theta)
+
+            # Rotate the points to align with the ellipse axes
+            x_rot = cos_angle * (x - center_x) + sin_angle * (y - center_y)
+            y_rot = -sin_angle * (x - center_x) + cos_angle * (y - center_y)
+
+            # Ellipse equation: (x_rot^2 / a^2) + (y_rot^2 / b^2) = 1
+            return (x_rot / a) ** 2 + (y_rot / b) ** 2 - 1
+
+        # Use least squares optimization to fit the ellipse to the points
+        result: OptimizeResult = least_squares(
+            ellipse_residuals, initial_params, args=(x, y)
+        )
+
+        # Extract optimized parameters
+        center_x, center_y, a, b, theta = result.x
+
+        if self.debugging_plots:
+            self.plot_ellipse_fit_and_centers(
+                centers, center_x, center_y, a, b, theta
+            )
+
+        return center_x, center_y, a, b, theta
+
+    def plot_ellipse_fit_and_centers(
+        self,
+        centers: np.ndarray,
+        center_x: int,
+        center_y: int,
+        a: int,
+        b: int,
+        theta: int,
+    ):
+        """Plot the fitted ellipse on the largest blob centers.
+
+        Parameters
+        ----------
+        centers : np.ndarray
+            The centers of the largest blob in each image.
+        center_x : int
+            The x-coordinate of the center of the ellipse
+        center_y : int
+            The y-coordinate of the center of the ellipse
+        a : int
+            The semi-major axis of the ellipse
+        b : int
+            The semi-minor axis of the ellipse
+        theta : int
+            The rotation angle of the ellipse
+        """
+        # Convert centers to numpy array
+        centers = np.array(centers)
+        x = centers[:, 0]
+        y = centers[:, 1]
+
+        # Create the plot
+        fig, ax = plt.subplots(figsize=(8, 8))
+        #  plot behind a frame of the original image
+        ax.imshow(self.image_stack[0], cmap="gray")
+        ax.scatter(x, y, label="Largest Blob Centers", color="red")
+
+        # Plot fitted ellipse
+        ellipse = Ellipse(
+            (center_x, center_y),
+            width=2 * a,
+            height=2 * b,
+            angle=np.degrees(theta),
+            edgecolor="blue",
+            facecolor="none",
+            label="Fitted Ellipse",
+        )
+        ax.add_patch(ellipse)
+
+        # Plot center of fitted ellipse
+        ax.scatter(
+            center_x,
+            center_y,
+            color="green",
+            marker="x",
+            s=100,
+            label="Ellipse Center",
+        )
+
+        # Add some plot formatting
+        ax.set_xlim(0, self.image_stack.shape[1])
+        ax.set_ylim(
+            self.image_stack.shape[1], 0
+        )  # Invert y-axis to match image coordinate system
+        ax.set_aspect("equal")
+        ax.legend()
+        ax.grid(True)
+        ax.set_title("Fitted Ellipse on largest blob centers")
+        ax.axis("off")
+
+        #  save
+        plt.savefig(self.debug_plots_folder / "ellipse_fit.png")

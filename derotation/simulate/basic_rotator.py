@@ -1,11 +1,17 @@
 import copy
+from typing import Optional, Tuple
 
 import numpy as np
 from scipy.ndimage import affine_transform
 
 
 class Rotator:
-    def __init__(self, angles: np.ndarray, image_stack: np.ndarray) -> None:
+    def __init__(
+        self,
+        angles: np.ndarray,
+        image_stack: np.ndarray,
+        center: Optional[Tuple[int, int]] = None,
+    ) -> None:
         """Initializes the Rotator object.
         The Rotator aims to imitate a the scanning pattern of a multi-photon
         microscope while the speciment is rotating. Currently, it approximates
@@ -50,6 +56,11 @@ class Rotator:
         self.image_stack = image_stack
         self.num_lines_per_frame = image_stack.shape[1]
 
+        if center is None:
+            self.center = np.array(image_stack.shape[1:]) / 2
+        else:
+            self.center = np.array(center)
+
     def rotate_by_line(self) -> np.ndarray:
         """Simulate the acquisition of a rotated image stack as if for each
         line acquired, the sample was rotated at a given angle.
@@ -64,7 +75,7 @@ class Rotator:
             i.e. (num_frames, num_lines_per_frame, num_pixels_per_line).
         """
         rotated_image_stack = copy.deepcopy(self.image_stack)
-        blank_pixel = self.get_blank_pixels_value()
+        self.get_blank_pixels_value()
 
         for i, image in enumerate(self.image_stack):
             is_this_frame_rotating = not np.all(
@@ -76,15 +87,12 @@ class Rotator:
                     if angle == 0:
                         continue
                     else:
-                        rotated_frame = self.rotate(image, angle, blank_pixel)
+                        rotated_frame = self.rotate(image, angle)
                         rotated_image_stack[i][j] = rotated_frame[j]
 
         return rotated_image_stack
 
-    @staticmethod
-    def rotate(
-        image: np.ndarray, angle: float, blank_pixel: float
-    ) -> np.ndarray:
+    def rotate(self, image: np.ndarray, angle: float) -> np.ndarray:
         """Rotate the entire image by a given angle. Uses affine transformation
         with no interpolation.
 
@@ -107,9 +115,6 @@ class Rotator:
         angle_rad = np.deg2rad(angle)
         cos, sin = np.cos(angle_rad), np.sin(angle_rad)
 
-        # Calculate center of the image
-        center_y, center_x = np.array(image.shape) / 2
-
         # Rotation matrix clockwise if angle is positive
         rotation_matrix = np.array(
             [
@@ -119,9 +124,7 @@ class Rotator:
         )
 
         # Compute offset so rotation is around the center
-        offset = np.array([center_y, center_x]) - rotation_matrix @ np.array(
-            [center_y, center_x]
-        )
+        offset = self.center - rotation_matrix @ self.center
 
         # Apply affine transformation
         rotated_image = affine_transform(
@@ -131,7 +134,7 @@ class Rotator:
             output_shape=image.shape,  # Keep original shape
             order=0,
             mode="constant",  # NO interpolation
-            cval=blank_pixel,
+            cval=self.get_blank_pixels_value(),
         )
 
         return rotated_image

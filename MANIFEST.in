@@ -3,11 +3,10 @@ include README.md
 include *.yaml
 recursive-include * *.yaml
 recursive-include * *.yml
-recursive-include tests *.py
 recursive-include examples *.py
-recursive-include tests *.png
 recursive-include images *.png
 
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]
 recursive-exclude docs *
+recursive-exclude tests *

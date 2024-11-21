@@ -490,7 +490,7 @@ def test_blob_detection_on_derotated_stack(
 
     # we do not expect more than 5% errors
     # (there are 100 frames and 2 blobs per frame)
-    assert errors < 10, (
+    assert errors < derotated_sinusoidal.shape[0] * 2 * 0.05, (
         f"More than 5% errors ({errors}) in derotation "
         + f" with wrong center of rotation {center_of_rotation_initial}"
     )

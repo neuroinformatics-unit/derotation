@@ -36,7 +36,7 @@ def derotate_an_image_array_line_by_line(
     rot_deg_line : np.ndarray
         The rotation angles by line.
     center : tuple, optional
-        The center of rotation (y, x). If not provided, defaults to the
+        The center of rotation (x, y). If not provided, defaults to the
         center of the image.
 
     Returns
@@ -48,13 +48,13 @@ def derotate_an_image_array_line_by_line(
     num_lines_per_frame = image_stack.shape[1]
 
     if center is None:
+        #  assumes square images
         center = (
             image_stack.shape[2] // 2,
             image_stack.shape[1] // 2,
-        )  # Default center
-    else:
-        # invert order
-        center = (center[1], center[0])
+        )  # Default center of rotation
+    #  Swap x and y and reshape to column vector
+    center = np.array(center[::-1]).reshape(2, 1)
 
     derotated_image_stack = copy.deepcopy(image_stack)
     previous_image_completed = True
@@ -119,16 +119,14 @@ def derotate_an_image_array_line_by_line(
             # Stack the coordinates into (y, x) pairs
             line_coords = np.vstack((y_coords, x_coords))
 
-            # Center the coordinates relative to the rotation center
-            centered_coords = line_coords - np.array(center).reshape(2, 1)
+            # Center the coordinates
+            centered_coords = line_coords - center
 
             # Apply rotation matrix
             rotated_coords = rotation_matrix @ centered_coords
 
             # Shift back the rotated coordinates to the image space
-            final_coords = (
-                rotated_coords + np.array(center).reshape(2, 1)
-            ).astype(int)
+            final_coords = (rotated_coords + center).astype(int)
 
             # Valid coordinates that fall within image bounds
             valid_mask = (

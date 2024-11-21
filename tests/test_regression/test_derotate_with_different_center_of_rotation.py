@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from assertions import comapre_images
+from assertions import compare_images
 from PIL import Image
 
 from derotation.derotate_by_line import derotate_an_image_array_line_by_line
@@ -33,7 +33,7 @@ def test_derotator_by_line_with_center(angles, center):
         )
         target_image = np.array(target_image.convert("L"))
 
-        comapre_images
+        compare_images
         (
             i,
             derotated_frame,

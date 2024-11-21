@@ -1,5 +1,5 @@
 import numpy as np
-from assertions import comapre_images
+from assertions import compare_images
 from PIL import Image
 
 from derotation.derotate_by_line import derotate_an_image_array_line_by_line
@@ -25,6 +25,6 @@ def test_derotator_by_line(angles):
         )
         target_image = np.array(target_image.convert("L"))
 
-        comapre_images(
+        compare_images(
             i, derotated_frame, target_image, 1, DEROTATED_IMAGES_PATH, 10
         )

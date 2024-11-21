@@ -1,5 +1,5 @@
 import numpy as np
-from assertions import comapre_images
+from assertions import compare_images
 from PIL import Image
 
 from tests.test_regression.recreate_target.shared import (
@@ -20,6 +20,6 @@ def test_rotator_by_line(image_stack, angles):
         )
         target_image = np.array(target_image.convert("L"))
 
-        comapre_images(
+        compare_images(
             i, rotated_frame, target_image, 1, ROTATED_IMAGES_PATH, 0
         )

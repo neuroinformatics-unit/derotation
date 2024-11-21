@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from assertions import comapre_images
+from assertions import compare_images
 from PIL import Image
 
 from derotation.simulate.basic_rotator import Rotator
@@ -19,7 +19,7 @@ def test_center_50_50_is_same_to_None(image_stack, angles):
     custom_rotation = rotator_custom.rotate_by_line()
 
     for i in range(len(default_rotation)):
-        comapre_images(
+        compare_images(
             i,
             default_rotation[i],
             custom_rotation[i],
@@ -46,7 +46,7 @@ def test_rotator_by_line(image_stack, angles, center):
         target_image = np.array(target_image.convert("L"))
 
         # Compare each frame against the precomputed target image
-        comapre_images(
+        compare_images(
             i,
             rotated_frame,
             target_image,

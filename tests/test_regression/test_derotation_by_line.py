@@ -2,7 +2,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-from assertions import comapre_images
+from assertions import compare_images
 from PIL import Image
 
 from derotation.analysis.full_derotation_pipeline import FullPipeline
@@ -61,7 +61,7 @@ def test_derotation_by_line(n_lines, n_total_lines, len_stack, image_stack):
             )
             target_image = np.array(target_image.convert("L"))
 
-            comapre_images(
+            compare_images(
                 i,
                 image,
                 target_image,

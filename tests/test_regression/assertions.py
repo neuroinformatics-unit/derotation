@@ -4,7 +4,7 @@ import numpy as np
 from PIL import Image
 
 
-def comapre_images(
+def compare_images(
     image_idx: int,
     current_image: np.ndarray,
     target_image: np.ndarray,

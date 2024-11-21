@@ -176,6 +176,7 @@ class FullPipeline:
         logging.info(f"Dataset {self.filename_raw} loaded")
         logging.info(f"Filename: {self.filename}")
 
+        #  by default the center of rotation is the center of the image
         self.center_of_rotation = (
             self.num_lines_per_frame // 2,
             self.num_lines_per_frame // 2,
@@ -861,6 +862,19 @@ class FullPipeline:
     @staticmethod
     def find_image_offset(img):
         """Find the "F0", also called "image offset" for a given image.
+
+        Explanations
+        ------------
+        What is the image offset?
+        The PMT (photo-multiplier tube) adds an arbitrary offset to the
+        image that corresponds to 0 photons received. We can use a Gaussian
+        Mixture Model to find this offset by assuming that it will be the
+        smallest mean of the Gaussian components.
+
+        Why do we need to find it?
+        When we rotate the image, the pixels of the image that are not
+        sampled will be filled with the offset is order to correctly express
+        "0 photons received".
 
         Parameters
         ----------

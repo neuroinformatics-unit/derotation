@@ -502,4 +502,5 @@ def test_blob_detection_on_derotated_stack(
 # -----------------------------------------------------
 
 if __name__ == "__main__":
+    Path("debug/").mkdir(parents=True, exist_ok=True)
     test_blob_detection_on_derotated_stack((44, 51))

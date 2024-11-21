@@ -75,7 +75,6 @@ class Rotator:
             i.e. (num_frames, num_lines_per_frame, num_pixels_per_line).
         """
         rotated_image_stack = copy.deepcopy(self.image_stack)
-        self.get_blank_pixels_value()
 
         for i, image in enumerate(self.image_stack):
             is_this_frame_rotating = not np.all(

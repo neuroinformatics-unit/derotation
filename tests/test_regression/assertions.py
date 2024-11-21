@@ -45,7 +45,7 @@ def compare_images(
     try:
         # Check if the current image is close to the target image
         # within the tolerance level
-        assert np.allclose(current_image, target_image, atol=atol)
+        assert np.allclose(current_image, target_image, atol=atol, rtol=0)
 
     except AssertionError:
         # If the current image is not close to the target image

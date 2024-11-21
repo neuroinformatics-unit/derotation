@@ -484,7 +484,7 @@ def test_blob_detection_on_derotated_stack(
         if not np.allclose(blob[0][:2][::-1], center_1, atol=atol):
             errors += 1
         if len(blob) > 1 and not np.allclose(
-            blob[-1][:2][::-1], center_2, atol=atol
+            blob[-1][:2][::-1], center_2, atol=atol, rtol=0
         ):
             errors += 1
 

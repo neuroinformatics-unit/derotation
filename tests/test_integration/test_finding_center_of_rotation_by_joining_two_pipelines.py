@@ -1,6 +1,6 @@
 #  -----------------------------------------------------
 #  This test is an integration test that combines the incremental derotation
-#  pipelinewith the full derotation pipeline. The test generates a test image
+#  pipeline with the full derotation pipeline. The test generates a test image
 #  stack with two circles and rotates it incrementally and sinusoidally using
 #  a variable center of rotation.
 #

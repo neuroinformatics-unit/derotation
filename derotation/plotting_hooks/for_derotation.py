@@ -40,12 +40,27 @@ def line_addition(
     plt.close()
 
 
-def image_completed(derotated_image_stack, image_counter):
+def image_completed(
+    derotated_image_stack: np.ndarray,
+    image_counter: int,
+    frame_of_interest: int = 149,
+):
     """Hook for plotting the maximum projection of the derotated image stack
     after the first rotation (which ends ~149th frame) and the current
     derotated image.
+
+    Parameters
+    ----------
+    derotated_image_stack : np.ndarray
+        The derotated image stack.
+    image_counter : int
+        The current frame number.
+    frame_of_interest : int, optional
+        A frame number for which the maximum projection will be saved
+        by cumulating all the frames up to that frame.
+        Suggestion: set it to the last frame of the first rotation.
     """
-    if image_counter == 149:
+    if image_counter == frame_of_interest:
         fig, ax = plt.subplots(1, 1, figsize=(10, 10))
         ax.imshow(
             np.max(derotated_image_stack[:image_counter], axis=0),

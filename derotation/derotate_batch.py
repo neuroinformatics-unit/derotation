@@ -1,4 +1,4 @@
-import argparse
+import logging
 from pathlib import Path
 
 import yaml
@@ -29,14 +29,19 @@ def update_config_paths(
     return config
 
 
-def main(dataset_path, tif_path, bin_path, output_folder):
+def derotate(dataset_folder: Path, output_folder):
+    # find tif and bin files
+    bin_path = list(dataset_folder.rglob("*rotation_*001.bin"))[0]
+    tif_path = list(dataset_folder.rglob("rotation_00001.tif"))[0]
+
     # Load the config template and update paths
-    config_template_path = Path("derotation/config/full_rotation.yml")
+    this_module_path = Path(__file__).parent
+    config_template_path = this_module_path / Path("config/full_rotation.yml")
     with open(config_template_path, "r") as f:
         config = yaml.safe_load(f)
 
     config = update_config_paths(
-        config, tif_path, bin_path, dataset_path, output_folder
+        config, tif_path, bin_path, dataset_folder, output_folder
     )
 
     # Create output directories if they don't exist
@@ -50,27 +55,22 @@ def main(dataset_path, tif_path, bin_path, output_folder):
         parents=True, exist_ok=True
     )
 
+    logging.info("Running full derotation pipeline")
+
     # Run the pipeline
-    derotate = FullPipeline(config)
-    derotate()
+    try:
+        derotator = FullPipeline(config)
+        derotator()
 
+        logging.info("Full derotation pipeline complete")
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Run Full Derotation Pipeline"
-    )
-    parser.add_argument(
-        "dataset_path", type=str, help="Path to the dataset's root directory"
-    )
-    parser.add_argument(
-        "tif_path", type=str, help="Full path to the correct TIFF file"
-    )
-    parser.add_argument(
-        "bin_path", type=str, help="Full path to the correct BIN file"
-    )
-    parser.add_argument(
-        "output_folder", type=str, help="Directory for storing output files"
-    )
-    args = parser.parse_args()
-
-    main(args.dataset_path, args.tif_path, args.bin_path, args.output_folder)
+        mean_images = derotator.calculate_mean_images(
+            derotator.masked_image_volume, round_decimals=0
+        )
+        debug_plots_folder = Path(config["paths_write"]["debug_plots_folder"])
+        del derotator
+        return mean_images, debug_plots_folder
+    except Exception as e:
+        logging.error("Full derotation pipeline failed")
+        logging.error(e.args)
+        raise e

@@ -61,8 +61,10 @@ class FullPipeline:
         """
         self.process_analog_signals()
         rotated_images = self.derotate_frames_line_by_line()
-        masked = self.add_circle_mask(rotated_images, self.mask_diameter)
-        self.save(masked)
+        self.masked_image_volume = self.add_circle_mask(
+            rotated_images, self.mask_diameter
+        )
+        self.save(self.masked_image_volume)
         self.save_csv_with_derotation_data()
 
     def get_config(self, config_name: str) -> dict:
@@ -1017,3 +1019,39 @@ class FullPipeline:
             + ".csv",
             index=False,
         )
+
+    ### ----------------- Additional methods ---------------- ###
+
+    def calculate_mean_images(
+        self, image_stack: np.ndarray, round_decimals: int = 2
+    ) -> list:
+        """Calculate the mean images for each rotation angle. This required
+        to calculate the shifts using phase cross correlation.
+
+        Parameters
+        ----------
+        rotated_image_stack : np.ndarray
+            The rotated image stack.
+
+        Returns
+        -------
+        list
+            The list of mean images.
+        """
+        logging.info("Calculating mean images...")
+
+        #  correct for a mismatch in the total number of frames
+        #  and the number of angles, given by instrument error
+        angles_subset = copy.deepcopy(self.rot_deg_frame[2:])
+        # also there is a bias on the angles
+        angles_subset += -0.1
+        rounded_angles = np.round(angles_subset, round_decimals)
+
+        mean_images = []
+        for i in np.arange(10, 360, 10):
+            images = image_stack[rounded_angles == i]
+            mean_image = np.mean(images, axis=0)
+
+            mean_images.append(mean_image)
+
+        return mean_images

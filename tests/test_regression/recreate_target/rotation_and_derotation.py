@@ -6,7 +6,8 @@ from shared import (
 )
 
 if __name__ == "__main__":
-    # Define paths and parameters
+    # Please run basic_rotator.py first to generate the rotated images
+    # if they are not already present in the images/rotator/ directory.
 
     # Angles must match those used for the original rotation
     n_total_lines = (

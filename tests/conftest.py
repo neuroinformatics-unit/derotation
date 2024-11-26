@@ -2,6 +2,12 @@ import numpy as np
 import pytest
 
 from derotation.analysis.full_derotation_pipeline import FullPipeline
+from tests.test_regression.recreate_target.shared import (
+    NUMBER_OF_FRAMES,
+    get_increasing_angles,
+    get_static_video,
+    square_with_gray_stripes_in_black_background,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -168,34 +174,26 @@ def derotation_pipeline(
     return pipeline
 
 
+# ------------------------------------------------------------
+# For regression tests
+# ------------------------------------------------------------
+
+
 @pytest.fixture
 def len_stack():
-    return 3  # Number of frames in the stack
+    return NUMBER_OF_FRAMES
 
 
 @pytest.fixture
 def test_image():
-    """Create a single frame image with a gradient square."""
-    image = np.zeros((100, 100))
-    gray_values = [i % 5 * 60 + 15 for i in range(100)]
-    for i in range(100):
-        image[i] = gray_values[i]
-    image[:20] = 0
-    image[-20:] = 0
-    image[:, :20] = 0
-    image[:, -20:] = 0
-
-    return image
+    return square_with_gray_stripes_in_black_background()
 
 
 @pytest.fixture
-def image_stack(len_stack, test_image):
-    """Create a stack of frames with the same test image."""
-    return np.array([test_image for _ in range(len_stack)])
+def image_stack():
+    return get_static_video()
 
 
 @pytest.fixture
 def angles(image_stack):
-    """Generate a simple set of rotation angles."""
-    n_total_lines = image_stack.shape[0] * image_stack.shape[1]
-    return np.arange(n_total_lines)
+    return get_increasing_angles(image_stack)

@@ -10,6 +10,7 @@ from derotation.simulate.basic_rotator import Rotator
 NUMBER_OF_FRAMES = 3
 ROTATED_IMAGES_PATH = Path("tests/test_regression/images/rotator")
 DEROTATED_IMAGES_PATH = Path("tests/test_regression/images/rotator_derotator")
+NUM_LINES = 100
 
 
 def square_with_gray_stripes_in_black_background() -> np.ndarray:
@@ -25,11 +26,11 @@ def square_with_gray_stripes_in_black_background() -> np.ndarray:
     """
 
     # initialize image
-    image = np.zeros((100, 100))
+    image = np.zeros((NUM_LINES, NUM_LINES))
 
     # create gray stripes
-    gray_values = [i % 5 * 60 + 15 for i in range(100)]
-    for i in range(100):
+    gray_values = [i % 5 * 60 + 15 for i in range(NUM_LINES)]
+    for i in range(NUM_LINES):
         image[i] = gray_values[i]
 
     # create a square by setting borders to zero

@@ -171,7 +171,7 @@ class FullPipeline:
             self.debug_plots_folder = Path(
                 self.config["paths_write"]["debug_plots_folder"]
             )
-            Path(self.debug_plots_folder).mkdir(parents=True, exist_ok=True)
+            self.debug_plots_folder.mkdir(parents=True, exist_ok=True)
 
         logging.info(f"Dataset {self.filename_raw} loaded")
         logging.info(f"Filename: {self.filename}")

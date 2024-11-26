@@ -1,4 +1,4 @@
-from shared import (
+from tests.test_regression.recreate_target.shared import (
     get_increasing_angles,
     get_static_video,
     load_rotated_images,

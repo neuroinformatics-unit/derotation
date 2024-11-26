@@ -1,5 +1,6 @@
 import numpy as np
-from shared import (
+
+from tests.test_regression.recreate_target.shared import (
     NUMBER_OF_FRAMES,
     load_rotated_images,
     regenerate_derotated_images_for_testing,

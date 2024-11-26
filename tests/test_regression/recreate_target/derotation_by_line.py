@@ -1,5 +1,6 @@
 import numpy as np
 from PIL import Image
+from shared import save_image_in_test_folder
 
 from derotation.analysis.full_derotation_pipeline import FullPipeline
 
@@ -51,9 +52,8 @@ def regenerate_images_for_testing(image_stack, n_lines, n_total_lines):
 
         for i, image in enumerate(derotated_images):
             image = Image.fromarray(image.astype("uint8"))
-            image.save(
-                "tests/test_regression/images/"
-                + f"{kind}_rotation/rotated_dog_{i + 1}.png"
+            save_image_in_test_folder(
+                f"{kind}_rotation", f"rotated_dog_{i + 1}.png", image
             )
 
 

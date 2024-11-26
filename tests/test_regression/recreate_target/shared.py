@@ -179,14 +179,14 @@ def regenerate_rotator_images_for_testing(
     # expected end of file name
     center_suffix = "" if center is None else f"{center[0]}_{center[1]}_"
 
-    # create a directory to store the images if it does not existå
-    path = Path("tests/test_regression/images/rotator")
-    path.mkdir(parents=True, exist_ok=True)
-
     # Save rotated images
     for i, rotated_frame in enumerate(rotated_image_stack):
         rotated_image = Image.fromarray(rotated_frame.astype("uint8"))
-        rotated_image.save(path / f"rotated_frame_{center_suffix}{i + 1}.png")
+        save_image_in_test_folder(
+            "rotator",
+            f"rotated_frame_{center_suffix}{i + 1}.png",
+            rotated_image,
+        )
 
 
 def regenerate_derotated_images_for_testing(
@@ -215,12 +215,19 @@ def regenerate_derotated_images_for_testing(
     )
 
     # Save derotated images
-    Path(DEROTATED_IMAGES_PATH).mkdir(parents=True, exist_ok=True)
     center_suffix = "" if center is None else f"{center[0]}_{center[1]}_"
 
     for i, derotated_frame in enumerate(derotated_image_stack):
         derotated_image = Image.fromarray(derotated_frame.astype("uint8"))
-        derotated_image.save(
-            Path(DEROTATED_IMAGES_PATH)
-            / f"derotated_frame_{center_suffix}{i + 1}.png"
+        save_image_in_test_folder(
+            "rotator_derotator",
+            f"derotated_frame_{center_suffix}{i + 1}.png",
+            derotated_image,
         )
+
+
+def save_image_in_test_folder(folder: str, image_name: str, image: np.ndarray):
+    base_dir = Path(__file__).resolve().parent.parent
+    target_path = base_dir / f"images/{folder}/{image_name}"
+    target_path.parent.mkdir(parents=True, exist_ok=True)
+    image.save(target_path)

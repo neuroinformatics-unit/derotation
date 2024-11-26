@@ -138,14 +138,13 @@ def load_rotated_images(
     np.ndarray
         The stack of rotated images.
     """
-    #  expected end of file name
-    center_suffix = "" if center is None else f"{center[0]}_{center[1]}_"
 
     #  load pre-computed images one by one
     rotated_image_stack = []
     for i in range(1, NUMBER_OF_FRAMES + 1):
         image_path = (
-            ROTATED_IMAGES_PATH / f"rotated_frame_{center_suffix}{i}.png"
+            ROTATED_IMAGES_PATH
+            / f"rotated_frame_{center_formatting(center)}{i}.png"
         )
         rotated_image = Image.open(image_path).convert("L")
         rotated_image_stack.append(np.array(rotated_image))
@@ -178,14 +177,13 @@ def regenerate_rotator_images_for_testing(
     rotated_image_stack = rotate_images(image_stack, angles, center=center)
 
     # expected end of file name
-    center_suffix = "" if center is None else f"{center[0]}_{center[1]}_"
 
     # Save rotated images
     for i, rotated_frame in enumerate(rotated_image_stack):
         rotated_image = Image.fromarray(rotated_frame.astype("uint8"))
         save_image_in_test_folder(
             "rotator",
-            f"rotated_frame_{center_suffix}{i + 1}.png",
+            f"rotated_frame_{center_formatting(center)}{i + 1}.png",
             rotated_image,
         )
 
@@ -215,14 +213,11 @@ def regenerate_derotated_images_for_testing(
         rotated_image_stack, angles, center=center
     )
 
-    # Save derotated images
-    center_suffix = "" if center is None else f"{center[0]}_{center[1]}_"
-
     for i, derotated_frame in enumerate(derotated_image_stack):
         derotated_image = Image.fromarray(derotated_frame.astype("uint8"))
         save_image_in_test_folder(
             "rotator_derotator",
-            f"derotated_frame_{center_suffix}{i + 1}.png",
+            f"derotated_frame_{center_formatting(center)}{i + 1}.png",
             derotated_image,
         )
 
@@ -232,3 +227,7 @@ def save_image_in_test_folder(folder: str, image_name: str, image: np.ndarray):
     target_path = base_dir / f"images/{folder}/{image_name}"
     target_path.parent.mkdir(parents=True, exist_ok=True)
     image.save(target_path)
+
+
+def center_formatting(center: Optional[Tuple[int, int]]) -> str:
+    return "" if center is None else f"{center[0]}_{center[1]}_"

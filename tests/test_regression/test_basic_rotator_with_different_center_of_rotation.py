@@ -6,6 +6,7 @@ from PIL import Image
 from derotation.simulate.basic_rotator import Rotator
 from tests.test_regression.recreate_target.shared import (
     ROTATED_IMAGES_PATH,
+    center_formatting,
     rotate_images,
 )
 
@@ -36,13 +37,13 @@ def test_rotator_by_line(image_stack, angles, center):
     # Perform rotation
     rotated_image_stack = rotate_images(image_stack, angles, center=center)
 
-    center_suffix = "default" if center is None else f"{center[0]}_{center[1]}"
-
     # Check each rotated frame against precomputed expected images
     for i, rotated_frame in enumerate(rotated_image_stack):
         target_image = Image.open(
-            ROTATED_IMAGES_PATH / f"rotated_frame_{center_suffix}_{i + 1}.png"
+            ROTATED_IMAGES_PATH
+            / f"rotated_frame_{center_formatting(center)}{i + 1}.png"
         )
+
         target_image = np.array(target_image.convert("L"))
 
         # Compare each frame against the precomputed target image

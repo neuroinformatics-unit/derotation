@@ -6,6 +6,7 @@ from PIL import Image
 from derotation.derotate_by_line import derotate_an_image_array_line_by_line
 from tests.test_regression.recreate_target.shared import (
     DEROTATED_IMAGES_PATH,
+    center_formatting,
     load_rotated_images,
 )
 
@@ -23,13 +24,10 @@ def test_derotator_by_line_with_center(angles, center):
         rotated_images, angles, center=center
     )
 
-    # Check each derotated frame against precomputed expected images
-    center_suffix = f"{center[0]}_{center[1]}"
-
     for i, derotated_frame in enumerate(derotated_image_stack):
         target_image = Image.open(
             DEROTATED_IMAGES_PATH
-            / f"derotated_frame_{center_suffix}_{i + 1}.png"
+            / f"derotated_frame_{center_formatting(center)}{i + 1}.png"
         )
         target_image = np.array(target_image.convert("L"))
 

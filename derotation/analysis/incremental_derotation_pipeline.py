@@ -530,10 +530,16 @@ class IncrementalPipeline(FullPipeline):
         blobs = [
             blobs[i][blobs[i][:, 2].argsort()] for i in range(len(image_stack))
         ]
-
-        coord_first_blob_of_every_image = [
-            blobs[i][0][:2].astype(int) for i in range(len(image_stack))
-        ]
+        
+        try:
+            coord_first_blob_of_every_image = [
+                blobs[i][0][:2].astype(int) for i in range(len(image_stack))
+            ]
+        except IndexError:
+            raise ValueError(
+                "No blobs were found. Try changing the parameters of the "
+                + "blob detection algorithm."
+            )
 
         #  invert x, y order
         coord_first_blob_of_every_image = [

@@ -11,6 +11,7 @@ class Rotator:
         angles: np.ndarray,
         image_stack: np.ndarray,
         center: Optional[Tuple[int, int]] = None,
+        rotation_plane_angle: Optional[float] = None,
     ) -> None:
         """Initializes the Rotator object.
         The Rotator aims to imitate a the scanning pattern of a multi-photon
@@ -60,6 +61,26 @@ class Rotator:
             self.center = np.array(image_stack.shape[1:]) / 2
         else:
             self.center = np.array(center)
+        
+        if rotation_plane_angle is None:
+            self.rotation_plane_angle = 0
+        else:
+            self.rotation_plane_angle = rotation_plane_angle
+            self.create_homography_matrices()
+    
+    def create_homography_matrices(self) -> None:
+        #  expansion
+        self.homography_matrix = np.array(
+            [
+                [1, 0, 0],
+                [0, np.cos(np.radians(self.rotation_plane_angle)), 0],
+                [0, 0, 1],
+            ]
+        )
+
+        #  contraction
+        self.inverse_homography_matrix = np.linalg.inv(self.homography_matrix)
+        
 
     def rotate_by_line(self) -> np.ndarray:
         """Simulate the acquisition of a rotated image stack as if for each
@@ -90,6 +111,29 @@ class Rotator:
                         rotated_image_stack[i][j] = rotated_frame[j]
 
         return rotated_image_stack
+    
+    def apply_homography(self, image: np.ndarray, direction: str) -> np.ndarray:
+        if direction == "expand":
+            return affine_transform(
+                image,
+                self.homography_matrix,
+                offset=self.center - self.center,
+                output_shape=image.shape,
+                order=0,
+                mode="constant",
+                cval=self.get_blank_pixels_value(),
+            )
+        elif direction == "contract":
+            return affine_transform(
+                image,
+                self.inverse_homography_matrix,
+                offset=self.center - self.center,
+                output_shape=image.shape,
+                order=0,
+                mode="constant",
+                cval=self.get_blank_pixels_value(),
+            )
+
 
     def rotate(self, image: np.ndarray, angle: float) -> np.ndarray:
         """Rotate the entire image by a given angle. Uses affine transformation
@@ -110,6 +154,10 @@ class Rotator:
         np.ndarray
             The rotated image.
         """
+        if self.rotation_plane_angle != 0:
+            image = self.apply_homography(image, "expand")
+
+
         # Compute rotation in radians
         angle_rad = np.deg2rad(angle)
         cos, sin = np.cos(angle_rad), np.sin(angle_rad)
@@ -136,6 +184,9 @@ class Rotator:
             cval=self.get_blank_pixels_value(),
         )
 
+        if self.rotation_plane_angle != 0:
+            rotated_image = self.apply_homography(rotated_image, "contract")
+
         return rotated_image
 
     def get_blank_pixels_value(self) -> float:
@@ -150,4 +201,4 @@ class Rotator:
         float
             The minimum value of the image stack.
         """
-        return np.min(self.image_stack)
+        return 0 # np.min(self.image_stack)

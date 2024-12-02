@@ -60,22 +60,21 @@ class Rotator:
 
         if rotation_plane_angle is None:
             self.rotation_plane_angle: float = 0
-            #  reshape the angles to the shape of the image
-            #  stack to ease indexing
-            self.angles = angles.reshape(
-                image_stack.shape[0], image_stack.shape[1]
-            )
+            self.ps: int = 0
+            self.image_size = image_stack.shape[1]
         else:
             self.rotation_plane_angle = rotation_plane_angle
+
             self.create_homography_matrices()
             print(f"Pixel shift: {self.ps}")
             print(f"New image size: {self.image_size}")
-            #  reshape angles depending on new image size
-            #  angles might be cropped
-            self.angles = angles[
-                : image_stack.shape[0] * self.image_size
-            ].reshape(image_stack.shape[0], self.image_size)
-            print("New angles shape:", self.angles.shape)
+
+        #  reshape the angles to the shape of the image
+        #  stack to ease indexing
+        self.angles = angles[: image_stack.shape[0] * self.image_size].reshape(
+            image_stack.shape[0], self.image_size
+        )
+        print("New angles shape:", self.angles.shape)
 
     def create_homography_matrices(self) -> None:
         #  from the scanning plane to the rotation plane
@@ -110,12 +109,15 @@ class Rotator:
         self.image_size = line_length - self.ps
 
     def crop_image(self, image: np.ndarray) -> np.ndarray:
-        return image[
-            # centered in the rows
-            self.ps // 2 : -self.ps // 2,
-            # take the left side of the image
-            : self.image_size,
-        ]
+        if self.ps == 0:
+            return image
+        else:
+            return image[
+                # centered in the rows
+                self.ps // 2 : -self.ps // 2,
+                # take the left side of the image
+                : self.image_size,
+            ]
 
     def rotate_by_line(self) -> np.ndarray:
         """Simulate the acquisition of a rotated image stack as if for each
@@ -231,12 +233,11 @@ class Rotator:
             rotated_image = self.apply_homography(
                 rotated_image, "rotation_to_scanning_plane"
             )
+            rotated_image = self.crop_image(rotated_image)
 
         # plt.imshow(rotated_image, vmin=0, vmax=255)
         # plt.savefig(f"debug/projections/rotated_image_projected{angle:.3f}.png")
         # plt.close()
-
-        rotated_image = self.crop_image(rotated_image)
 
         # plt.imshow(rotated_image, vmin=0, vmax=255)
         # plt.savefig(f"debug/projections/rotated_image_projected_cropped{angle:.3f}.png")

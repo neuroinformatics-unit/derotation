@@ -63,6 +63,7 @@ from derotation.simulate.basic_rotator import Rotator
 def create_sample_image_with_two_cells(
     center_of_bright_cell: Tuple[int, int] = (50, 10),
     center_of_dimmer_cell: Tuple[int, int] = (60, 60),
+    lines_per_frame: int = 100,
 ) -> np.ndarray:
     """Create a 2D image with two circles, one bright and one dim
     by default in the top center and bottom right, respectively.
@@ -84,7 +85,7 @@ def create_sample_image_with_two_cells(
     """
 
     # Initialize a black image of size 100x100
-    image = np.zeros((100, 100), dtype=np.uint8)
+    image = np.zeros((lines_per_frame, lines_per_frame), dtype=np.uint8)
 
     # Define the circle's parameters
     radius = 5  # radius of the circle
@@ -211,6 +212,7 @@ class MockIncrementalPipeline(IncrementalPipeline):
 
         return mean_images
 
+
 def get_center_of_rotation(
     rotated_stack_incremental: np.ndarray, incremental_angles: np.ndarray
 ) -> Tuple[int, int]:
@@ -238,7 +240,9 @@ def get_center_of_rotation(
     """
 
     # Use the mock class to find the center of rotation
-    pipeline = MockIncrementalPipeline(rotated_stack_incremental, incremental_angles)
+    pipeline = MockIncrementalPipeline(
+        rotated_stack_incremental, incremental_angles
+    )
     center_of_rotation = pipeline.find_center_of_rotation()
 
     return center_of_rotation

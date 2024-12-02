@@ -1,7 +1,7 @@
-import copy
 from typing import Optional, Tuple
 
 import numpy as np
+import tqdm
 from scipy.ndimage import affine_transform
 
 
@@ -50,10 +50,6 @@ class Rotator:
             + f"({image_stack.shape[0] * image_stack.shape[1]})"
         )
 
-        #  reshape the angles to the shape of the image stack to ease indexing
-        self.angles = angles.reshape(
-            image_stack.shape[0], image_stack.shape[1]
-        )
         self.image_stack = image_stack
         self.num_lines_per_frame = image_stack.shape[1]
 
@@ -61,15 +57,28 @@ class Rotator:
             self.center = np.array(image_stack.shape[1:]) / 2
         else:
             self.center = np.array(center)
-        
+
         if rotation_plane_angle is None:
-            self.rotation_plane_angle = 0
+            self.rotation_plane_angle: float = 0
+            #  reshape the angles to the shape of the image
+            #  stack to ease indexing
+            self.angles = angles.reshape(
+                image_stack.shape[0], image_stack.shape[1]
+            )
         else:
             self.rotation_plane_angle = rotation_plane_angle
             self.create_homography_matrices()
-    
+            print(f"Pixel shift: {self.ps}")
+            print(f"New image size: {self.image_size}")
+            #  reshape angles depending on new image size
+            #  angles might be cropped
+            self.angles = angles[
+                : image_stack.shape[0] * self.image_size
+            ].reshape(image_stack.shape[0], self.image_size)
+            print("New angles shape:", self.angles.shape)
+
     def create_homography_matrices(self) -> None:
-        #  expansion
+        #  from the scanning plane to the rotation plane
         self.homography_matrix = np.array(
             [
                 [1, 0, 0],
@@ -78,9 +87,35 @@ class Rotator:
             ]
         )
 
-        #  contraction
+        #  from the rotation plane to the scanning plane
         self.inverse_homography_matrix = np.linalg.inv(self.homography_matrix)
-        
+
+        #  store pixels shift based on inverse homography
+        line_length = self.image_stack.shape[2]
+        self.ps = (
+            line_length
+            - np.round(
+                np.abs(
+                    line_length * np.cos(np.radians(self.rotation_plane_angle))
+                )
+            ).astype(int)
+            + 1
+        )
+
+        #  round to the nearest even number
+        if self.ps % 2 != 0:
+            self.ps -= 1
+
+        #  final image size depends on the pixel shift
+        self.image_size = line_length - self.ps
+
+    def crop_image(self, image: np.ndarray) -> np.ndarray:
+        return image[
+            # centered in the rows
+            self.ps // 2 : -self.ps // 2,
+            # take the left side of the image
+            : self.image_size,
+        ]
 
     def rotate_by_line(self) -> np.ndarray:
         """Simulate the acquisition of a rotated image stack as if for each
@@ -95,9 +130,14 @@ class Rotator:
             The rotated image stack of the same shape as the input image stack,
             i.e. (num_frames, num_lines_per_frame, num_pixels_per_line).
         """
-        rotated_image_stack = copy.deepcopy(self.image_stack)
+        rotated_image_stack = np.empty(
+            (self.image_stack.shape[0], self.image_size, self.image_size),
+            dtype=np.float64,
+        )
 
-        for i, image in enumerate(self.image_stack):
+        for i, image in tqdm.tqdm(
+            enumerate(self.image_stack), total=self.image_stack.shape[0]
+        ):
             is_this_frame_rotating = not np.all(
                 # don't bother if rotation is less than 0.01 degrees
                 np.isclose(self.angles[i], 0, atol=1e-2)
@@ -105,15 +145,21 @@ class Rotator:
             if is_this_frame_rotating:
                 for j, angle in enumerate(self.angles[i]):
                     if angle == 0:
-                        continue
+                        rotated_image_stack[i][j] = self.crop_image(image)[j]
                     else:
                         rotated_frame = self.rotate(image, angle)
                         rotated_image_stack[i][j] = rotated_frame[j]
+                        # plt.imshow(rotated_image_stack[i])
+                        # plt.savefig(f"debug/projections/image_{i}_{j}.png")
+                        # plt.close()
 
         return rotated_image_stack
-    
-    def apply_homography(self, image: np.ndarray, direction: str) -> np.ndarray:
-        if direction == "expand":
+
+    def apply_homography(
+        self, image: np.ndarray, direction: str
+    ) -> np.ndarray:
+        if direction == "scanning_to_rotation_plane":
+            # backward transformation
             return affine_transform(
                 image,
                 self.homography_matrix,
@@ -123,7 +169,8 @@ class Rotator:
                 mode="constant",
                 cval=self.get_blank_pixels_value(),
             )
-        elif direction == "contract":
+        elif direction == "rotation_to_scanning_plane":
+            # forward transformation
             return affine_transform(
                 image,
                 self.inverse_homography_matrix,
@@ -133,7 +180,6 @@ class Rotator:
                 mode="constant",
                 cval=self.get_blank_pixels_value(),
             )
-
 
     def rotate(self, image: np.ndarray, angle: float) -> np.ndarray:
         """Rotate the entire image by a given angle. Uses affine transformation
@@ -154,9 +200,6 @@ class Rotator:
         np.ndarray
             The rotated image.
         """
-        if self.rotation_plane_angle != 0:
-            image = self.apply_homography(image, "expand")
-
 
         # Compute rotation in radians
         angle_rad = np.deg2rad(angle)
@@ -185,7 +228,19 @@ class Rotator:
         )
 
         if self.rotation_plane_angle != 0:
-            rotated_image = self.apply_homography(rotated_image, "contract")
+            rotated_image = self.apply_homography(
+                rotated_image, "rotation_to_scanning_plane"
+            )
+
+        # plt.imshow(rotated_image, vmin=0, vmax=255)
+        # plt.savefig(f"debug/projections/rotated_image_projected{angle:.3f}.png")
+        # plt.close()
+
+        rotated_image = self.crop_image(rotated_image)
+
+        # plt.imshow(rotated_image, vmin=0, vmax=255)
+        # plt.savefig(f"debug/projections/rotated_image_projected_cropped{angle:.3f}.png")
+        # plt.close()
 
         return rotated_image
 
@@ -201,4 +256,4 @@ class Rotator:
         float
             The minimum value of the image stack.
         """
-        return 0 # np.min(self.image_stack)
+        return 0  # np.min(self.image_stack)

@@ -151,9 +151,8 @@ class Rotator:
                     else:
                         rotated_frame = self.rotate(image, angle)
                         rotated_image_stack[i][j] = rotated_frame[j]
-                        # plt.imshow(rotated_image_stack[i])
-                        # plt.savefig(f"debug/projections/image_{i}_{j}.png")
-                        # plt.close()
+            else:
+                rotated_image_stack[i] = self.crop_image(image)
 
         return rotated_image_stack
 
@@ -235,14 +234,6 @@ class Rotator:
             )
             rotated_image = self.crop_image(rotated_image)
 
-        # plt.imshow(rotated_image, vmin=0, vmax=255)
-        # plt.savefig(f"debug/projections/rotated_image_projected{angle:.3f}.png")
-        # plt.close()
-
-        # plt.imshow(rotated_image, vmin=0, vmax=255)
-        # plt.savefig(f"debug/projections/rotated_image_projected_cropped{angle:.3f}.png")
-        # plt.close()
-
         return rotated_image
 
     def get_blank_pixels_value(self) -> float:
@@ -257,4 +248,4 @@ class Rotator:
         float
             The minimum value of the image stack.
         """
-        return 0  # np.min(self.image_stack)
+        return np.min(self.image_stack)

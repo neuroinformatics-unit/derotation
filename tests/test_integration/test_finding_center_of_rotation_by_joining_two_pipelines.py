@@ -475,7 +475,9 @@ def test_blob_detection_on_derotated_stack(
     # If not, the derotation was not successful and the test fails
 
     # Detect the blobs in the derotated stack
-    blobs = [blob_log(img) for img in derotated_sinusoidal]
+    blobs = [
+        blob_log(img, min_sigma=3, max_sigma=5) for img in derotated_sinusoidal
+    ]
 
     # Get the center of the blobs
     # for every frame, place first the blob with the smallest x value

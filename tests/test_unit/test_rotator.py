@@ -1,6 +1,6 @@
 import numpy as np
 
-from derotation.simulate.basic_rotator import Rotator
+from derotation.simulate.line_scanning_microscope import Rotator
 
 
 def test_Rotator_constructor():

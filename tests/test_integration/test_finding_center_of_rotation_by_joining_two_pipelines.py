@@ -53,7 +53,7 @@ from derotation.analysis.incremental_derotation_pipeline import (
     IncrementalPipeline,
 )
 from derotation.derotate_by_line import derotate_an_image_array_line_by_line
-from derotation.simulate.basic_rotator import Rotator
+from derotation.simulate.line_scanning_microscope import Rotator
 
 #  -----------------------------------------------------
 #  Prepare the 3D image stack and the rotation angles

@@ -79,6 +79,8 @@ class Rotator:
 
         if blank_pixel_val is None:
             self.blank_pixel_val = self.get_blank_pixels_value()
+        else:
+            self.blank_pixel_val = blank_pixel_val
 
     def create_homography_matrices(self) -> None:
         #  from the scanning plane to the rotation plane

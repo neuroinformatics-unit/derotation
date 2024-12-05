@@ -12,6 +12,7 @@ class Rotator:
         image_stack: np.ndarray,
         center: Optional[Tuple[int, int]] = None,
         rotation_plane_angle: Optional[float] = None,
+        rotation_plane_orientation: Optional[float] = None,
         blank_pixel_val: Optional[float] = None,
     ) -> None:
         """Initializes the Rotator object.
@@ -65,6 +66,10 @@ class Rotator:
             self.image_size = image_stack.shape[1]
         else:
             self.rotation_plane_angle = rotation_plane_angle
+            if rotation_plane_orientation is not None:
+                self.rotation_plane_orientation = rotation_plane_orientation
+            else:
+                self.rotation_plane_orientation = 0
 
             self.create_homography_matrices()
             print(f"Pixel shift: {self.ps}")
@@ -155,8 +160,19 @@ class Rotator:
                     if angle == 0:
                         rotated_image_stack[i][j] = self.crop_image(image)[j]
                     else:
-                        rotated_frame = self.rotate_sample(image, angle)
-                        rotated_image_stack[i][j] = rotated_frame[j]
+                        # rotate the whole image by the angle
+                        rotated_image = self.rotate_sample(image, angle)
+
+                        # if the rotation plane angle is not 0,
+                        # apply the homography
+                        if self.rotation_plane_angle != 0:
+                            rotated_image = self.apply_homography(
+                                rotated_image, "rotation_to_scanning_plane"
+                            )
+                            rotated_image = self.crop_image(rotated_image)
+
+                        # store the rotated image line
+                        rotated_image_stack[i][j] = rotated_image[j]
             else:
                 rotated_image_stack[i] = self.crop_image(image)
 
@@ -178,7 +194,7 @@ class Rotator:
             )
         elif direction == "rotation_to_scanning_plane":
             # forward transformation
-            return affine_transform(
+            image = affine_transform(
                 image,
                 self.inverse_homography_matrix,
                 offset=self.center - self.center,
@@ -187,6 +203,14 @@ class Rotator:
                 mode="constant",
                 cval=self.get_blank_pixels_value(),
             )
+
+            #  rotate the image back to the scanning plane angle
+            if self.rotation_plane_orientation != 0:
+                image = self.rotate_sample(
+                    self.rotation_plane_orientation, image
+                )
+
+            return image
 
     def rotate_sample(self, image: np.ndarray, angle: float) -> np.ndarray:
         """Rotate the entire image by a given angle. Uses affine transformation
@@ -207,7 +231,6 @@ class Rotator:
         np.ndarray
             The rotated image.
         """
-
         # Compute rotation in radians
         angle_rad = np.deg2rad(angle)
         cos, sin = np.cos(angle_rad), np.sin(angle_rad)
@@ -233,12 +256,6 @@ class Rotator:
             mode="constant",  # NO interpolation
             cval=self.blank_pixel_val,
         )
-
-        if self.rotation_plane_angle != 0:
-            rotated_image = self.apply_homography(
-                rotated_image, "rotation_to_scanning_plane"
-            )
-            rotated_image = self.crop_image(rotated_image)
 
         return rotated_image
 

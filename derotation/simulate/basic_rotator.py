@@ -12,6 +12,7 @@ class Rotator:
         image_stack: np.ndarray,
         center: Optional[Tuple[int, int]] = None,
         rotation_plane_angle: Optional[float] = None,
+        blank_pixel_val: Optional[float] = None,
     ) -> None:
         """Initializes the Rotator object.
         The Rotator aims to imitate a the scanning pattern of a multi-photon
@@ -75,6 +76,9 @@ class Rotator:
             image_stack.shape[0], self.image_size
         )
         print("New angles shape:", self.angles.shape)
+
+        if blank_pixel_val is None:
+            self.blank_pixel_val = self.get_blank_pixels_value()
 
     def create_homography_matrices(self) -> None:
         #  from the scanning plane to the rotation plane
@@ -149,7 +153,7 @@ class Rotator:
                     if angle == 0:
                         rotated_image_stack[i][j] = self.crop_image(image)[j]
                     else:
-                        rotated_frame = self.rotate(image, angle)
+                        rotated_frame = self.rotate_sample(image, angle)
                         rotated_image_stack[i][j] = rotated_frame[j]
             else:
                 rotated_image_stack[i] = self.crop_image(image)
@@ -182,7 +186,7 @@ class Rotator:
                 cval=self.get_blank_pixels_value(),
             )
 
-    def rotate(self, image: np.ndarray, angle: float) -> np.ndarray:
+    def rotate_sample(self, image: np.ndarray, angle: float) -> np.ndarray:
         """Rotate the entire image by a given angle. Uses affine transformation
         with no interpolation.
 
@@ -225,7 +229,7 @@ class Rotator:
             output_shape=image.shape,  # Keep original shape
             order=0,
             mode="constant",  # NO interpolation
-            cval=self.get_blank_pixels_value(),
+            cval=self.blank_pixel_val,
         )
 
         if self.rotation_plane_angle != 0:

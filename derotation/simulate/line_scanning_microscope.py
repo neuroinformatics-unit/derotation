@@ -52,6 +52,12 @@ class Rotator:
             + f"({image_stack.shape[0] * image_stack.shape[1]})"
         )
 
+        if rotation_plane_orientation is not None:
+            assert rotation_plane_angle is not None, (
+                "If rotation_plane_orientation is provided, "
+                + "rotation_plane_angle should be provided as well."
+            )
+
         self.image_stack = image_stack
         self.num_lines_per_frame = image_stack.shape[1]
 
@@ -207,7 +213,7 @@ class Rotator:
             #  rotate the image back to the scanning plane angle
             if self.rotation_plane_orientation != 0:
                 image = self.rotate_sample(
-                    self.rotation_plane_orientation, image
+                    image, self.rotation_plane_orientation
                 )
 
             return image

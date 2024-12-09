@@ -21,6 +21,11 @@ class Rotator:
         the acquisition of a given line as if it was instantaneous, happening
         while the sample was rotated at a given angle.
 
+        It is also possible to simulate the acquisition of a movie from a
+        rotation plane that differs from the scanning plane. To achieve this,
+        provide the rotation_plane_angle and if you want the orientation as
+        well.
+
         The purpouse of the Rotator object is to imitate the acquisition of
         rotated samples in order to validate the derotation algorithms and in
         the future, build a forward model of the transformation.
@@ -38,12 +43,25 @@ class Rotator:
             num_lines_per_frame, num_pixels_per_line). In case you want to
             rotate a single frame, provide an (1, num_lines_per_frame,
             num_pixels_per_line) image stack.
-
+        center : Tuple[int, int], optional
+            The center of rotation. If None, the center is going to be the
+            center of the image, by default None
+        rotation_plane_angle : Optional[float], optional
+            The z angle of the rotation plane in degrees in relation to the
+            scanning plane. If None or 0, the rotation plane is the same as
+            the  scanning plane, by default None.
+        rotation_plane_orientation : Optional[float], optional
+            The angle of the rotation plane in the x-y plane in degrees,
+            transposed into the rotation plane. If None or 0, the rotation
+            plane is the same as the scanning plane, by default None.
         Raises
         ------
-        AssertionError
+        AssertionError (1)
             If the number of angles is not equal to the number of lines
             per frame multiplied by the number of frames
+        AssertionError (2)
+            If rotation_plane_orientation is provided, but rotation_plane_angle
+            is not provided.
         """
         #  there should be one angle per line pe frame
         assert len(angles) == image_stack.shape[0] * image_stack.shape[1], (
@@ -53,6 +71,9 @@ class Rotator:
         )
 
         if rotation_plane_orientation is not None:
+            # The rotation plane angle makes sense only if the orientation is
+            # provided, as without it the rotation is going to be circular
+            # and not elliptical.
             assert rotation_plane_angle is not None, (
                 "If rotation_plane_orientation is provided, "
                 + "rotation_plane_angle should be provided as well."
@@ -78,6 +99,7 @@ class Rotator:
                 self.rotation_plane_orientation = 0
 
             self.create_homography_matrices()
+            self.calculate_pixel_shift()
             print(f"Pixel shift: {self.ps}")
             print(f"New image size: {self.image_size}")
 
@@ -94,6 +116,22 @@ class Rotator:
             self.blank_pixel_val = blank_pixel_val
 
     def create_homography_matrices(self) -> None:
+        """
+        Create the homography matrices to simulate the acquisition of a
+        rotated sample from a different plane than the scanning plane.
+
+        The homography matrix is used to transform the image from the scanning
+        plane to the rotation plane and vice-versa.
+
+        The homography matrix is defined as:
+        H = [[1, 0, 0],
+             [0, cos(theta), 0],
+             [0, 0, 1]]
+        where theta is the rotation plane angle in degrees.
+
+        Currently, we are using only the inverse homography matrix to transform
+        the image from the rotation plane to the scanning plane.
+        """
         #  from the scanning plane to the rotation plane
         self.homography_matrix = np.array(
             [
@@ -106,6 +144,11 @@ class Rotator:
         #  from the rotation plane to the scanning plane
         self.inverse_homography_matrix = np.linalg.inv(self.homography_matrix)
 
+    def calculate_pixel_shift(self) -> None:
+        """
+        Calculate the pixel shift and the new image size based on the rotation
+        plane angle.
+        """
         #  store pixels shift based on inverse homography
         line_length = self.image_stack.shape[2]
         self.ps = (
@@ -126,6 +169,7 @@ class Rotator:
         self.image_size = line_length - self.ps
 
     def crop_image(self, image: np.ndarray) -> np.ndarray:
+        """Crop the image to the new size based on the pixel shift."""
         if self.ps == 0:
             return image
         else:
@@ -138,7 +182,8 @@ class Rotator:
 
     def rotate_by_line(self) -> np.ndarray:
         """Simulate the acquisition of a rotated image stack as if for each
-        line acquired, the sample was rotated at a given angle.
+        line acquired, the sample was rotated at a given angle in a given
+        center and plane of rotation.
 
         Each frame is rotated n_lines_per_frame times, where n_lines_per_frame
         is the number of lines per frame in the image stack.
@@ -187,6 +232,23 @@ class Rotator:
     def apply_homography(
         self, image: np.ndarray, direction: str
     ) -> np.ndarray:
+        """Apply the homography matrix to the image to simulate the acquisition
+        of a rotated sample from a different plane than the scanning plane.
+
+        Parameters
+        ----------
+        image : np.ndarray
+            The image to apply the homography.
+        direction : str
+            The direction of the transformation. It can be either
+            "scanning_to_rotation_plane" or "rotation_to_scanning_plane".
+
+        Returns
+        -------
+        np.ndarray
+            The transformed image.
+        """
+
         if direction == "scanning_to_rotation_plane":
             # backward transformation
             return affine_transform(

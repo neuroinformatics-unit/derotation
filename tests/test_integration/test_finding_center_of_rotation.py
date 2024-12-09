@@ -67,7 +67,7 @@ def create_sample_image_with_two_cells(
     second_cell=True,
     radius: int = 5,
 ) -> np.ndarray:
-    """Create a 2D image with two circles, one bright and one dim
+    """Create a 2D image with two circles, one bright and one dim (optional)
     by default in the top center and bottom right, respectively.
 
     Location of the circles can be changed by providing the
@@ -79,6 +79,12 @@ def create_sample_image_with_two_cells(
         Location of brightest cell, by default (50, 10)
     center_of_dimmer_cell : Tuple[int, int], optional
         Location of dimmer cell, by default (60, 60)
+    lines_per_frame : int, optional
+        Number of lines per frame, by default 100
+    second_cell : bool, optional
+        Add an extra dimmer cell, by default True
+    radius : int, optional
+        Radius of the circles, by default 5
 
     Returns
     -------

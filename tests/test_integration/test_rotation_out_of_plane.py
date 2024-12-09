@@ -3,8 +3,6 @@ from typing import Optional, Tuple
 
 import numpy as np
 import pytest
-from matplotlib import pyplot as plt
-from skimage.draw import ellipse_perimeter
 
 from derotation.analysis.fit_ellipse import (
     fit_ellipse_to_points,
@@ -63,73 +61,6 @@ def rotate_image_stack(
     )
     rotated_image_stack = rotator.rotate_by_line()
     return image_stack, rotated_image_stack, rotator, num_frames
-
-
-def make_plot(
-    image_stack: np.ndarray,
-    rotated_image_stack: np.ndarray,
-    rotator: Rotator,
-    num_frames: int,
-    title: str = "",
-) -> None:
-    """
-    Plots the original and rotated image stacks.
-
-    Parameters
-    ----------
-    image_stack : np.ndarray
-        Original image stack.
-    rotated_image_stack : np.ndarray
-        Rotated image stack.
-    rotator : Rotator
-        Rotator instance containing rotation metadata.
-    num_frames : int
-        Number of frames in the image stack.
-    title : str, optional
-        Title for the saved plot, by default "".
-    """
-    row_n = 5
-    fig, ax = plt.subplots(row_n, num_frames // row_n + 1, figsize=(40, 25))
-
-    ax[0, 0].imshow(image_stack[0], cmap="gray", vmin=0, vmax=255)
-    ax[0, 0].set_title("Original image")
-    ax[0, 0].axis("off")
-
-    for n in range(1, len(rotated_image_stack) + 1):
-        row = n % row_n
-        col = n // row_n
-        ax[row, col].imshow(
-            rotated_image_stack[n - 1], cmap="gray", vmin=0, vmax=255
-        )
-        ax[row, col].set_title(n)
-
-        angles = rotator.angles[n - 1]
-        angle_range = f"{angles.min():.0f}-{angles.max():.0f}"
-        ax[row, col].text(
-            0.5,
-            0.9,
-            angle_range,
-            horizontalalignment="center",
-            verticalalignment="center",
-            transform=ax[row, col].transAxes,
-            color="white",
-        )
-
-    ax[row_n - 1, num_frames // row_n].imshow(
-        rotated_image_stack.max(axis=0), cmap="gray"
-    )
-    ax[row_n - 1, num_frames // row_n].plot(
-        rotated_image_stack.shape[2] / 2,
-        rotated_image_stack.shape[1] / 2,
-        "rx",
-        markersize=10,
-    )
-    ax[row_n - 1, num_frames // row_n].set_title("Max projection")
-
-    for a in ax.ravel():
-        a.axis("off")
-
-    plt.savefig(f"debug/{title}.png")
 
 
 @pytest.mark.parametrize(
@@ -245,58 +176,3 @@ def test_max_projection(
                 f"Difference between major and minor axes should be close to "
                 f"{expected_b}, instead got {b}"
             )
-
-
-def plot_max_projection_with_rotation_out_of_plane(
-    max_projection, yc, xc, a, b, o, title
-):
-    #  plot for debugging purposes
-
-    fig, ax = plt.subplots(1, 2, figsize=(10, 5))
-    ax[0].imshow(max_projection, cmap="gray")
-    ax[0].set_title("Max projection")
-    ax[0].axis("off")
-
-    # #  plot edges
-    # ax[1].imshow(edges, cmap="gray")
-    # ax[1].set_title("Edges")
-    # ax[1].axis("off")
-
-    print(f"Ellipse center: ({yc}, {xc}), a: {a}, b: {b}, orientation: {o}")
-
-    #  plot the ellipse
-    cy, cx = ellipse_perimeter(yc, xc, a, b, orientation=o)
-    empty_image = np.zeros_like(max_projection)
-    empty_image[cy, cx] = 255
-
-    #  show ellipse
-    ax[1].imshow(empty_image, cmap="gray")
-    ax[1].set_title("Fitted ellipse")
-    ax[1].axis("off")
-
-    plt.savefig(title)
-
-
-if __name__ == "__main__":
-    #  To be used for debugging purposes
-    image_stack, rotated_image_stack, rotator, num_frames = rotate_image_stack(
-        plane_angle=25, num_frames=50, pad=20
-    )
-    make_plot(
-        image_stack,
-        rotated_image_stack,
-        rotator,
-        num_frames,
-        title="rotation_out_of_plane",
-    )
-
-    image_stack, rotated_image_stack, rotator, num_frames = rotate_image_stack(
-        plane_angle=25, num_frames=50, pad=20, orientation=45
-    )
-    make_plot(
-        image_stack,
-        rotated_image_stack,
-        rotator,
-        num_frames,
-        title="rotation_out_of_plane_plus_orientation",
-    )

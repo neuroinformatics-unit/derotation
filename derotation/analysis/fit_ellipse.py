@@ -108,6 +108,12 @@ def plot_ellipse_fit_and_centers(
         The semi-minor axis of the ellipse
     theta : int
         The rotation angle of the ellipse
+    image_stack : np.ndarray
+        The image stack to plot the ellipse on.
+    debug_plots_folder : Path
+        The folder to save the debug plot to.
+    saving_name : str, optional
+        The name of the file to save the plot to, by default "ellipse_fit.png".
     """
     # Convert centers to numpy array
     centers = np.array(centers)

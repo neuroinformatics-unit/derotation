@@ -97,7 +97,7 @@ def test_max_projection(
     ----------
     plane_angle : int
         The angle of the rotation plane in degrees.
-    expected_orientation : int, optional
+    exp_orientation : int, optional
         Expected orientation of the rotation plane, by default None.
     atol : int, optional
         Allowed tolerance for orientation, by default 5.

@@ -64,7 +64,7 @@ def rotate_image_stack(
 
 
 @pytest.mark.parametrize(
-    "plane_angle,expected_orientation",
+    "plane_angle,exp_orientation",
     [
         (0, None),
         (15, None),
@@ -86,9 +86,9 @@ def test_max_projection(
     and verify orientation and major/minor axes are close to expected values:
     - if plane_angle is 0, the major and minor axes should be close to each
       other;
-    - if expected_orientation is not None, the orientation should be close to
+    - if exp_orientation is not None, the orientation should be close to
       it.
-    - if expected_orientation is None, the orientation should be close to 0.
+    - if exp_orientation is None, the orientation should be close to 0.
 
     Giving by default an allowed tolerance of 15 degrees as I care about
     the test tracking the general shape of the ellipse, not the exact values.

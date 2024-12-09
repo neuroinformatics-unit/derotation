@@ -64,6 +64,8 @@ def create_sample_image_with_two_cells(
     center_of_bright_cell: Tuple[int, int] = (50, 10),
     center_of_dimmer_cell: Tuple[int, int] = (60, 60),
     lines_per_frame: int = 100,
+    second_cell=True,
+    radius: int = 5,
 ) -> np.ndarray:
     """Create a 2D image with two circles, one bright and one dim
     by default in the top center and bottom right, respectively.
@@ -88,12 +90,7 @@ def create_sample_image_with_two_cells(
     image = np.zeros((lines_per_frame, lines_per_frame), dtype=np.uint8)
 
     # Define the circle's parameters
-    radius = 5  # radius of the circle
     white_value = 255  # white color for the circle
-
-    #  add an extra gray circle at the bottom right
-    radius2 = 5
-    gray_value = 128
 
     # Draw a white circle in the top center
     y, x = np.ogrid[: image.shape[0], : image.shape[1]]
@@ -102,11 +99,14 @@ def create_sample_image_with_two_cells(
     ) ** 2 <= radius**2
     image[mask] = white_value
 
-    # Draw a gray circle in the bottom right
-    mask2 = (x - center_of_dimmer_cell[0]) ** 2 + (
-        y - center_of_dimmer_cell[1]
-    ) ** 2 <= radius2**2
-    image[mask2] = gray_value
+    if second_cell:
+        #  add an extra gray circle at the bottom right
+        gray_value = 128
+        # Draw a gray circle in the bottom right
+        mask2 = (x - center_of_dimmer_cell[0]) ** 2 + (
+            y - center_of_dimmer_cell[1]
+        ) ** 2 <= radius**2
+        image[mask2] = gray_value
 
     return image
 

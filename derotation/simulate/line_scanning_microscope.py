@@ -254,7 +254,7 @@ class Rotator:
             return affine_transform(
                 image,
                 self.homography_matrix,
-                offset=self.center - self.center,
+                offset=self.center,
                 output_shape=image.shape,
                 order=0,
                 mode="constant",
@@ -265,7 +265,7 @@ class Rotator:
             image = affine_transform(
                 image,
                 self.inverse_homography_matrix,
-                offset=self.center - self.center,
+                offset=self.center,
                 output_shape=image.shape,
                 order=0,
                 mode="constant",

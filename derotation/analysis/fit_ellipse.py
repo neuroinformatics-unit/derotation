@@ -120,6 +120,8 @@ def plot_ellipse_fit_and_centers(
     x = centers[:, 0]
     y = centers[:, 1]
 
+    image_stack = np.asarray(image_stack)
+
     # Create the plot
     fig, ax = plt.subplots(figsize=(8, 8))
 

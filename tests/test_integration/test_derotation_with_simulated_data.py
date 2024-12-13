@@ -247,14 +247,15 @@ def get_center_of_rotation(
     # Use the mock class to find the center of rotation
     pipeline = MockIncrementalPipeline()
     center_of_rotation = pipeline.find_center_of_rotation()
-
-    return center_of_rotation
+    return center_of_rotation, pipeline.all_ellipse_fits
 
 
 def integration_pipeline(
     test_image: np.ndarray,
     center_of_rotation_initial: Tuple[int, int],
     num_frames: int,
+    rotation_plane_angle: int = 0,
+    rotation_plane_orientation: int = 0,
 ) -> np.ndarray:
     """Integration pipeline that combines the incremental and sinusoidal
     rotation pipelines to derotate a 3D image stack.
@@ -292,14 +293,22 @@ def integration_pipeline(
 
     # Initialize Rotator for incremental rotation
     rotator_incremental = Rotator(
-        incremental_angles, image_stack, center_of_rotation_initial
+        incremental_angles,
+        image_stack,
+        center_of_rotation_initial,
+        rotation_plane_angle,
+        rotation_plane_orientation,
     )
     # Rotate the image stack incrementally
     rotated_stack_incremental = rotator_incremental.rotate_by_line()
 
     # Initialize Rotator for sinusoidal rotation
     rotator_sinusoidal = Rotator(
-        sinusoidal_angles, image_stack, center_of_rotation_initial
+        sinusoidal_angles,
+        image_stack,
+        center_of_rotation_initial,
+        rotation_plane_angle,
+        rotation_plane_orientation,
     )
     # Rotate the image stack sinusoidally
     rotated_stack_sinusoidal = rotator_sinusoidal.rotate_by_line()
@@ -309,15 +318,29 @@ def integration_pipeline(
     # estimated by the incremental pipeline
 
     # Get the center of rotation with a mock of the IncrementalPipeline
-    center_of_rotation = get_center_of_rotation(
+    center_of_rotation, ellipse_fits = get_center_of_rotation(
         rotated_stack_incremental, incremental_angles
     )
+
+    # derive orientation and angle from the ellipse fits
+    if rotation_plane_angle == 0:
+        # use the fact that cos(theta) * a = b
+        rotation_plane_angle = np.degrees(
+            np.arccos(ellipse_fits["b"] / ellipse_fits["a"])
+        )
+        rotation_plane_orientation = np.degrees(ellipse_fits["theta"])
+        print(
+            f"rotation_plane_angle: {rotation_plane_angle}, rotation_plane_orientation: {rotation_plane_orientation}"
+        )
 
     # Derotate the sinusoidal stack
     derotated_sinusoidal = derotate_an_image_array_line_by_line(
         rotated_stack_sinusoidal,
         sinusoidal_angles,
         center=center_of_rotation,
+        use_homography=True if (rotation_plane_angle != 0) else False,
+        rotation_plane_angle=rotation_plane_angle,
+        rotation_plane_orientation=rotation_plane_orientation,
     )
 
     #  -----------------------------------------------------
@@ -434,7 +457,7 @@ def plot_derotated_frames(derotated_sinusoidal: np.ndarray):
 
 
 @pytest.mark.parametrize("center_of_rotation_initial", [(44, 51), (51, 44)])
-def test_blob_detection_on_derotated_stack(
+def test_derotation_with_shifted_center(
     center_of_rotation_initial: Tuple[int, int]
 ):
     """Test if the two circles are detected in the derotated stack
@@ -472,6 +495,79 @@ def test_blob_detection_on_derotated_stack(
         test_image, center_of_rotation_initial, num_frames
     )
 
+    assert_blob_detection(
+        derotated_sinusoidal, center_1, center_2, center_of_rotation_initial
+    )
+
+
+@pytest.mark.parametrize(
+    "center_of_rotation_initial, rotation_plane_angle, rotation_plane_orientation",
+    [
+        ((50, 50), 0, 0),  # null case
+        ((50, 50), 0, 5),  # null case
+        ((50, 50), 5, 0),
+        ((50, 50), 5, 5),
+        ((50, 50), 5, 10),
+        ((50, 50), 10, 5),
+        ((44, 51), 0, 0),  # null case
+        ((44, 51), 0, 5),  # null case
+        ((44, 51), 5, 0),
+        ((44, 51), 5, 5),
+        ((44, 51), 5, 10),
+        ((44, 51), 10, 5),
+        ((51, 44), 0, 0),  # null case
+        ((51, 44), 0, 5),  # null case
+        ((51, 44), 5, 0),
+        ((51, 44), 5, 5),
+        ((51, 44), 5, 10),
+        ((51, 44), 10, 5),
+    ],
+)
+def test_derotation_with_rotation_out_of_plane(
+    center_of_rotation_initial,
+    rotation_plane_angle,
+    rotation_plane_orientation,
+):
+    # Set the centers of the two circles and the number of frames
+    center_1 = (50, 10)
+    center_2 = (60, 60)
+    num_frames = 100
+
+    # Create a test image with two circles
+    test_image = create_sample_image_with_two_cells(
+        center_of_bright_cell=center_1, center_of_dimmer_cell=center_2
+    )
+
+    # Run the integration pipeline and obtain the derotated stack
+    derotated_sinusoidal = integration_pipeline(
+        test_image,
+        center_of_rotation_initial,
+        num_frames,
+        rotation_plane_angle,
+        rotation_plane_orientation,
+    )
+
+    #  plot mean projection
+    plt.close()
+    mean_projection = np.mean(derotated_sinusoidal, axis=0)
+    fig, ax = plt.subplots()
+    ax.imshow(mean_projection, cmap="gray")
+    plt.savefig(
+        f"debug/max_projection_{center_of_rotation_initial}_{rotation_plane_angle}_{rotation_plane_orientation}.png"
+    )
+    plt.close()
+
+    assert_blob_detection(
+        derotated_sinusoidal, center_1, center_2, center_of_rotation_initial
+    )
+
+
+def assert_blob_detection(
+    derotated_sinusoidal: np.ndarray,
+    center_1: Tuple[int, int],
+    center_2: Tuple[int, int],
+    center_of_rotation_initial: Tuple[int, int],
+):
     # -----------------------------------------------------
     # Are the blobs detected in the derotated stack where we expect them?
     # If yes, the derotation was successful and the test passes
@@ -512,4 +608,5 @@ def test_blob_detection_on_derotated_stack(
 
 if __name__ == "__main__":
     Path("debug/").mkdir(parents=True, exist_ok=True)
-    test_blob_detection_on_derotated_stack((44, 51))
+    # test_derotation_with_shifted_center((44, 51))
+    test_derotation_with_rotation_out_of_plane((50, 50), 0, 0)

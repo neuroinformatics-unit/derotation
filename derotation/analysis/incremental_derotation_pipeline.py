@@ -518,6 +518,13 @@ class IncrementalPipeline(FullPipeline):
         )
         logging.info(f"Variation from a perfect circle: {a - b:.2f}")
 
+        self.all_ellipse_fits = {
+            "center_x": center_x,
+            "center_y": center_y,
+            "a": a,
+            "b": b,
+            "theta": theta,
+        }
         return int(center_x), int(center_y)
 
     def get_coords_of_largest_blob(

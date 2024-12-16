@@ -4,7 +4,7 @@ from typing import Optional, Tuple
 import numpy as np
 import tqdm
 from scipy.ndimage import affine_transform
-
+import matplotlib.pyplot as plt
 
 def derotate_an_image_array_line_by_line(
     image_stack: np.ndarray,
@@ -81,44 +81,46 @@ def derotate_an_image_array_line_by_line(
             ]
         )
 
+        #  final image shape 
+        shape = (image_stack.shape[1], int(image_stack.shape[2] / np.cos(np.radians(rotation_plane_angle))))
+
         #  shear the image stack (i.e. shift it to the rotation plane)
-        derotated_image_stack = []
+        hom_image_stack = []
         for i, image in enumerate(image_stack):
-            # #  pad the image to have some leway for the subsequent transformations
-            # pad = int(
-            #     np.abs(
-            #         num_lines_per_frame * np.cos(np.radians(rotation_plane_angle))
-            #     )) + 2
-            # image = np.pad(image, ((pad, pad), (pad, pad)), mode="constant")
+        
             # first apply orientation
             transformed = affine_transform(
                 image,
                 orientation,
-                # offset=center,
-                output_shape=image.shape,
+                output_shape=shape,
                 order=0,
                 mode="constant",
-                cval=blank_pixels_value,
+                cval=-20,
             )
             # then apply homography
             transformed = affine_transform(
                 transformed,
                 homography_matrix,
                 # offset=center,
-                output_shape=image.shape,
+                output_shape=shape,
                 order=0,
                 mode="constant",
-                cval=blank_pixels_value,
+                cval=-20,
             )
-            derotated_image_stack.append(transformed)
+            
+            #  clip the image to the original size
+            offset = int((transformed.shape[1] - image.shape[1]) / 2)
+            transformed = transformed[:, offset : offset + image.shape[1]] 
+            hom_image_stack.append(transformed)
 
-        derotated_image_stack = np.asarray(derotated_image_stack)
+        hom_image_stack = np.asarray(hom_image_stack)
         #  check shape
         assert (
-            derotated_image_stack.shape == image_stack.shape
-        ), f"Shape mismatch: {derotated_image_stack.shape} != {image_stack.shape}"
-    else:
-        derotated_image_stack = copy.deepcopy(image_stack)
+            hom_image_stack.shape == image_stack.shape
+        ), f"Shape mismatch: {hom_image_stack.shape} != {image_stack.shape}"
+        image_stack = hom_image_stack
+
+    derotated_image_stack = copy.deepcopy(image_stack)
 
     previous_image_completed = True
     rotation_completed = True
@@ -235,32 +237,32 @@ def derotate_an_image_array_line_by_line(
                     derotated_image_stack, image_counter
                 )
 
-    if use_homography:
-        #  rotation plane to scanning plane transformation
-        inverse_homography_matrix = np.linalg.inv(homography_matrix)
-        inverse_orientation = np.linalg.inv(orientation)
+    # if use_homography:
+    #     #  rotation plane to scanning plane transformation
+    #     inverse_homography_matrix = np.linalg.inv(homography_matrix)
+    #     inverse_orientation = np.linalg.inv(orientation)
 
-        for i, img in enumerate(derotated_image_stack):
-            # first apply homography
-            transformed = affine_transform(
-                img,
-                inverse_homography_matrix,
-                # offset=center,
-                output_shape=image.shape,
-                order=0,
-                mode="constant",
-                cval=blank_pixels_value,
-            )
-            # then apply orientation
-            transformed = affine_transform(
-                transformed,
-                inverse_orientation,
-                # offset=center,
-                output_shape=image.shape,
-                order=0,
-                mode="constant",
-                cval=blank_pixels_value,
-            )
-            derotated_image_stack[i] = transformed
+    #     for i, img in enumerate(derotated_image_stack):
+    #         # first apply homography
+    #         transformed = affine_transform(
+    #             img,
+    #             inverse_homography_matrix,
+    #             # offset=center,
+    #             output_shape=image.shape,
+    #             order=0,
+    #             mode="constant",
+    #             cval=blank_pixels_value,
+    #         )
+    #         # then apply orientation
+    #         # transformed = affine_transform(
+    #         #     transformed,
+    #         #     inverse_orientation,
+    #         #     # offset=center,
+    #         #     output_shape=image.shape,
+    #         #     order=0,
+    #         #     mode="constant",
+    #         #     cval=blank_pixels_value,
+    #         # )
+    #         derotated_image_stack[i] = transformed
 
     return derotated_image_stack

@@ -29,6 +29,10 @@ def fit_ellipse_to_points(
     x = centers[:, 0]
     y = centers[:, 1]
 
+    # remove nans
+    x = x[~np.isnan(x)]
+    y = y[~np.isnan(y)]
+
     # Find the extreme points for the initial ellipse estimate
     topmost = centers[np.argmin(y)]
     rightmost = centers[np.argmax(x)]
@@ -125,7 +129,7 @@ def plot_ellipse_fit_and_centers(
     # Create the plot
     fig, ax = plt.subplots(figsize=(8, 8))
 
-    max_projection = image_stack.max(axis=0)
+    max_projection = image_stack.mean(axis=0)
     #  plot behind a frame of the original image
     ax.imshow(max_projection, cmap="gray")
     ax.scatter(x, y, label="Largest Blob Centers", color="red")

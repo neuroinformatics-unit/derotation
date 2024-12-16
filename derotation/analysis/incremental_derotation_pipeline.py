@@ -503,7 +503,7 @@ class IncrementalPipeline(FullPipeline):
                 a,
                 b,
                 theta,
-                image_stack=mean_images,
+                image_stack=self.image_stack,
                 debug_plots_folder=self.debug_plots_folder,
                 saving_name="ellipse_fit.png",
             )
@@ -553,15 +553,15 @@ class IncrementalPipeline(FullPipeline):
             blobs[i][blobs[i][:, 2].argsort()] for i in range(len(image_stack))
         ]
 
-        try:
-            coord_first_blob_of_every_image = [
-                blobs[i][0][:2].astype(int) for i in range(len(image_stack))
-            ]
-        except IndexError:
-            raise ValueError(
-                "No blobs were found. Try changing the parameters of the "
-                + "blob detection algorithm."
-            )
+        coord_first_blob_of_every_image = []
+        for i, blob in enumerate(blobs):
+            if len(blob) > 0:
+                coord_first_blob_of_every_image.append(
+                    blob[0][:2].astype(int)
+                )
+            else:
+                coord_first_blob_of_every_image.append([np.nan, np.nan])
+                logging.warning(f"No blobs were found in image {i}")
 
         #  invert x, y order
         coord_first_blob_of_every_image = [

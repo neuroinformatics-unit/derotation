@@ -123,6 +123,8 @@ def derotate_an_image_array_line_by_line(
     previous_image_completed = True
     rotation_completed = True
 
+    rot_deg_line = rot_deg_line[: num_lines_per_frame * len(image_stack)]
+    
     for i, angle in tqdm.tqdm(
         enumerate(rot_deg_line), total=len(rot_deg_line)
     ):

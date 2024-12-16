@@ -9,12 +9,7 @@ from derotation.analysis.fit_ellipse import (
     plot_ellipse_fit_and_centers,
 )
 from derotation.simulate.line_scanning_microscope import Rotator
-from tests.test_integration.test_derotation_with_simulated_data import (
-    create_image_stack,
-    create_rotation_angles,
-    create_sample_image_with_two_cells,
-)
-
+from tests.test_integration.test_derotation_with_simulated_data import SintheticData
 
 def rotate_image_stack(
     plane_angle: int = 0,
@@ -44,14 +39,15 @@ def rotate_image_stack(
         Original image stack, rotated image stack, Rotator instance,
         and number of frames.
     """
-    cells = create_sample_image_with_two_cells(
+    s_data = SintheticData(
         lines_per_frame=100, second_cell=False, radius=1
     )
+    cells = s_data.create_sample_image_with_two_cells()
     cells = np.pad(cells, ((pad, pad), (pad, pad)), mode="constant")
     cells[cells == 0] = 80
 
-    image_stack = create_image_stack(cells, num_frames=num_frames)
-    _, angles = create_rotation_angles(image_stack.shape)
+    image_stack = s_data.create_image_stack(cells, num_frames=num_frames)
+    _, angles = s_data.create_rotation_angles(image_stack.shape)
 
     n_lines = image_stack.shape[1]
     if center_of_rotation_diff is None:

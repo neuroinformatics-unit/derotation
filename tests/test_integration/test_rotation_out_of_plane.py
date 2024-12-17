@@ -16,6 +16,7 @@ def rotate_image_stack(
     num_frames: int = 50,
     pad: int = 20,
     orientation: float = 0,
+    center_of_rotation_diff: Tuple[int, int] = (0, 0),
 ) -> Tuple[np.ndarray, np.ndarray, Rotator, int]:
     """
     Rotates an image stack with a specified plane angle and
@@ -72,19 +73,21 @@ def rotate_image_stack(
 @pytest.mark.parametrize(
     "plane_angle,exp_orientation,center_of_rotation_diff",
     [
-        (0, 0),
-        (15, 0),
-        (25, 0),
-        (25, 45),
-        (25, 90),
-        (40, 0),
-        (40, 45),
-        (40, 90),
+        (0, 0, None),
+        (15, 0, None),
+        (25, 0, None),
+        (25, 45, None),
+        (25, 90, None),
+        (25, 45, (-4, 2)),
+        (40, 0, None),
+        (40, 45, None),
+        (40, 90, None),
     ],
 )
 def test_max_projection(
     plane_angle: float,
     exp_orientation: float,
+    center_of_rotation_diff: Tuple[int, int],
     atol: int = 15,
 ) -> None:
     """

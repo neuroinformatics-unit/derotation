@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Tuple
 
 import numpy as np
 import pytest
@@ -12,11 +12,10 @@ from derotation.simulate.line_scanning_microscope import Rotator
 from tests.test_integration.test_derotation_with_simulated_data import SintheticData
 
 def rotate_image_stack(
-    plane_angle: int = 0,
+    plane_angle: float = 0,
     num_frames: int = 50,
     pad: int = 20,
-    orientation: Optional[int] = None,
-    center_of_rotation_diff: Tuple[int, int] = (0, 0),
+    orientation: float = 0,
 ) -> Tuple[np.ndarray, np.ndarray, Rotator, int]:
     """
     Rotates an image stack with a specified plane angle and
@@ -24,13 +23,13 @@ def rotate_image_stack(
 
     Parameters
     ----------
-    plane_angle : int
+    plane_angle : float, optional
         The angle of the rotation plane in degrees.
     num_frames : int
         Number of frames in the image stack.
     pad : int
         Padding size to apply to the sample image.
-    orientation : int, optional
+    orientation : float, optional
         Orientation of the rotation plane in degrees, by default None.
 
     Returns
@@ -73,21 +72,19 @@ def rotate_image_stack(
 @pytest.mark.parametrize(
     "plane_angle,exp_orientation,center_of_rotation_diff",
     [
-        (0, None, None),
-        (15, None, None),
-        (25, None, None),
-        (25, 45, None),
-        (25, 90, None),
-        (25, 45, (-4, 2)),
-        (40, None, None),
-        (40, 45, None),
-        (40, 90, None),
+        (0, 0),
+        (15, 0),
+        (25, 0),
+        (25, 45),
+        (25, 90),
+        (40, 0),
+        (40, 45),
+        (40, 90),
     ],
 )
 def test_max_projection(
-    plane_angle: int,
-    exp_orientation: Optional[int],
-    center_of_rotation_diff: Tuple[int, int],
+    plane_angle: float,
+    exp_orientation: float,
     atol: int = 15,
 ) -> None:
     """
@@ -104,12 +101,12 @@ def test_max_projection(
 
     Parameters
     ----------
-    plane_angle : int
+    plane_angle : float
         The angle of the rotation plane in degrees.
-    exp_orientation : int, optional
+    exp_orientation : float
         Expected orientation of the rotation plane, by default None.
     atol : int, optional
-        Allowed tolerance for orientation, by default 5.
+        Allowed tolerance for orientation, by default 15.
     """
     _, rotated_image_stack, *_ = rotate_image_stack(
         plane_angle=plane_angle,

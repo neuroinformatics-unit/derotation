@@ -53,7 +53,7 @@ from derotation.analysis.incremental_derotation_pipeline import (
     IncrementalPipeline,
 )
 from derotation.derotate_by_line import derotate_an_image_array_line_by_line
-from derotation.simulate.basic_rotator import Rotator
+from derotation.simulate.line_scanning_microscope import Rotator
 
 #  -----------------------------------------------------
 #  Prepare the 3D image stack and the rotation angles
@@ -63,8 +63,11 @@ from derotation.simulate.basic_rotator import Rotator
 def create_sample_image_with_two_cells(
     center_of_bright_cell: Tuple[int, int] = (50, 10),
     center_of_dimmer_cell: Tuple[int, int] = (60, 60),
+    lines_per_frame: int = 100,
+    second_cell=True,
+    radius: int = 5,
 ) -> np.ndarray:
-    """Create a 2D image with two circles, one bright and one dim
+    """Create a 2D image with two circles, one bright and one dim (optional)
     by default in the top center and bottom right, respectively.
 
     Location of the circles can be changed by providing the
@@ -76,6 +79,12 @@ def create_sample_image_with_two_cells(
         Location of brightest cell, by default (50, 10)
     center_of_dimmer_cell : Tuple[int, int], optional
         Location of dimmer cell, by default (60, 60)
+    lines_per_frame : int, optional
+        Number of lines per frame, by default 100
+    second_cell : bool, optional
+        Add an extra dimmer cell, by default True
+    radius : int, optional
+        Radius of the circles, by default 5
 
     Returns
     -------
@@ -84,15 +93,10 @@ def create_sample_image_with_two_cells(
     """
 
     # Initialize a black image of size 100x100
-    image = np.zeros((100, 100), dtype=np.uint8)
+    image = np.zeros((lines_per_frame, lines_per_frame), dtype=np.uint8)
 
     # Define the circle's parameters
-    radius = 5  # radius of the circle
     white_value = 255  # white color for the circle
-
-    #  add an extra gray circle at the bottom right
-    radius2 = 5
-    gray_value = 128
 
     # Draw a white circle in the top center
     y, x = np.ogrid[: image.shape[0], : image.shape[1]]
@@ -101,11 +105,14 @@ def create_sample_image_with_two_cells(
     ) ** 2 <= radius**2
     image[mask] = white_value
 
-    # Draw a gray circle in the bottom right
-    mask2 = (x - center_of_dimmer_cell[0]) ** 2 + (
-        y - center_of_dimmer_cell[1]
-    ) ** 2 <= radius2**2
-    image[mask2] = gray_value
+    if second_cell:
+        #  add an extra gray circle at the bottom right
+        gray_value = 128
+        # Draw a gray circle in the bottom right
+        mask2 = (x - center_of_dimmer_cell[0]) ** 2 + (
+            y - center_of_dimmer_cell[1]
+        ) ** 2 <= radius**2
+        image[mask2] = gray_value
 
     return image
 
@@ -471,7 +478,9 @@ def test_blob_detection_on_derotated_stack(
     # If not, the derotation was not successful and the test fails
 
     # Detect the blobs in the derotated stack
-    blobs = [blob_log(img) for img in derotated_sinusoidal]
+    blobs = [
+        blob_log(img, min_sigma=3, max_sigma=5) for img in derotated_sinusoidal
+    ]
 
     # Get the center of the blobs
     # for every frame, place first the blob with the smallest x value

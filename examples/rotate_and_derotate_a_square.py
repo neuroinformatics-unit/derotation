@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from derotation.derotate_by_line import derotate_an_image_array_line_by_line
-from derotation.simulate.basic_rotator import Rotator
+from derotation.simulate.line_scanning_microscope import Rotator
 
 #  make a simple image, a square in a black background
 image = np.empty((100, 100))

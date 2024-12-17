@@ -83,3 +83,4 @@ venv/
 **/_version.py
 
 .conda/
+debug/*

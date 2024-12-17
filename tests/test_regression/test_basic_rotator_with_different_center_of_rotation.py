@@ -3,7 +3,7 @@ import pytest
 from assertions import compare_images
 from PIL import Image
 
-from derotation.simulate.basic_rotator import Rotator
+from derotation.simulate.line_scanning_microscope import Rotator
 from tests.test_regression.recreate_target.shared import (
     ROTATED_IMAGES_PATH,
     center_formatting,

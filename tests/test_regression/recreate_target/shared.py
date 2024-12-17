@@ -5,7 +5,7 @@ import numpy as np
 from PIL import Image
 
 from derotation.derotate_by_line import derotate_an_image_array_line_by_line
-from derotation.simulate.basic_rotator import Rotator
+from derotation.simulate.line_scanning_microscope import Rotator
 
 NUMBER_OF_FRAMES = 3
 ROTATED_IMAGES_PATH = Path("tests/test_regression/images/rotator")

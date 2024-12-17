@@ -6,12 +6,14 @@ from typing import Dict, Tuple
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from matplotlib.patches import Ellipse
 from scipy.ndimage import rotate
-from scipy.optimize import OptimizeResult, least_squares
 from skimage.feature import blob_log
 from tqdm import tqdm
 
+from derotation.analysis.fit_ellipse import (
+    fit_ellipse_to_points,
+    plot_ellipse_fit_and_centers,
+)
 from derotation.analysis.full_derotation_pipeline import FullPipeline
 
 
@@ -489,9 +491,22 @@ class IncrementalPipeline(FullPipeline):
         )
 
         # Fit an ellipse to the largest blob centers and get its center
-        center_x, center_y, a, b, theta = self.fit_ellipse_to_points(
+        center_x, center_y, a, b, theta = fit_ellipse_to_points(
             coord_first_blob_of_every_image
         )
+
+        if self.debugging_plots:
+            plot_ellipse_fit_and_centers(
+                coord_first_blob_of_every_image,
+                center_x,
+                center_y,
+                a,
+                b,
+                theta,
+                image_stack=mean_images,
+                debug_plots_folder=self.debug_plots_folder,
+                saving_name="ellipse_fit.png",
+            )
 
         logging.info(
             f"Center of ellipse: ({center_x:.2f}, {center_y:.2f}), "
@@ -531,9 +546,15 @@ class IncrementalPipeline(FullPipeline):
             blobs[i][blobs[i][:, 2].argsort()] for i in range(len(image_stack))
         ]
 
-        coord_first_blob_of_every_image = [
-            blobs[i][0][:2].astype(int) for i in range(len(image_stack))
-        ]
+        try:
+            coord_first_blob_of_every_image = [
+                blobs[i][0][:2].astype(int) for i in range(len(image_stack))
+            ]
+        except IndexError:
+            raise ValueError(
+                "No blobs were found. Try changing the parameters of the "
+                + "blob detection algorithm."
+            )
 
         #  invert x, y order
         coord_first_blob_of_every_image = [
@@ -573,150 +594,3 @@ class IncrementalPipeline(FullPipeline):
 
         # save the plot
         plt.savefig(self.debug_plots_folder / "blobs.png")
-
-    def fit_ellipse_to_points(
-        self, centers: np.ndarray
-    ) -> Tuple[int, int, int, int, int]:
-        """Fit an ellipse to the points using least squares optimization.
-
-        Parameters
-        ----------
-        centers : np.ndarray
-            The centers of the largest blob in each image.
-
-        Returns
-        -------
-        Tuple[int, int, int, int, int]
-            The center of the ellipse (center_x, center_y), the semi-major
-            axis (a), the semi-minor axis (b), and the rotation angle (theta).
-        """
-        # Convert centers to numpy array
-        centers = np.array(centers)
-        x = centers[:, 0]
-        y = centers[:, 1]
-
-        # Find the extreme points for the initial ellipse estimate
-        topmost = centers[np.argmin(y)]
-        rightmost = centers[np.argmax(x)]
-        bottommost = centers[np.argmax(y)]
-        leftmost = centers[np.argmin(x)]
-
-        # Initial parameters: (center_x, center_y, semi_major_axis,
-        # semi_minor_axis, rotation_angle)
-        initial_center = np.mean(
-            [topmost, bottommost, leftmost, rightmost], axis=0
-        )
-        semi_major_axis = np.linalg.norm(rightmost - leftmost) / 2
-        semi_minor_axis = np.linalg.norm(topmost - bottommost) / 2
-        rotation_angle = 0  # Start with no rotation
-
-        initial_params = [
-            initial_center[0],
-            initial_center[1],
-            semi_major_axis,
-            semi_minor_axis,
-            rotation_angle,
-        ]
-
-        logging.info("Fitting ellipse to points...")
-
-        # Objective function to minimize: sum of squared distances to ellipse
-        def ellipse_residuals(params, x, y):
-            center_x, center_y, a, b, theta = params
-            cos_angle = np.cos(theta)
-            sin_angle = np.sin(theta)
-
-            # Rotate the points to align with the ellipse axes
-            x_rot = cos_angle * (x - center_x) + sin_angle * (y - center_y)
-            y_rot = -sin_angle * (x - center_x) + cos_angle * (y - center_y)
-
-            # Ellipse equation: (x_rot^2 / a^2) + (y_rot^2 / b^2) = 1
-            return (x_rot / a) ** 2 + (y_rot / b) ** 2 - 1
-
-        # Use least squares optimization to fit the ellipse to the points
-        result: OptimizeResult = least_squares(
-            ellipse_residuals, initial_params, args=(x, y)
-        )
-
-        # Extract optimized parameters
-        center_x, center_y, a, b, theta = result.x
-
-        if self.debugging_plots:
-            self.plot_ellipse_fit_and_centers(
-                centers, center_x, center_y, a, b, theta
-            )
-
-        return center_x, center_y, a, b, theta
-
-    def plot_ellipse_fit_and_centers(
-        self,
-        centers: np.ndarray,
-        center_x: int,
-        center_y: int,
-        a: int,
-        b: int,
-        theta: int,
-    ):
-        """Plot the fitted ellipse on the largest blob centers.
-
-        Parameters
-        ----------
-        centers : np.ndarray
-            The centers of the largest blob in each image.
-        center_x : int
-            The x-coordinate of the center of the ellipse
-        center_y : int
-            The y-coordinate of the center of the ellipse
-        a : int
-            The semi-major axis of the ellipse
-        b : int
-            The semi-minor axis of the ellipse
-        theta : int
-            The rotation angle of the ellipse
-        """
-        # Convert centers to numpy array
-        centers = np.array(centers)
-        x = centers[:, 0]
-        y = centers[:, 1]
-
-        # Create the plot
-        fig, ax = plt.subplots(figsize=(8, 8))
-        #  plot behind a frame of the original image
-        ax.imshow(self.image_stack[0], cmap="gray")
-        ax.scatter(x, y, label="Largest Blob Centers", color="red")
-
-        # Plot fitted ellipse
-        ellipse = Ellipse(
-            (center_x, center_y),
-            width=2 * a,
-            height=2 * b,
-            angle=np.degrees(theta),
-            edgecolor="blue",
-            facecolor="none",
-            label="Fitted Ellipse",
-        )
-        ax.add_patch(ellipse)
-
-        # Plot center of fitted ellipse
-        ax.scatter(
-            center_x,
-            center_y,
-            color="green",
-            marker="x",
-            s=100,
-            label="Ellipse Center",
-        )
-
-        # Add some plot formatting
-        ax.set_xlim(0, self.image_stack.shape[1])
-        ax.set_ylim(
-            self.image_stack.shape[1], 0
-        )  # Invert y-axis to match image coordinate system
-        ax.set_aspect("equal")
-        ax.legend()
-        ax.grid(True)
-        ax.set_title("Fitted Ellipse on largest blob centers")
-        ax.axis("off")
-
-        #  save
-        plt.savefig(self.debug_plots_folder / "ellipse_fit.png")

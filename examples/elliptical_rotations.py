@@ -1,6 +1,8 @@
 #  Visualize the acquisition of a movie where the rotation axis is not
 #  aligned with the image plane.
 
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -76,6 +78,8 @@ def make_plot(
 
     plt.savefig(f"debug/{title}.png")
 
+
+Path("debug").mkdir(exist_ok=True)
 
 image_stack, rotated_image_stack, rotator, num_frames = rotate_image_stack(
     plane_angle=25, num_frames=50, pad=20

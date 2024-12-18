@@ -48,22 +48,13 @@ def rotate_image_stack(
     image_stack = s_data.create_image_stack(cells, num_frames=num_frames)
     _, angles = s_data.create_rotation_angles(image_stack.shape)
 
-    n_lines = image_stack.shape[1]
-    if center_of_rotation_diff is None:
-        center = (n_lines // 2, n_lines // 2)
-    else:
-        center = (
-            n_lines // 2 + center_of_rotation_diff[0],
-            n_lines // 2 + center_of_rotation_diff[1],
-        )
-
     rotator = Rotator(
         angles,
         image_stack,
         rotation_plane_angle=plane_angle,
         blank_pixel_val=0,
         rotation_plane_orientation=orientation,
-        center=center,
+        center_offset=center_of_rotation_diff,
     )
     rotated_image_stack = rotator.rotate_by_line()
     return image_stack, rotated_image_stack, rotator, num_frames

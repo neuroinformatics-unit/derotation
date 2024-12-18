@@ -141,7 +141,7 @@ def test_derotation_with_rotation_out_of_plane(
         rotation_plane_angle=rotation_plane_angle,
         rotation_plane_orientation=rotation_plane_orientation,
         num_frames=50,
-        plots=True,
+        # plots=True,
     )
 
     image = s_data.create_sample_image_with_two_cells()
@@ -216,4 +216,4 @@ def assert_blob_detection(
 if __name__ == "__main__":
     Path("debug/").mkdir(parents=True, exist_ok=True)
     # test_derotation_with_shifted_center((44, 51))
-    test_derotation_with_rotation_out_of_plane((0, 0), 45, 0)
+    test_derotation_with_rotation_out_of_plane((0, 0), 25, 90)

@@ -163,7 +163,9 @@ class SyntheticData:
     #  -----------------------------------------------------
 
     def get_center_of_rotation(
-        self, rotated_stack_incremental: np.ndarray, incremental_angles: np.ndarray
+        self,
+        rotated_stack_incremental: np.ndarray,
+        incremental_angles: np.ndarray,
     ) -> Tuple[int, int]:
         """Get the center of rotation by using the IncrementalPipeline.
 
@@ -189,6 +191,7 @@ class SyntheticData:
         """
 
         make_plots = self.plots
+
         # Mock class to use the IncrementalPipeline
         class MockIncrementalPipeline(IncrementalPipeline):
             def __init__(self):
@@ -228,7 +231,6 @@ class SyntheticData:
     def integration_pipeline(
         self,
         test_image: np.ndarray,
-        center_of_rotation_offset: Tuple[int, int] = None,
         # center_of_rotation_initial: Tuple[int, int],
         # # num_frames: int,
         # rotation_plane_angle: int = 0,
@@ -266,21 +268,11 @@ class SyntheticData:
         )
 
         #  -----------------------------------------------------
-        # Use the Rotator to create the rotated image stacks
-        n_lines = image_stack.shape[1]
-        if center_of_rotation_offset is None:
-            center = (n_lines // 2, n_lines // 2)
-        else:
-            center = (
-                n_lines // 2 + center_of_rotation_offset[0],
-                n_lines // 2 + center_of_rotation_offset[1],
-            )
-
         # Initialize Rotator for incremental rotation
         rotator_incremental = Rotator(
             incremental_angles,
             image_stack,
-            center=center,
+            center_offset=self.center_of_rotation_offset,
             # blank_pixel_val=0,
             rotation_plane_angle=self.rotation_plane_angle,
             rotation_plane_orientation=self.rotation_plane_orientation,
@@ -292,7 +284,7 @@ class SyntheticData:
         rotator_sinusoidal = Rotator(
             sinusoidal_angles,
             image_stack,
-            center=center,
+            center_offset=self.center_of_rotation_offset,
             # blank_pixel_val=0,
             rotation_plane_angle=self.rotation_plane_angle,
             rotation_plane_orientation=self.rotation_plane_orientation,
@@ -310,27 +302,38 @@ class SyntheticData:
         )
         print(center_of_rotation)
         print(ellipse_fits)
-        self.center = center
+        self.center = rotator_sinusoidal.post_homography_center
         self.fitted_center = center_of_rotation
 
         # derive orientation and angle from the ellipse fits
         if self.rotation_plane_angle != 0:
-            
-            rotation_plane_angle = np.degrees(
-                np.arccos(ellipse_fits["a"] / ellipse_fits["b"])
-            )
-            rotation_plane_orientation = np.degrees(ellipse_fits["theta"])
+            if ellipse_fits["a"] < ellipse_fits["b"]:
+                print("a < b")
+                rotation_plane_angle = np.degrees(
+                    np.arccos(ellipse_fits["a"] / ellipse_fits["b"])
+                )
+                rotation_plane_orientation = np.degrees(ellipse_fits["theta"])
+            else:
+                print("a > b")
+                rotation_plane_angle = np.degrees(
+                    np.arccos(ellipse_fits["b"] / ellipse_fits["a"])
+                )
+                theta = ellipse_fits["theta"] + np.pi / 2
+                rotation_plane_orientation = np.degrees(theta)
+
             print(
                 f"rotation_plane_angle: {rotation_plane_angle}, rotation_plane_orientation: {rotation_plane_orientation}"
             )
             self.rotation_plane_angle = np.round(rotation_plane_angle, 1)
-            self.rotation_plane_orientation = np.round(rotation_plane_orientation, 1)
+            self.rotation_plane_orientation = np.round(
+                rotation_plane_orientation, 1
+            )
 
         # Derotate the sinusoidal stack
         derotated_sinusoidal = derotate_an_image_array_line_by_line(
             rotated_stack_sinusoidal,
             sinusoidal_angles,
-            center=center_of_rotation,
+            center=self.fitted_center,
             use_homography=True if (self.rotation_plane_angle != 0) else False,
             rotation_plane_angle=self.rotation_plane_angle,
             rotation_plane_orientation=self.rotation_plane_orientation,

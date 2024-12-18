@@ -10,7 +10,7 @@ class Rotator:
         self,
         angles: np.ndarray,
         image_stack: np.ndarray,
-        center: Optional[Tuple[int, int]] = None,
+        center_offset: Tuple[int, int] = (0, 0),
         rotation_plane_angle: float = 0,
         rotation_plane_orientation: float = 0,
         blank_pixel_val: Optional[float] = None,
@@ -85,10 +85,11 @@ class Rotator:
         self.image_stack = image_stack
         self.num_lines_per_frame = image_stack.shape[1]
 
-        if center is None:
-            self.center = np.array(image_stack.shape[1:]) / 2
-        else:
-            self.center = np.array(center)
+        self.pre_homography_center = np.array(
+            [image_stack.shape[2] // 2, image_stack.shape[2] // 2]
+        )
+        if center_offset != (0, 0):
+            self.pre_homography_center += np.array(center_offset)
 
         self.rotation_plane_angle = np.deg2rad(rotation_plane_angle)
         self.rotation_plane_orientation = rotation_plane_orientation
@@ -97,9 +98,17 @@ class Rotator:
             self.image_size = image_stack.shape[1]
         else:
             self.create_homography_matrices()
-            self.calculate_pixel_shift()
+            # self.calculate_pixel_shift()
+            self.image_size = image_stack.shape[1]
+            self.ps = 0
             print(f"Pixel shift: {self.ps}")
             print(f"New image size: {self.image_size}")
+
+        self.post_homography_center = np.array(
+            [self.image_size // 2, self.image_size // 2]
+        )
+        if center_offset != (0, 0):
+            self.post_homography_center += np.array(center_offset)
 
         #  reshape the angles to the shape of the image
         #  stack to ease indexing
@@ -133,9 +142,8 @@ class Rotator:
         #  from the scanning plane to the rotation plane
         self.homography_matrix = np.array(
             [
-                [1, 0, 0],
-                [0, np.cos(self.rotation_plane_angle), 0],
-                [0, 0, 1],
+                [1, 0],
+                [0, np.cos(self.rotation_plane_angle)],
             ]
         )
 
@@ -161,15 +169,14 @@ class Rotator:
 
     def crop_image(self, image: np.ndarray) -> np.ndarray:
         """Crop the image to the new size based on the pixel shift."""
-        if self.ps == 0:
-            return image
-        else:
-            return image[
-                # centered in the rows
-                self.ps // 2 : -self.ps // 2,
-                # take the left side of the image
-                : self.image_size,
-            ]
+        return image
+        # if self.ps == 0:
+        #     return image
+        # else:
+        #     return image[
+        #         : -self.ps,
+        #         : -self.ps,
+        #     ]
 
     def rotate_by_line(self) -> np.ndarray:
         """Simulate the acquisition of a rotated image stack as if for each
@@ -205,7 +212,9 @@ class Rotator:
                     rotated_image_stack[i][j] = self.crop_image(image)[j]
                 else:
                     # rotate the whole image by the angle
-                    rotated_image = self.rotate_sample(image, angle)
+                    rotated_image = self.rotate_sample(
+                        image, angle, center=self.post_homography_center
+                    )
 
                     # if the rotation plane angle is not 0,
                     # apply the homography
@@ -239,11 +248,16 @@ class Rotator:
             The transformed image.
         """
 
+        offset = (
+            self.pre_homography_center
+            - self.inverse_homography_matrix @ self.pre_homography_center
+        )
+
         # forward transformation
         image = affine_transform(
             image,
             self.inverse_homography_matrix,
-            offset=self.center,
+            offset=offset,
             output_shape=image.shape,
             order=0,
             mode="constant",
@@ -252,11 +266,20 @@ class Rotator:
 
         #  rotate the image back to the scanning plane angle
         if self.rotation_plane_orientation != 0:
-            image = self.rotate_sample(image, self.rotation_plane_orientation)
+            image = self.rotate_sample(
+                image,
+                self.rotation_plane_orientation,
+                center=self.pre_homography_center,
+            )
 
         return image
 
-    def rotate_sample(self, image: np.ndarray, angle: float) -> np.ndarray:
+    def rotate_sample(
+        self,
+        image: np.ndarray,
+        angle: float,
+        center: Optional[Tuple[int, int]] = None,
+    ) -> np.ndarray:
         """Rotate the entire image by a given angle. Uses affine transformation
         with no interpolation.
 
@@ -288,7 +311,7 @@ class Rotator:
         )
 
         # Compute offset so rotation is around the center
-        offset = self.center - rotation_matrix @ self.center
+        offset = center - rotation_matrix @ center
 
         # Apply affine transformation
         rotated_image = affine_transform(

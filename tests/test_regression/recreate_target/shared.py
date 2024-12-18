@@ -114,7 +114,7 @@ def rotate_images(
     """
 
     # initialize the Rotator object and rotate the images
-    rotator = Rotator(angles, image_stack, center=center)
+    rotator = Rotator(angles, image_stack, center=center)  # TODO: change ceter
     return rotator.rotate_by_line()
 
 

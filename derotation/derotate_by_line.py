@@ -65,13 +65,14 @@ def derotate_an_image_array_line_by_line(
         #  scanning to rotation plane
         homography_matrix = np.array(
             [
-                [1, 0, 0],
-                [0, np.cos(np.deg2rad(rotation_plane_angle)), 0],
-                [0, 0, 1],
+                [1, 0],
+                # shear happens in the x direction (columns)
+                [0, np.cos(np.deg2rad(rotation_plane_angle))],
             ]
         )
-        #  rotation matrix for plane orientation
-        angle_rad = np.deg2rad(rotation_plane_orientation)
+        # rotation matrix for plane orientation
+        # invert the angle to get the correct rotation
+        angle_rad = np.deg2rad( - rotation_plane_orientation)
         cos, sin = np.cos(angle_rad), np.sin(angle_rad)
 
         orientation = np.array(
@@ -80,37 +81,72 @@ def derotate_an_image_array_line_by_line(
                 [sin, cos],
             ]
         )
+        
+        h_offset = center.T[0] - homography_matrix @ center.T[0]
+        o_offset = center.T[0] - orientation @ center.T[0]
+        io_offset = center.T[0] - orientation.T @ center.T[0]
 
         #  final image shape 
-        shape = (image_stack.shape[1], int(image_stack.shape[2] / np.cos(np.radians(rotation_plane_angle))))
+        # shape = (image_stack.shape[1], int(image_stack.shape[2] / np.cos(np.radians(rotation_plane_angle))))
 
         #  shear the image stack (i.e. shift it to the rotation plane)
         hom_image_stack = []
+        import matplotlib.pyplot as plt
         for i, image in enumerate(image_stack):
+
+            fig, ax = plt.subplots()
+            ax.imshow(image, cmap='gray')
+            plt.savefig(f'./debug/original_{i}.png')
         
-            # first apply orientation
+            # first rotate according to orientation
             transformed = affine_transform(
                 image,
                 orientation,
-                output_shape=shape,
+                offset=o_offset,
+                output_shape=image.shape,
                 order=0,
                 mode="constant",
-                cval=-20,
+                cval=-20, # for debugging purposes
             )
+
+            fig, ax = plt.subplots()
+            ax.imshow(transformed, cmap='gray')
+            plt.savefig(f'./debug/orientation_{i}.png')
+
             # then apply homography
             transformed = affine_transform(
                 transformed,
                 homography_matrix,
-                # offset=center,
-                output_shape=shape,
+                offset=h_offset,
+                output_shape=image.shape,
                 order=0,
                 mode="constant",
-                cval=-20,
+                cval=-20, # for debugging purposes
             )
+
+            fig, ax = plt.subplots()   
+            ax.imshow(transformed, cmap='gray')
+            plt.savefig(f'./debug/homography_{i}.png')
+
+            # rotate it back to the original orientation
+            transformed = affine_transform(
+                transformed,
+                orientation.T,
+                offset=io_offset,
+                output_shape=image.shape,
+                order=0,
+                mode="constant",
+                cval=-20, # for debugging purposes
+            )
+
+            fig, ax = plt.subplots()
+            ax.imshow(transformed, cmap='gray')
+            plt.savefig(f'./debug/inv_orientation_{i}.png')
             
+
             #  clip the image to the original size
-            offset = int((transformed.shape[1] - image.shape[1]) / 2)
-            transformed = transformed[:, offset : offset + image.shape[1]] 
+            # offset = int((transformed.shape[1] - image.shape[1]) / 2)
+            # transformed = transformed[:, offset : offset + image.shape[1]] 
             hom_image_stack.append(transformed)
 
         hom_image_stack = np.asarray(hom_image_stack)

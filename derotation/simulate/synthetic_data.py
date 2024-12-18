@@ -24,6 +24,7 @@ class SyntheticData:
         center_of_rotation_offset=(0, 0),
         rotation_plane_angle=0,
         rotation_plane_orientation=0,
+        plots=False,
     ):
         self.center_of_bright_cell = center_of_bright_cell
         self.center_of_dimmer_cell = center_of_dimmer_cell
@@ -34,6 +35,7 @@ class SyntheticData:
         self.center_of_rotation_offset = center_of_rotation_offset
         self.rotation_plane_angle = rotation_plane_angle
         self.rotation_plane_orientation = rotation_plane_orientation
+        self.plots = plots
 
     #  -----------------------------------------------------
     #  Prepare the 3D image stack and the rotation angles
@@ -160,9 +162,8 @@ class SyntheticData:
     #  Integration pipeline with mock of the IncrementalPipeline
     #  -----------------------------------------------------
 
-    @staticmethod
     def get_center_of_rotation(
-        rotated_stack_incremental: np.ndarray, incremental_angles: np.ndarray
+        self, rotated_stack_incremental: np.ndarray, incremental_angles: np.ndarray
     ) -> Tuple[int, int]:
         """Get the center of rotation by using the IncrementalPipeline.
 
@@ -187,6 +188,7 @@ class SyntheticData:
             The center of rotation
         """
 
+        make_plots = self.plots
         # Mock class to use the IncrementalPipeline
         class MockIncrementalPipeline(IncrementalPipeline):
             def __init__(self):
@@ -197,7 +199,7 @@ class SyntheticData:
                 ][: rotated_stack_incremental.shape[0]]
                 self.num_frames = rotated_stack_incremental.shape[0]
 
-                if __name__ == "__main__":
+                if make_plots:
                     self.debugging_plots = True
                     self.debug_plots_folder = Path("debug/")
                 else:
@@ -312,15 +314,17 @@ class SyntheticData:
         self.fitted_center = center_of_rotation
 
         # derive orientation and angle from the ellipse fits
-        # if rotation_plane_angle == 0:
-        #     # use the fact that cos(theta) * a = b
+        # if self.rotation_plane_angle != 0:
+            
         #     rotation_plane_angle = np.degrees(
-        #         np.arccos(ellipse_fits["b"] / ellipse_fits["a"])
+        #         np.arccos(ellipse_fits["a"] / ellipse_fits["b"])
         #     )
         #     rotation_plane_orientation = np.degrees(ellipse_fits["theta"])
         #     print(
         #         f"rotation_plane_angle: {rotation_plane_angle}, rotation_plane_orientation: {rotation_plane_orientation}"
         #     )
+        #     self.rotation_plane_angle = rotation_plane_angle
+        #     self.rotation_plane_orientation = rotation_plane_orientation
 
         # Derotate the sinusoidal stack
         derotated_sinusoidal = derotate_an_image_array_line_by_line(
@@ -335,7 +339,7 @@ class SyntheticData:
         #  -----------------------------------------------------
         #  Debugging plots
         #  Will be run if the script is run as a standalone script
-        if __name__ == "__main__":
+        if self.plots:
             self.plot_angles(incremental_angles, sinusoidal_angles)
             self.plot_a_few_rotated_frames(
                 rotated_stack_incremental, rotated_stack_sinusoidal

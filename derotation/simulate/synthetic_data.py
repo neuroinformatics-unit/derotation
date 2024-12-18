@@ -314,17 +314,17 @@ class SyntheticData:
         self.fitted_center = center_of_rotation
 
         # derive orientation and angle from the ellipse fits
-        # if self.rotation_plane_angle != 0:
+        if self.rotation_plane_angle != 0:
             
-        #     rotation_plane_angle = np.degrees(
-        #         np.arccos(ellipse_fits["a"] / ellipse_fits["b"])
-        #     )
-        #     rotation_plane_orientation = np.degrees(ellipse_fits["theta"])
-        #     print(
-        #         f"rotation_plane_angle: {rotation_plane_angle}, rotation_plane_orientation: {rotation_plane_orientation}"
-        #     )
-        #     self.rotation_plane_angle = rotation_plane_angle
-        #     self.rotation_plane_orientation = rotation_plane_orientation
+            rotation_plane_angle = np.degrees(
+                np.arccos(ellipse_fits["a"] / ellipse_fits["b"])
+            )
+            rotation_plane_orientation = np.degrees(ellipse_fits["theta"])
+            print(
+                f"rotation_plane_angle: {rotation_plane_angle}, rotation_plane_orientation: {rotation_plane_orientation}"
+            )
+            self.rotation_plane_angle = np.round(rotation_plane_angle, 1)
+            self.rotation_plane_orientation = np.round(rotation_plane_orientation, 1)
 
         # Derotate the sinusoidal stack
         derotated_sinusoidal = derotate_an_image_array_line_by_line(

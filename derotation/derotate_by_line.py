@@ -104,7 +104,7 @@ def derotate_an_image_array_line_by_line(
                 output_shape=image.shape,
                 order=0,
                 mode="constant",
-                cval=-20,  # for debugging purposes
+                cval=blank_pixels_value,
             )
 
             # fig, ax = plt.subplots()
@@ -119,7 +119,7 @@ def derotate_an_image_array_line_by_line(
                 output_shape=image.shape,
                 order=0,
                 mode="constant",
-                cval=-20,  # for debugging purposes
+                cval=blank_pixels_value,
             )
 
             # fig, ax = plt.subplots()
@@ -134,7 +134,7 @@ def derotate_an_image_array_line_by_line(
                 output_shape=image.shape,
                 order=0,
                 mode="constant",
-                cval=-20,  # for debugging purposes
+                cval=blank_pixels_value,
             )
 
             # fig, ax = plt.subplots()

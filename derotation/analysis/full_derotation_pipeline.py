@@ -182,6 +182,8 @@ class FullPipeline:
             self.num_lines_per_frame // 2,
         )
         self.hooks = {}
+        self.rotation_plane_angle = 0
+        self.rotation_plane_orientation = 0
 
     ### ----------------- Analog signals processing pipeline ------------- ###
     def process_analog_signals(self):
@@ -854,6 +856,9 @@ class FullPipeline:
             plotting_hook_image_completed=self.hooks.get(
                 "plotting_hook_image_completed"
             ),
+            use_homography=True if self.rotation_plane_angle != 0 else False,
+            rotation_plane_angle=self.rotation_plane_angle,
+            rotation_plane_orientation=self.rotation_plane_orientation,
         )
 
         logging.info("✨ Image stack rotated ✨")

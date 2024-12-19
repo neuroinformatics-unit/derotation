@@ -18,13 +18,15 @@ def update_config_paths(
 
     # Set output paths to the specified output_folder
     config["paths_write"]["debug_plots_folder"] = str(
-        Path(output_folder) / "debug_plots_full"
+        Path(output_folder) / "derotation" / "debug_plots_full"
     )
-    config["paths_write"]["logs_folder"] = str(Path(output_folder) / "logs")
+    config["paths_write"]["logs_folder"] = str(
+        Path(output_folder) / "derotation" / "logs"
+    )
     config["paths_write"]["derotated_tiff_folder"] = str(
-        Path(output_folder) / "derotated"
+        Path(output_folder) / "derotation"
     )
-    config["paths_write"]["saving_name"] = "derotated_image_stack_full"
+    config["paths_write"]["saving_name"] = "derotated_full"
 
     return config
 

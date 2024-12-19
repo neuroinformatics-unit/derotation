@@ -125,7 +125,9 @@ class FullPipeline:
         data from your setup.
         """
         logging.info("Loading data...")
-
+        logging.info(
+            f"Loading image stack from {self.config['paths_read']['path_to_tif']}"
+        )
         self.image_stack = tiff.imread(
             self.config["paths_read"]["path_to_tif"]
         )
@@ -163,7 +165,10 @@ class FullPipeline:
             self.config["paths_read"]["path_to_tif"]
         ).stem.split(".")[0]
         self.filename = self.config["paths_write"]["saving_name"]
-
+        self.file_saving_path_with_name = (
+            Path(self.config["paths_write"]["derotated_tiff_folder"])
+            / self.filename
+        )
         self.std_coef = self.config["analog_signals_processing"][
             "squared_pulse_k"
         ]
@@ -963,14 +968,13 @@ class FullPipeline:
         masked : np.ndarray
             The masked derotated image stack.
         """
-        path = self.config["paths_write"]["derotated_tiff_folder"]
-        Path(path).mkdir(parents=True, exist_ok=True)
-
         imsave(
-            path + self.config["paths_write"]["saving_name"] + ".tif",
+            str(self.file_saving_path_with_name) + ".tif",
             np.array(masked),
         )
-        logging.info(f"Masked image saved in {path}")
+        logging.info(
+            f"Masked image saved in {str(self.file_saving_path_with_name) + '.tif'}"
+        )
 
     def save_csv_with_derotation_data(self):
         """Saves a csv file with the rotation angles by line and frame,
@@ -1009,14 +1013,8 @@ class FullPipeline:
                 rotation_counter += 1
                 adding_roatation = False
 
-        Path(self.config["paths_write"]["derotated_tiff_folder"]).mkdir(
-            parents=True, exist_ok=True
-        )
-
         df.to_csv(
-            self.config["paths_write"]["derotated_tiff_folder"]
-            + self.config["paths_write"]["saving_name"]
-            + ".csv",
+            str(self.file_saving_path_with_name) + ".csv",
             index=False,
         )
 

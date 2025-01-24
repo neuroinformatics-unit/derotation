@@ -455,7 +455,7 @@ class FullPipeline:
             )
         if self.rot_blocks_idx["start"].shape[0] != self.number_of_rotations:
             logging.info(
-                f"Number of rotations is {self.number_of_rotations}."
+                f"Number of rotations is not {self.number_of_rotations}."
                 + f"Adjusting to {self.rot_blocks_idx['start'].shape[0]}"
             )
             self.number_of_rotations = self.rot_blocks_idx["start"].shape[0]
@@ -623,7 +623,10 @@ class FullPipeline:
                 "Start and end of rotations have different lengths"
             )
         if start.shape[0] != self.number_of_rotations:
-            raise ValueError(
+            #  plot the rotation on signal and the interpolated angles
+            self.plot_rotation_on_and_ticks()
+
+            logging.warning(
                 "Number of rotations is not as expected after interpolation, "
                 + f"{start.shape[0]} instead of {self.number_of_rotations}"
             )
@@ -745,6 +748,7 @@ class FullPipeline:
         plt.savefig(
             self.debug_plots_folder / "rotation_ticks_and_rotation_on.png"
         )
+        plt.close()
 
     def plot_rotation_angles(self):
         """Plots example rotation angles by line and frame for each speed.
@@ -808,6 +812,7 @@ class FullPipeline:
         fig.legend(handles, labels, loc="upper right")
 
         plt.savefig(self.debug_plots_folder / "rotation_angles.png")
+        plt.close()
 
     ### ----------------- Derotation ----------------- ###
 
@@ -838,6 +843,7 @@ class FullPipeline:
         ax.axis("off")
 
         plt.savefig(self.debug_plots_folder / "max_projection_with_center.png")
+        plt.close()
 
     def derotate_frames_line_by_line(self) -> np.ndarray:
         """Wrapper for the function `derotate_an_image_array_line_by_line`.
@@ -1009,7 +1015,18 @@ class FullPipeline:
         )
 
         df["frame"] = np.arange(self.num_frames)
-        df["rotation_angle"] = self.rot_deg_frame[: self.num_frames]
+        if len(self.rot_deg_frame) > self.num_frames:
+            df["rotation_angle"] = self.rot_deg_frame[: self.num_frames]
+            logging.warning(
+                "Number of rotation angles by frame is higher than the number of frames"
+            )
+        elif len(self.rot_deg_frame) < self.num_frames:
+            df["rotation_angle"] = self.rot_deg_frame
+            logging.warning(
+                "Number of rotation angles by frame is lower than the number of frames"
+            )
+        else:
+            df["rotation_angle"] = self.rot_deg_frame
         df["clock"] = self.frame_start[: self.num_frames]
 
         df["direction"] = np.nan * np.ones(len(df))
@@ -1058,17 +1075,21 @@ class FullPipeline:
         logging.info("Calculating mean images...")
 
         #  correct for a mismatch in the total number of frames
-        #  and the number of angles, given by instrument error
-        angles_subset = copy.deepcopy(self.rot_deg_frame[2:])
+        angles_subset = copy.deepcopy(self.rot_deg_frame)
+        angles_subset = angles_subset[: len(image_stack)]
+
         # also there is a bias on the angles
         angles_subset += -0.1
         rounded_angles = np.round(angles_subset, round_decimals)
 
         mean_images = []
         for i in np.arange(10, 360, 10):
-            images = image_stack[rounded_angles == i]
-            mean_image = np.mean(images, axis=0)
+            try:
+                images = image_stack[rounded_angles == i]
+                mean_image = np.mean(images, axis=0)
 
-            mean_images.append(mean_image)
+                mean_images.append(mean_image)
+            except:
+                logging.warning(f"Angle {i} not found in the image stack")
 
-        return mean_images
+        return np.asarray(mean_images)

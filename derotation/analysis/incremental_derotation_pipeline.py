@@ -253,6 +253,7 @@ class IncrementalPipeline(FullPipeline):
             Path(self.config["paths_write"]["debug_plots_folder"])
             / "rotation_angles.png"
         )
+        plt.close()
 
     def save_csv_with_derotation_data(self):
         """Saves a csv file with the rotation angles by line and frame,
@@ -433,7 +434,7 @@ class IncrementalPipeline(FullPipeline):
 
         return registered_images
 
-    def find_center_of_rotation(self) -> Tuple[int, int]:
+    def find_center_of_rotation(self, method="track") -> Tuple[int, int]:
         """Find the center of rotation by fitting an ellipse to the largest
         blob centers.
 
@@ -453,9 +454,14 @@ class IncrementalPipeline(FullPipeline):
         mean_images = self.calculate_mean_images(self.image_stack)
 
         logging.info("Finding blobs...")
-        coord_first_blob_of_every_image = self.get_coords_of_largest_blob(
-            mean_images
-        )
+        if method == "track":
+            coord_first_blob_of_every_image = self.get_coords_of_tracked_blob(
+                mean_images
+            )
+        if method == "largest":
+            coord_first_blob_of_every_image = self.get_coords_of_largest_blob(
+                mean_images
+            )
 
         # Fit an ellipse to the largest blob centers and get its center
         center_x, center_y, a, b, theta = fit_ellipse_to_points(
@@ -484,6 +490,16 @@ class IncrementalPipeline(FullPipeline):
             + f"({center_x - 128:.2f}, {center_y - 128:.2f})"
         )
         logging.info(f"Variation from a perfect circle: {a - b:.2f}")
+
+        #  if the variation from a perfect circle is too high, log a warning and store it in a variable
+        if np.abs(a - b) > 10:
+            logging.warning(
+                "The variation from a perfect circle is too high: "
+                + f"{a - b:.2f}; likely due to a bad fit."
+            )
+            self.good_ellipse_fit = False
+        else:
+            self.good_ellipse_fit = True
 
         self.all_ellipse_fits = {
             "center_x": center_x,
@@ -539,6 +555,260 @@ class IncrementalPipeline(FullPipeline):
 
         return np.asarray(coord_first_blob_of_every_image)
 
+    def get_coords_of_tracked_blob(
+        self, image_stack: np.ndarray
+    ) -> np.ndarray:
+        """Track a blob across frames based on circular motion prediction.
+
+        Parameters
+        ----------
+        image_stack : np.ndarray
+            The image stack.
+
+        Returns
+        -------
+        np.ndarray
+            The coordinates of the tracked blob in each image.
+        """
+
+        def predict_next_position(center, prev_coord, radius, angle_increment):
+            """Predict the next blob position on the circle based on the previous position."""
+            # Calculate the angle based on the previous position relative to the center
+            delta_x, delta_y = prev_coord - center
+            prev_angle = np.arctan2(delta_y, delta_x)
+
+            # Increment the angle to predict the next position
+            next_angle = prev_angle + angle_increment
+
+            # Calculate the new coordinates
+            x = center[0] + radius * np.cos(next_angle)
+            y = center[1] + radius * np.sin(next_angle)
+
+            # # log everything for debugging
+            # logging.info(f"Center: {center}")
+            # logging.info(f"Previous coordinate: {prev_coord}")
+            # logging.info(f"Radius: {radius}")
+            # logging.info(f"Angle increment: {angle_increment}")
+            # logging.info(f"Previous angle: {prev_angle}")
+            # logging.info(f"Next angle: {next_angle}")
+            # logging.info(f"Predicted coordinate: ({x}, {y})")
+
+            return np.array([x, y])
+
+        def find_closest_blob(predicted_coord, current_blobs, max_distance):
+            """Find the closest blob to the predicted coordinate within a threshold."""
+            distances = np.linalg.norm(
+                current_blobs[:, :2] - predicted_coord, axis=1
+            )
+            min_distance_idx = np.argmin(distances)
+            logging.info(
+                f"Distance to closest blob: {distances[min_distance_idx]}"
+            )
+            if distances[min_distance_idx] <= max_distance:
+                return current_blobs[min_distance_idx]
+            else:
+                return None  # No blob within the threshold
+
+        def find_most_isolated(numbers):
+            """
+            Finds the most isolated number in a list, defined as the number
+            with the largest minimum distance to all other numbers.
+
+            Parameters:
+            numbers (list or array-like): A list of numbers.
+
+            Returns:
+            float: The most isolated number.
+            """
+            # Convert to a numpy array for efficient computation
+            numbers = np.array(numbers)
+
+            # Compute pairwise distances
+            distances = np.abs(numbers[:, None] - numbers)
+
+            # Exclude self-distances by setting the diagonal to infinity
+            np.fill_diagonal(distances, np.inf)
+
+            # Find the minimum distance to any other number for each number
+            min_distances = distances.min(axis=1)
+
+            # Identify the number with the largest minimum distance
+            most_isolated_index = np.argmax(min_distances)
+            return most_isolated_index
+
+        blobs_in_frames = [
+            blob_log(img, max_sigma=12, min_sigma=7, threshold=0.95, overlap=0)
+            for img in tqdm(image_stack)
+        ]
+
+        #  blobs list description:
+        # blobs[i] is an array of shape (n, 3) where n is the number of blobs
+        # detected in image i. The columns are (y, x, r) where (y, x) is the
+        # center of the blob and r is the radius.
+        #  blobs length is the number of images in the stack
+
+        # Initialize parameters
+        tracked_coords = []
+        prev_coord = None
+        angle_increment = np.deg2rad(10)  # Approximate rotation per frame
+        angle = np.deg2rad(10)  # Initial angle
+        center = self.center_of_rotation
+        radius = None  # To be calculated from the first blob
+
+        max_distance = 150  # Threshold for discarding blobs (adjust as needed)
+        tollerance = 0
+        radius_tollerance = 15
+        min_distance = 70
+
+        for i, blobs_in_a_frame in enumerate(blobs_in_frames):
+            if len(blobs_in_a_frame) > 0:
+                if i == 0:
+                    distances = np.linalg.norm(
+                        blobs_in_a_frame[:, :2] - center, axis=1
+                    )
+                    logging.info(distances)
+                    #  only consider blobs further than 50px from the center
+                    criteria = (distances > min_distance) & (
+                        distances < max_distance
+                    )
+                    blobs_in_a_frame = blobs_in_a_frame[criteria]
+
+                    most_isolated_index = find_most_isolated(
+                        distances[criteria]
+                    )
+                    most_isolated_blob = blobs_in_a_frame[most_isolated_index]
+                    prev_coord = most_isolated_blob[:2]
+
+                    # largest_blob = blobs_in_a_frame[np.argmax(blobs_in_a_frame[:, 2])]
+                    # logging.info(largest_blob)
+                    # prev_coord = largest_blob[:2]
+                    radius = np.linalg.norm(
+                        prev_coord - center
+                    )  # Calculate initial radius
+                    logging.info(f"Initial radius: {radius}")
+                    tracked_coords.append(prev_coord.astype(int))
+                else:
+                    # Filter blobs based on distance from the center
+                    distances = np.linalg.norm(
+                        blobs_in_a_frame[:, :2] - center, axis=1
+                    )
+                    #  only consider blobs within +- 30 pix from the radius
+                    correct_radius = (
+                        np.abs(distances - radius) < radius_tollerance
+                    )
+
+                    # # if prev_coord is not None:
+                    # # distance_from_previous = np.linalg.norm(blobs_in_a_frame[:, :2] - prev_coord, axis=1)
+                    # # correct_distance = distance_from_previous < (max_distance + tollerance)
+                    # # blobs_in_a_frame = blobs_in_a_frame[correct_radius & correct_distance]
+                    # # else:
+
+                    blobs_in_a_frame = blobs_in_a_frame[correct_radius]
+
+                    # #  filter based on most isolated blob
+                    # distances = np.linalg.norm(blobs_in_a_frame[:, :2] - center, axis=1)
+                    # most_isolated_index = find_most_isolated(distances)
+                    # most_isolated_blob = blobs_in_a_frame[most_isolated_index]
+                    # blobs_in_a_frame = np.array([most_isolated_blob])
+
+                    if len(blobs_in_a_frame) == 0:
+                        # prev_coord = predict_next_position(center, prev_coord, radius, angle_increment)
+                        # logging.info(f"Predicted position: {prev_coord}")
+                        tollerance += max_distance
+                        tracked_coords.append([np.nan, np.nan])
+                        logging.warning(f"No blobs were found in image {i}")
+                    elif len(blobs_in_a_frame) == 1:
+                        prev_coord = blobs_in_a_frame[0][:2]
+                        tracked_coords.append(prev_coord.astype(int))
+                        logging.info(
+                            f"Blob found in image {i}, position: {prev_coord}"
+                        )
+                        tollerance = 0
+                    else:
+                        # #  pick the closest blob to the previous position
+                        # closest_blob = find_closest_blob(prev_coord, blobs_in_a_frame, max_distance)
+                        # if closest_blob is not None:
+                        #     prev_coord = closest_blob[:2]
+                        #     tracked_coords.append(prev_coord.astype(int))
+                        #     logging.info(f"Blob found in image {i}, position: {prev_coord}")
+                        #     tollerance = 0
+                        # else:
+                        #     prev_coord = predict_next_position(center, prev_coord, radius, angle_increment)
+                        #     tracked_coords.append([np.nan, np.nan])
+                        #     logging.warning(f"No blobs were found in image {i}")
+
+                        # #  pick the largest blob
+                        # largest_blob = blobs_in_a_frame[np.argmax(blobs_in_a_frame[:, 2])]
+                        # prev_coord = largest_blob[:2]
+
+                        # #  pick the blob less far from the radius
+                        # distances = np.linalg.norm(blobs_in_a_frame[:, :2] - center, axis=1)
+                        # closest_blob = blobs_in_a_frame[np.argmin(distances)]
+                        # prev_coord = closest_blob[:2]
+                        # tracked_coords.append(prev_coord.astype(int))
+                        # logging.info(f"Blob found in image {i}, position: {prev_coord}")
+                        # tollerance = 0
+
+                        # #  pick the furthest blob
+                        # distances = np.linalg.norm(blobs_in_a_frame[:, :2] - center, axis=1)
+                        # furthest_index = np.argmax(distances)
+                        # furthest_blob = blobs_in_a_frame[furthest_index]
+                        # prev_coord = furthest_blob[:2]
+                        # tracked_coords.append(prev_coord.astype(int))
+                        # logging.info(f"Blob found in image {i}, position: {prev_coord}")
+
+                        # take all blobs
+                        for blob in blobs_in_a_frame:
+                            tracked_coords.append(blob[:2].astype(int))
+                            logging.info(
+                                f"Blob found in image {i}, position: {blob[:2]}"
+                            )
+
+                        # #  pick the most isolated blob
+                        # distances = np.linalg.norm(blobs_in_a_frame[:, :2] - center, axis=1)
+                        # most_isolated_index = find_most_isolated(distances)
+                        # most_isolated_blob = blobs_in_a_frame[most_isolated_index]
+                        # prev_coord = most_isolated_blob[:2]
+                        # tracked_coords.append(prev_coord.astype(int))
+                        # logging.info(f"Blob found in image {i}, position: {prev_coord}")
+
+                        # #  nan
+                        # tracked_coords.append([np.nan, np.nan])
+                        # logging.warning(f"No blobs were found in image {i}")
+
+                        #  pick the closest blob to the predicted position
+                        # predicted = predict_next_position(center, prev_coord, radius, angle_increment)
+                        # closest_blob = find_closest_blob(predicted, blobs_in_a_frame, max_distance)
+
+                        # if closest_blob is not None:
+                        #     prev_coord = closest_blob[:2]
+                        #     tracked_coords.append(prev_coord.astype(int))
+                        #     logging.info(f"Blob found in image {i}, position: {prev_coord}")
+                        #     tollerance = 0
+                        # else:
+                        #     prev_coord = predict_next_position(center, prev_coord, radius, angle_increment)
+                        #     tracked_coords.append([np.nan, np.nan])
+                        #     logging.warning(f"No blobs were found in image {i}")
+
+                    # Update angle for the next prediction
+                    angle += angle_increment
+            else:
+                # Handle case where no blobs are found
+                tracked_coords.append([np.nan, np.nan])
+                tollerance += max_distance
+                logging.warning(f"No blobs were found in image {i}")
+
+        # Invert x, y order
+        tracked_coords = [(coord[1], coord[0]) for coord in tracked_coords]
+
+        # Plot blobs on top of every frame
+        if self.debugging_plots:
+            self.plot_blob_detection(blobs_in_frames, image_stack)
+
+        logging.info(f"Tracked coordinates: {tracked_coords}")
+
+        return np.asarray(tracked_coords)
+
     def plot_blob_detection(self, blobs: list, image_stack: np.ndarray):
         """Plot the first 4 blobs in each image. This is useful to check if
         the blob detection is working correctly and to see if the identity of
@@ -566,3 +836,4 @@ class IncrementalPipeline(FullPipeline):
 
         # save the plot
         plt.savefig(self.debug_plots_folder / "blobs.png")
+        plt.close()

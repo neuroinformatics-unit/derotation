@@ -1,13 +1,16 @@
 import logging
+import traceback
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 import yaml
 
 from derotation.analysis.full_derotation_pipeline import FullPipeline
 from derotation.analysis.incremental_derotation_pipeline import (
     IncrementalPipeline,
 )
+from derotation.analysis.metrics import stability_of_most_detected_blob
 
 
 def update_config_paths(
@@ -28,9 +31,9 @@ def update_config_paths(
         Path(output_folder) / "derotation" / "logs"
     )
     config["paths_write"]["derotated_tiff_folder"] = str(
-        Path(output_folder) / "derotation"
+        Path(output_folder) / "derotation/"
     )
-    config["paths_write"]["saving_name"] = f"derotated_{kind}.tif"
+    config["paths_write"]["saving_name"] = f"derotated_{kind}"
 
     return config
 
@@ -103,10 +106,141 @@ def derotate(dataset_folder: Path, output_folder):
     try:
         incremental_derotator = IncrementalPipeline(config_incremental)
         incremental_derotator()
+
+        derotator = FullPipeline(config)
+        derotator.debugging_plots = False
+        # derotator with no adjustments:
+        derotator()
+        mean_images_no_adj = derotator.calculate_mean_images(
+            derotator.masked_image_volume, round_decimals=0
+        )
+
+        debug_plots_folder = Path(config["paths_write"]["debug_plots_folder"])
+
+        shifted_center = (
+            incremental_derotator.center_of_rotation[0] - 10,
+            incremental_derotator.center_of_rotation[1],
+        )
+
+        #  will return the metrics: (ptp, std)
+
+        metrics = pd.DataFrame(
+            index=["no_adj", "adj_track", "adj_largest", "adj_track_shifted"],
+            columns=["ptd", "std"],
+        )
+        (
+            metrics.loc["no_adj", "ptd"],
+            metrics.loc["no_adj", "std"],
+        ) = stability_of_most_detected_blob(
+            (mean_images_no_adj, debug_plots_folder)
+        )
+        (
+            metrics.loc["adj_track", "ptd"],
+            metrics.loc["adj_track", "std"],
+        ) = good_derotation(
+            derotator,
+            incremental_derotator,
+            incremental_derotator.center_of_rotation,
+            debug_plots_folder,
+        )
+        (
+            metrics.loc["adj_largest", "ptd"],
+            metrics.loc["adj_largest", "std"],
+        ) = good_derotation(
+            derotator,
+            incremental_derotator,
+            incremental_derotator.center_of_rotation,
+            debug_plots_folder,
+            method="largest",
+        )
+        (
+            metrics.loc["adj_track_shifted", "ptd"],
+            metrics.loc["adj_track_shifted", "std"],
+        ) = good_derotation(
+            derotator,
+            incremental_derotator,
+            shifted_center,
+            debug_plots_folder,
+            method="track",
+        )
+
+        # take the option with the lowest stability
+        logging.info(f"Stability metric across conditions: {metrics}")
+        # give me back the index of the lowest value
+        optimal_ptd = metrics["ptd"].idxmin()
+        optimal_std = metrics["std"].idxmin()
+        logging.info(f"Optimal ptp: {optimal_ptd}, optimal std: {optimal_std}")
+
+        #  restart with the fresh plots
+        derotator.debugging_plots = True
+        #  delete ellipse fit in debug_plots_incremental
+        file_name = (
+            incremental_derotator.debug_plots_folder / "ellipse_fit.png"
+        )
+        file_name.unlink()
+
+        #  delete previous in debug_plots_folder
+        for file in debug_plots_folder.glob("*"):
+            file.unlink()
+
+        # now run the derotation with the optimal option
+        if optimal_ptd == "no_adj":
+            derotator()
+            mean_images_no_adj = derotator.calculate_mean_images(
+                derotator.masked_image_volume, round_decimals=0
+            )
+            stability_of_most_detected_blob(
+                (mean_images_no_adj, debug_plots_folder)
+            )
+        elif optimal_ptd == "adj_track":
+            good_derotation(
+                derotator,
+                incremental_derotator,
+                incremental_derotator.center_of_rotation,
+                debug_plots_folder,
+            )
+        elif optimal_ptd == "adj_largest":
+            good_derotation(
+                derotator,
+                incremental_derotator,
+                incremental_derotator.center_of_rotation,
+                debug_plots_folder,
+                method="largest",
+            )
+        elif optimal_ptd == "adj_track_shifted":
+            good_derotation(
+                derotator,
+                incremental_derotator,
+                shifted_center,
+                debug_plots_folder,
+                method="track",
+            )
+        else:
+            raise ValueError("Invalid option")
+
+        del derotator
+        return metrics
+    except Exception as e:
+        logging.error("Full derotation pipeline failed")
+        logging.error(e.args)
+        logging.error(traceback.format_exc())
+        raise e
+
+
+def good_derotation(
+    derotator,
+    incremental_derotator,
+    given_center,
+    debug_plots_folder,
+    method="track",
+):
+    incremental_derotator.center_of_rotation = given_center
+    try:
+        incremental_derotator.find_center_of_rotation(method)
+
         center = incremental_derotator.center_of_rotation
         ellipse_fits = incremental_derotator.all_ellipse_fits
 
-        derotator = FullPipeline(config)
         derotator.center_of_rotation = center
         if ellipse_fits["a"] < ellipse_fits["b"]:
             rotation_plane_angle = np.degrees(
@@ -132,10 +266,11 @@ def derotate(dataset_folder: Path, output_folder):
         mean_images = derotator.calculate_mean_images(
             derotator.masked_image_volume, round_decimals=0
         )
-        debug_plots_folder = Path(config["paths_write"]["debug_plots_folder"])
-        del derotator
-        return mean_images, debug_plots_folder
-    except Exception as e:
-        logging.error("Full derotation pipeline failed")
-        logging.error(e.args)
-        raise e
+        stability_metrics = stability_of_most_detected_blob(
+            (mean_images, debug_plots_folder)
+        )
+
+        return stability_metrics
+    except RuntimeError:
+        logging.error("Derotation failed")
+        return (100, 100)

@@ -6,32 +6,53 @@ from skimage.feature import blob_log
 from sklearn.cluster import DBSCAN
 
 
-def stability_of_most_detected_blob(data):
+def stability_of_most_detected_blob(
+    data,
+    plot=True,
+    blob_log_kwargs={
+        "min_sigma": 7,
+        "max_sigma": 10,
+        "threshold": 0.95,
+        "overlap": 0,
+    },
+    clip=True,
+):
     mean_images_by_angle, debug_plots_folder = data
 
     #  clip all the images to the same contrast
-    clipped_images = [
-        np.clip(img, np.percentile(img, 99), np.percentile(img, 99.99))
-        for img in mean_images_by_angle
-    ]
+    if clip:
+        clipped_images = [
+            np.clip(img, np.percentile(img, 99), np.percentile(img, 99.99))
+            for img in mean_images_by_angle
+        ]
+    else:
+        clipped_images = mean_images_by_angle
 
     # Detect the blobs in the derotated stack in each frame
     # blobs is a list(list(x, y, sigma)) of the detected blobs for every frame
     blobs = [
-        blob_log(img, max_sigma=10, min_sigma=7, threshold=0.95, overlap=0)
+        blob_log(
+            img,
+            min_sigma=blob_log_kwargs["min_sigma"],
+            max_sigma=blob_log_kwargs["max_sigma"],
+            threshold=blob_log_kwargs["threshold"],
+            overlap=blob_log_kwargs["overlap"],
+        )
         for img in clipped_images
     ]
 
     # plot image with center of blobs
-    fig, ax = plt.subplots()
-    ax.imshow(clipped_images[0], cmap="gray")
-    for blob in blobs[0]:
-        y, x, r = blob
-        c = plt.Circle((x, y), r, color="red", linewidth=2, fill=False)
-        plt.gca().add_artist(c)
+    if plot:
+        fig, ax = plt.subplots()
+        ax.imshow(clipped_images[0], cmap="gray")
+        for blob in blobs[0]:
+            y, x, r = blob
+            c = plt.Circle((x, y), r, color="red", linewidth=2, fill=False)
+            plt.gca().add_artist(c)
 
-    # save
-    plt.savefig(debug_plots_folder / "detected_blobs.png")
+        # save
+        plt.savefig(debug_plots_folder / "detected_blobs.png")
+        plt.close()
 
     # Flatten the blob list and add frame indices
     all_blobs = []
@@ -55,22 +76,24 @@ def stability_of_most_detected_blob(data):
     # Extract blobs belonging to the most detected cluster
     most_detected_blobs = all_blobs[all_blobs[:, -1] == most_detected_label]
 
-    # Calculate stability (standard deviation)
-    stability = np.sqrt(
+    #  Calculate range (peak to peak)
+    ptp = np.ptp(most_detected_blobs[:, 0]) + np.ptp(most_detected_blobs[:, 1])
+    #  Calculate stability (standard deviation)
+    std = np.sqrt(
         np.var(most_detected_blobs[:, 0]) + np.var(most_detected_blobs[:, 1])
     )
 
     #  plot the most detected blobs centers
+    if plot:
+        fig, ax = plt.subplots()
+        ax.imshow(clipped_images[0], cmap="gray")
+        for blob in most_detected_blobs:
+            y, x, *_ = blob
+            # plot an x on the center
+            plt.scatter(x, y, color="red", marker="x")
 
-    fig, ax = plt.subplots()
-    ax.imshow(clipped_images[0], cmap="gray")
-    for blob in most_detected_blobs:
-        y, x, *_ = blob
-        # plot an x on the center
-        plt.scatter(x, y, color="red", marker="x")
+        # save
+        plt.savefig(debug_plots_folder / "most_detected_blob_centers.png")
+        plt.close()
 
-    # save
-    plt.savefig(debug_plots_folder / "most_detected_blob_centers.png")
-    plt.close()
-
-    return stability
+    return ptp, std

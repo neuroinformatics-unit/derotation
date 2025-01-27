@@ -136,20 +136,59 @@ def test_derotation_with_rotation_out_of_plane(
     rotation_plane_orientation,
 ):
     s_data = SyntheticData(
-        radius=3,
+        radius=5,
         center_of_rotation_offset=center_of_rotation_offset,
         rotation_plane_angle=rotation_plane_angle,
         rotation_plane_orientation=rotation_plane_orientation,
         num_frames=50,
-        # plots=True,
+        plots=True,
     )
 
     image = s_data.create_sample_image_with_two_cells()
     pad = 20
     image = np.pad(image, ((pad, pad), (pad, pad)), mode="constant")
     image[image == 0] = 80
+
+    print("Saving original image")
+    # plot image
+    plt.close()
+    fig, ax = plt.subplots()
+    #  background black
+    fig.patch.set_facecolor("black")
+    ax.imshow(image, cmap="gray", vmin=0, vmax=255)
+    plt.savefig(
+        f"debug/image_{center_of_rotation_offset}_{rotation_plane_angle}_{rotation_plane_orientation}.png"
+    )
+    plt.close()
+
     s_data.lines_per_frame = image.shape[0]
     derotated_sinusoidal = s_data.integration_pipeline(image)
+
+    print("Saving rotated_sinusoidal")
+    Path("debug/frames_rotator_orig/").mkdir(parents=True, exist_ok=True)
+    for i, frame in enumerate(s_data.rotated_stack_sinusoidal):
+        plt.close()
+        fig, ax = plt.subplots()
+        #  background black
+        fig.patch.set_facecolor("black")
+        ax.imshow(frame, cmap="gray", vmin=0, vmax=255)
+        plt.savefig(
+            f"debug/frames_rotator_orig/rotated_image_{i}_{center_of_rotation_offset}_{rotation_plane_angle}_{rotation_plane_orientation}.png"
+        )
+
+
+    #  save each frame of the derotated stack
+    print("Saving derotated_sinusoidal")
+    Path("debug/frames_rotator/").mkdir(parents=True, exist_ok=True)
+    for i, frame in enumerate(derotated_sinusoidal):
+        plt.close()
+        fig, ax = plt.subplots()
+        #  background black
+        fig.patch.set_facecolor("black")
+        ax.imshow(frame, cmap="gray")
+        plt.savefig(
+            f"debug/frames_rotator/derotated_image_{i}_{center_of_rotation_offset}_{rotation_plane_angle}_{rotation_plane_orientation}.png"
+        )
 
     #  plot mean projection
     plt.close()
@@ -216,4 +255,4 @@ def assert_blob_detection(
 if __name__ == "__main__":
     Path("debug/").mkdir(parents=True, exist_ok=True)
     # test_derotation_with_shifted_center((44, 51))
-    test_derotation_with_rotation_out_of_plane((0, 0), 25, 90)
+    test_derotation_with_rotation_out_of_plane((10, 10), 0, 0)

@@ -290,7 +290,7 @@ class SyntheticData:
             rotation_plane_orientation=self.rotation_plane_orientation,
         )
         # Rotate the image stack sinusoidally
-        rotated_stack_sinusoidal = rotator_sinusoidal.rotate_by_line()
+        self.rotated_stack_sinusoidal = rotator_sinusoidal.rotate_by_line()
 
         #  -----------------------------------------------------
         # Derotate the sinusoidal stack using the center of rotation
@@ -331,7 +331,7 @@ class SyntheticData:
 
         # Derotate the sinusoidal stack
         derotated_sinusoidal = derotate_an_image_array_line_by_line(
-            rotated_stack_sinusoidal,
+            self.rotated_stack_sinusoidal,
             sinusoidal_angles,
             center=self.fitted_center,
             use_homography=True if (self.rotation_plane_angle != 0) else False,
@@ -345,7 +345,7 @@ class SyntheticData:
         if self.plots:
             self.plot_angles(incremental_angles, sinusoidal_angles)
             self.plot_a_few_rotated_frames(
-                rotated_stack_incremental, rotated_stack_sinusoidal
+                rotated_stack_incremental, self.rotated_stack_sinusoidal
             )
             self.plot_derotated_frames(derotated_sinusoidal)
 

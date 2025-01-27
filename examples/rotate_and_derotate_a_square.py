@@ -69,3 +69,6 @@ for i, rotated_image in enumerate(rotated_image_stack_derotated):
 
 
 plt.show()
+
+# save as pdf
+plt.savefig("rotate_and_derotate_a_square.pdf")

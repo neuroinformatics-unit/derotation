@@ -98,14 +98,24 @@ ignore = [
 ]
 
 
-[tool.ruff]
-line-length = 79
-exclude = ["__init__.py","build",".eggs"]
-select = ["I", "E", "F"]
-fix = true
+[tool.ruff.format]
+docstring-code-format = true # Also format code in docstrings (e.g. examples)
 
-[tool.cibuildwheel]
-build = "cp38-* cp39-* cp310-*"
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+envlist = py{39,310,311}
+isolated_build = True
 
-[tool.cibuildwheel.macos]
-archs = ["x86_64", "arm64"]
+[gh-actions]
+python =
+    3.9: py39
+    3.10: py310
+    3.11: py311
+
+[testenv]
+extras =
+    dev
+commands =
+    pytest -v --color=yes --cov=derotation --cov-report=xml
+"""

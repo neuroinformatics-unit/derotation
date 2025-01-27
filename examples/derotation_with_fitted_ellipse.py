@@ -37,9 +37,7 @@ print(
     f"rotation_plane_angle: {rotation_plane_angle}, rotation_plane_orientation: {rotation_plane_orientation}"
 )
 rotation_plane_angle = np.round(rotation_plane_angle, 1)
-rotation_plane_orientation = np.round(
-    rotation_plane_orientation, 1
-)
+rotation_plane_orientation = np.round(rotation_plane_orientation, 1)
 derotate.rotation_plane_angle = rotation_plane_angle
 derotate.rotation_plane_orientation = rotation_plane_orientation
 derotate()

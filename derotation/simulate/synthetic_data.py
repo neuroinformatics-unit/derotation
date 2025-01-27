@@ -26,6 +26,57 @@ class SyntheticData:
         rotation_plane_orientation=0,
         plots=False,
     ):
+        """Initialize the SyntheticData object. This class handles the creation
+        of a variety of synthetic data for testing and developing th derotation
+        pipeline.
+
+        The synthetic data consists of:
+        - a 2D image with two circles, one bright and one dim (optional),
+        by default in the top center and bottom right, respectively. Use the
+        center_of_bright_cell and center_of_dimmer_cell parameters to change
+        the location of the circles.
+        - two angle arrays for incremental and sinusoidal rotation
+        - one 3D image stack with the 2D image repeated for a given number
+        of frames (this is going to be the input for the Rotator)
+        - two rotated movies made with incremental and sinusoidal rotations
+        - two derotated movies:
+            - one made with a mock of the IncrementalPipeline, used then to estimate the
+            center of rotation and the ellipse fits
+            - one made just with derotate_an_image_array_line_by_line with the sinusoidal
+            rotation angles
+
+        Why mocking the IncrementalPipeline?
+        The IncrementalPipeline has the responsibility to find the center of
+        rotation but with mock data we cannot use it off the shelf because it
+        is too bound to signals coming from a real motor in the
+        `calculate_mean_images` method and in the constructor.
+
+        See the integration_pipeline method for the full pipeline.
+
+        Parameters
+        ----------
+        center_of_bright_cell : tuple, optional
+            The location of the brightest cell, by default (50, 10)
+        center_of_dimmer_cell : tuple, optional
+            The location of the dimmer cell, by default (60, 60)
+        lines_per_frame : int, optional
+            Number of lines per frame, by default 100
+        second_cell : bool, optional
+            Add an extra dimmer cell, by default True
+        radius : int, optional
+            Radius of the circles, by default 5
+        num_frames : int, optional
+            Number of frames in the 3D image stack, by default 100
+        center_of_rotation_offset : tuple, optional
+            The offset of the center of rotation, by default (0, 0)
+        rotation_plane_angle : int, optional
+            The angle of the rotation plane, by default 0
+        rotation_plane_orientation : int, optional
+            The orientation of the rotation plane, by default 0
+        plots : bool, optional
+            Whether to plot debugging plots, by default False
+        """
+
         self.center_of_bright_cell = center_of_bright_cell
         self.center_of_dimmer_cell = center_of_dimmer_cell
         self.lines_per_frame = lines_per_frame
@@ -231,10 +282,6 @@ class SyntheticData:
     def integration_pipeline(
         self,
         test_image: np.ndarray,
-        # center_of_rotation_initial: Tuple[int, int],
-        # # num_frames: int,
-        # rotation_plane_angle: int = 0,
-        # rotation_plane_orientation: int = 0,
     ) -> np.ndarray:
         """Integration pipeline that combines the incremental and sinusoidal
         rotation pipelines to derotate a 3D image stack.

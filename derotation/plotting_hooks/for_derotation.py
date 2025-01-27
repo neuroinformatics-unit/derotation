@@ -20,13 +20,29 @@ def line_addition(
     angle: float,
     original_image: np.ndarray,
 ):
-    """
-    Hook for plotting the derotated image and the current rotated line.
+    """Hook for plotting the original image on the left with the line of interest
+    highlighted in red and the derotated image on the right with the rotated line
+    in red colormap on top.
+
+    Parameters
+    ----------
+    derotated_filled_image : np.ndarray
+        The derotated image with the line added.
+    rotated_line : np.ndarray
+        An image with just the rotated line.
+    image_counter : int
+        The current frame number.
+    line_counter : int
+        The line number.
+    angle : float
+        The angle of rotation.
+    original_image : np.ndarray
+        The original image before derotation.
     """
     if image_counter == 132:
         fig, ax = plt.subplots(1, 2, figsize=(10, 5))
         #  background fig color: black
-        fig.patch.set_facecolor('black')
+        fig.patch.set_facecolor("black")
 
         ax[0].imshow(original_image, cmap="viridis")
         #  highlight the line in the original image
@@ -36,15 +52,19 @@ def line_addition(
             color="red",
             linewidth=2,
         )
-        ax[0].set_title(f"Take line {line_counter}\nfrom original image,\n then rotate it of {angle:.2f} degrees")
-        ax[0].title.set_color('white')
+        ax[0].set_title(
+            f"Take line {line_counter}\nfrom original image,\n then rotate it of {angle:.2f} degrees"
+        )
+        ax[0].title.set_color("white")
         ax[0].axis("off")
 
         ax[1].imshow(derotated_filled_image, cmap="viridis")
-        ax[1].set_title(f"Place the line in a new image\nto build frame {image_counter}")
-        ax[1].title.set_color('white')
+        ax[1].set_title(
+            f"Place the line in a new image\nto build frame {image_counter}"
+        )
+        ax[1].title.set_color("white")
         ax[1].axis("off")
-        
+
         #  plot on top axis 1 the rotated_line with a red colormap
         ax[1].imshow(rotated_line, cmap="Reds", alpha=0.5)
 

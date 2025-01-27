@@ -98,7 +98,6 @@ class Rotator:
             self.image_size = image_stack.shape[1]
         else:
             self.create_homography_matrices()
-            # self.calculate_pixel_shift()
             self.image_size = image_stack.shape[1]
             self.ps = 0
             print(f"Pixel shift: {self.ps}")
@@ -167,17 +166,6 @@ class Rotator:
         #  final image size depends on the pixel shift
         self.image_size = line_length - self.ps
 
-    def crop_image(self, image: np.ndarray) -> np.ndarray:
-        """Crop the image to the new size based on the pixel shift."""
-        return image
-        # if self.ps == 0:
-        #     return image
-        # else:
-        #     return image[
-        #         : -self.ps,
-        #         : -self.ps,
-        #     ]
-
     def rotate_by_line(self) -> np.ndarray:
         """Simulate the acquisition of a rotated image stack as if for each
         line acquired, the sample was rotated at a given angle in a given
@@ -204,12 +192,12 @@ class Rotator:
                 # don't bother if rotation is less than 0.01 degrees
                 np.isclose(self.angles[i], 0, atol=1e-2)
             ):
-                rotated_image_stack[i] = self.crop_image(image)
+                rotated_image_stack[i] = image
                 continue
 
             for j, angle in enumerate(self.angles[i]):
                 if angle == 0:
-                    rotated_image_stack[i][j] = self.crop_image(image)[j]
+                    rotated_image_stack[i][j] = image[j]
                 else:
                     # rotate the whole image by the angle
                     rotated_image = self.rotate_sample(
@@ -224,7 +212,7 @@ class Rotator:
                                 rotated_image
                             )
                         )
-                        rotated_image = self.crop_image(rotated_image)
+                        rotated_image = rotated_image
 
                     # store the rotated image line
                     rotated_image_stack[i][j] = rotated_image[j]

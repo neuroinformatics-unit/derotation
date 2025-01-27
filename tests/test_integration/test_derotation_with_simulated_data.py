@@ -176,7 +176,6 @@ def test_derotation_with_rotation_out_of_plane(
             f"debug/frames_rotator_orig/rotated_image_{i}_{center_of_rotation_offset}_{rotation_plane_angle}_{rotation_plane_orientation}.png"
         )
 
-
     #  save each frame of the derotated stack
     print("Saving derotated_sinusoidal")
     Path("debug/frames_rotator/").mkdir(parents=True, exist_ok=True)
@@ -200,12 +199,12 @@ def test_derotation_with_rotation_out_of_plane(
     )
     plt.close()
 
-    # assert_blob_detection(
-    #     derotated_sinusoidal,
-    #     s_data.center_of_bright_cell,
-    #     s_data.center_of_dimmer_cell,
-    #     s_data.center_of_rotation_offset,
-    # )
+    assert_blob_detection(
+        derotated_sinusoidal,
+        s_data.center_of_bright_cell,
+        s_data.center_of_dimmer_cell,
+        s_data.center_of_rotation_offset,
+    )
 
 
 def assert_blob_detection(

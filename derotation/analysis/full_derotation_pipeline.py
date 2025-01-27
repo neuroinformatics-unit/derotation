@@ -814,6 +814,31 @@ class FullPipeline:
         plt.savefig(self.debug_plots_folder / "rotation_angles.png")
         plt.close()
 
+        #  plot speed and accelleration in the four different conditions
+
+        #  first calculate velocity from self.interpolated_angles
+        sampling_rate = 1 / 1792  # 1 / Hz
+
+        velocity = np.diff(self.rot_deg_line)
+        # velocity[velocity<0] += 360
+        # velocity = np.where(np.abs(velocity) > 0.05, 0, velocity)
+        velocity /= sampling_rate
+
+        # acceleration = np.diff(velocity)
+
+        fig, ax = plt.subplots()
+
+        ax.plot(velocity[start_line_idx:end_line_idx] * -1)
+        ax.plot(self.rot_deg_line[start_line_idx:end_line_idx] * -1)
+        # ax.plot(acceleration[start_line_idx:end_line_idx])
+
+        fig.suptitle("Speed and acceleration")
+
+        handles, labels = ax.get_legend_handles_labels()
+        fig.legend(handles, labels, loc="upper right")
+
+        plt.savefig(self.debug_plots_folder / "speed_acc.png")
+
     ### ----------------- Derotation ----------------- ###
 
     def plot_max_projection_with_center(self):

@@ -10,13 +10,13 @@ def compare_images(
     target_image: np.ndarray,
     atol: float,
     save_location: Path,
-    wrong_pixel_tollerance: int = 0,
+    wrong_pixel_tolerance: int = 0,
 ):
     """Handle the comparison of two images and save the image if they are
     different. It uses the np.allclose function to compare the two images
     with a given tolerance level. If the images are not close, it calculates
     the difference and saves the wrong image for further inspection. If the
-    number of wrong pixels is greater than the tollerance level, it raises
+    number of wrong pixels is greater than the tolerance level, it raises
     an assertion error.
 
     Parameters
@@ -32,7 +32,7 @@ def compare_images(
         The tolerance level for the comparison.
     save_location : Path
         The location where the wrong image will be saved.
-    wrong_pixel_tollerance : int, optional
+    wrong_pixel_tolerance : int, optional
         The number of wrong pixels that are allowed, by default 0
 
     Raises
@@ -58,7 +58,7 @@ def compare_images(
         )
 
         #  If we do not expect any wrong pixels, raise an assertion error
-        if indexes[0].size > wrong_pixel_tollerance:
+        if indexes[0].size > wrong_pixel_tolerance:
             assert False, (
                 "Regenerated image is different from the target image. "
                 + "Index where it is different: "

@@ -46,35 +46,35 @@ for config_name in ["incremental_rotation", "full_rotation"]:
     with open(f"derotation/config/{config_name}.yml") as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
 
-    config["paths_read"][
-        "path_to_randperm"
-    ] = f"{dataset_path}/stimlus_randperm.mat"
+    config["paths_read"]["path_to_randperm"] = (
+        f"{dataset_path}/stimlus_randperm.mat"
+    )
     bin_name = (
         incremental_bin
         if config_name == "incremental_rotation"
         else full_rotation_bin
     )
-    config["paths_read"][
-        "path_to_aux"
-    ] = f"{dataset_path}/{dataset}/aux_stim/{bin_name}"
+    config["paths_read"]["path_to_aux"] = (
+        f"{dataset_path}/{dataset}/aux_stim/{bin_name}"
+    )
     image_name = (
         incremental_image
         if config_name == "incremental_rotation"
         else full_rotation_image
     )
-    config["paths_read"][
-        "path_to_tif"
-    ] = f"{dataset_path}/{dataset}/imaging/{image_name}"
-    config["paths_write"][
-        "debug_plots_folder"
-    ] = f"{dataset_path}/{dataset}/debug_plots_{config_name.split('_')[0]}"
+    config["paths_read"]["path_to_tif"] = (
+        f"{dataset_path}/{dataset}/imaging/{image_name}"
+    )
+    config["paths_write"]["debug_plots_folder"] = (
+        f"{dataset_path}/{dataset}/debug_plots_{config_name.split('_')[0]}"
+    )
     config["paths_write"]["logs_folder"] = f"{dataset_path}/{dataset}/logs/"
-    config["paths_write"][
-        "derotated_tiff_folder"
-    ] = f"{dataset_path}/{dataset}/derotated/"
-    config["paths_write"][
-        "saving_name"
-    ] = f"derotated_image_stack_{config_name.split('_')[0]}"
+    config["paths_write"]["derotated_tiff_folder"] = (
+        f"{dataset_path}/{dataset}/derotated/"
+    )
+    config["paths_write"]["saving_name"] = (
+        f"derotated_image_stack_{config_name.split('_')[0]}"
+    )
 
     with open(f"derotation/config/{config_name}_{job_id}.yml", "w") as f:
         yaml.dump(config, f)

@@ -70,7 +70,7 @@ include = ["derotation*"]
 exclude = ["tests", "docs*"]
 
 [tool.pytest.ini_options]
-addopts = "--cov={{cookiecutter.module_name}}"
+addopts = "--cov=derotation"
 filterwarnings = [
     "error",
 ]

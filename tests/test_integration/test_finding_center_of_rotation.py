@@ -137,7 +137,7 @@ def create_image_stack(image: np.ndarray, num_frames: int) -> np.ndarray:
 
 
 def create_rotation_angles(
-    image_stack_shape: Tuple[int, int]
+    image_stack_shape: Tuple[int, int],
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Create rotation angles for incremental and sinusoidal rotation
     for a given 3D image stack.
@@ -435,7 +435,7 @@ def plot_derotated_frames(derotated_sinusoidal: np.ndarray):
 
 @pytest.mark.parametrize("center_of_rotation_initial", [(44, 51), (51, 44)])
 def test_blob_detection_on_derotated_stack(
-    center_of_rotation_initial: Tuple[int, int]
+    center_of_rotation_initial: Tuple[int, int],
 ):
     """Test if the two circles are detected in the derotated stack
     at the expected locations when the center of rotation is estimated

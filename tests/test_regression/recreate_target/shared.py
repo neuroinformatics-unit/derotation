@@ -93,7 +93,7 @@ def rotate_images(
 ) -> np.ndarray:
     """Rotate a stack of images by a given set of angles.
     This function emulates the acquisition of a "video" of images
-    in a line scannning microscope.
+    in a line scanning microscope.
 
     Parameters
     ----------
@@ -119,7 +119,7 @@ def rotate_images(
 
 
 def load_rotated_images(
-    center: Optional[Tuple[int, int]] = None
+    center: Optional[Tuple[int, int]] = None,
 ) -> np.ndarray:
     """Load pre-computed rotated images from a directory.
     These images are going to be used to compare current

@@ -100,8 +100,6 @@ class Rotator:
             self.create_homography_matrices()
             self.image_size = image_stack.shape[1]
             self.ps = 0
-            print(f"Pixel shift: {self.ps}")
-            print(f"New image size: {self.image_size}")
 
         self.post_homography_center = np.array(
             [self.image_size // 2, self.image_size // 2]
@@ -114,7 +112,6 @@ class Rotator:
         self.angles = angles[: image_stack.shape[0] * self.image_size].reshape(
             image_stack.shape[0], self.image_size
         )
-        print("New angles shape:", self.angles.shape)
 
         if blank_pixel_val is None:
             self.blank_pixel_val = self.get_blank_pixels_value()
@@ -236,6 +233,14 @@ class Rotator:
             The transformed image.
         """
 
+        #  rotate the image according to the rotation plane orientation
+        if self.rotation_plane_orientation != 0:
+            image = self.rotate_sample(
+                image,
+                self.rotation_plane_orientation,
+                center=self.pre_homography_center,
+            )
+
         offset = (
             self.pre_homography_center
             - self.inverse_homography_matrix @ self.pre_homography_center
@@ -252,11 +257,11 @@ class Rotator:
             cval=self.blank_pixel_val,
         )
 
-        #  rotate the image back to the scanning plane angle
+        #  rotate the image back to the original orientation
         if self.rotation_plane_orientation != 0:
             image = self.rotate_sample(
                 image,
-                self.rotation_plane_orientation,
+                -self.rotation_plane_orientation,
                 center=self.pre_homography_center,
             )
 

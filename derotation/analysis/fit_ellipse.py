@@ -161,5 +161,34 @@ def plot_ellipse_fit_and_centers(
     ax.set_title("Fitted Ellipse on largest blob centers")
     ax.axis("off")
 
-    #  save
     plt.savefig(debug_plots_folder / saving_name)
+
+
+def derive_angles_from_ellipse_fits(
+    ellipse_fits: np.ndarray,
+) -> Tuple[int, int]:
+    """Derive the rotation plane angle and orientation from the ellipse fits.
+
+    Parameters
+    ----------
+    ellipse_fits : np.ndarray
+        The fitted ellipse parameters
+
+    Returns
+    -------
+    Tuple[int, int]
+        The rotation plane angle and orientation
+    """
+    if ellipse_fits["a"] < ellipse_fits["b"]:
+        rotation_plane_angle = np.degrees(
+            np.arccos(ellipse_fits["a"] / ellipse_fits["b"])
+        )
+        rotation_plane_orientation = np.degrees(ellipse_fits["theta"])
+    else:
+        rotation_plane_angle = np.degrees(
+            np.arccos(ellipse_fits["b"] / ellipse_fits["a"])
+        )
+        theta = ellipse_fits["theta"] + np.pi / 2
+        rotation_plane_orientation = np.degrees(theta)
+
+    return rotation_plane_angle, rotation_plane_orientation

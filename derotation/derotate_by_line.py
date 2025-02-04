@@ -14,8 +14,8 @@ def derotate_an_image_array_line_by_line(
     plotting_hook_line_addition=None,
     plotting_hook_image_completed=None,
     use_homography: bool = False,
-    rotation_plane_angle: Optional[int] = None,
-    rotation_plane_orientation: Optional[int] = None,
+    rotation_plane_angle: int = 0,
+    rotation_plane_orientation: int = 0,
 ) -> np.ndarray:
     """Rotates the image stack line by line, using the rotation angles
     provided.
@@ -280,7 +280,7 @@ def apply_homography(
     io_offset = center.T[0] - orientation.T @ center.T[0]
 
     #  shear the image stack (i.e. shift it to the rotation plane)
-    hom_image_stack = []
+    new_image_stack = []
     for image in image_stack:
         # first rotate according to orientation
         transformed = affine_transform(
@@ -315,9 +315,9 @@ def apply_homography(
             cval=blank_pixels_value,
         )
 
-        hom_image_stack.append(transformed)
+        new_image_stack.append(transformed)
 
-    hom_image_stack = np.asarray(hom_image_stack)
+    hom_image_stack = np.asarray(new_image_stack)
     #  check shape
     assert (
         hom_image_stack.shape == image_stack.shape

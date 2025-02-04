@@ -5,6 +5,7 @@ from typing import Any, Tuple
 import matplotlib.pyplot as plt
 import numpy as np
 
+from derotation.analysis.fit_ellipse import derive_angles_from_ellipse_fits
 from derotation.analysis.incremental_derotation_pipeline import (
     IncrementalPipeline,
 )
@@ -15,16 +16,18 @@ from derotation.simulate.line_scanning_microscope import Rotator
 class SyntheticData:
     def __init__(
         self,
-        center_of_bright_cell=(50, 10),
-        center_of_dimmer_cell=(60, 60),
-        lines_per_frame=100,
-        second_cell=True,
-        radius=5,
-        num_frames=100,
-        center_of_rotation_offset=(0, 0),
-        rotation_plane_angle=0,
-        rotation_plane_orientation=0,
-        plots=False,
+        center_of_bright_cell: Tuple[int, int] = (50, 10),
+        center_of_dimmer_cell: Tuple[int, int] = (60, 60),
+        pad: int = 0,
+        background_value: int = 80,
+        lines_per_frame: int = 100,
+        second_cell: bool = True,
+        radius: int = 5,
+        num_frames: int = 100,
+        center_of_rotation_offset: Tuple[int, int] = (0, 0),
+        rotation_plane_angle: int = 0,
+        rotation_plane_orientation: int = 0,
+        plots: bool = False,
     ):
         """Initialize the SyntheticData object. This class handles the creation
         of a variety of synthetic data for testing and developing th derotation
@@ -34,11 +37,22 @@ class SyntheticData:
         - a 2D image with two circles, one bright and one dim (optional),
         by default in the top center and bottom right, respectively. Use the
         center_of_bright_cell and center_of_dimmer_cell parameters to change
-        the location of the circles.
+        the location of the circles. If padding and background value are
+        provided, the image will be padded and the background value will be
+        set to the background_value.
+        Padding helps increasing the field of view in order to accomodate for
+        larger rotations and have more data to derotate.
+        The background value is useful to distinguish pixels from the original
+        image from those that are never evaluated, which will remain 0.
+        NB: padding will alter the number of lines per frame.
+
         - two angle arrays for incremental and sinusoidal rotation
+
         - one 3D image stack with the 2D image repeated for a given number
         of frames (this is going to be the input for the Rotator)
+
         - two rotated movies made with incremental and sinusoidal rotations
+
         - two derotated movies:
             - one made with a mock of the IncrementalPipeline, used then to
             estimate the center of rotation and the ellipse fits
@@ -59,6 +73,10 @@ class SyntheticData:
             The location of the brightest cell, by default (50, 10)
         center_of_dimmer_cell : tuple, optional
             The location of the dimmer cell, by default (60, 60)
+        pad : int, optional
+            Padding around the image, by default 0
+        background_value : int, optional
+            Background value, by default 80
         lines_per_frame : int, optional
             Number of lines per frame, by default 100
         second_cell : bool, optional
@@ -87,6 +105,102 @@ class SyntheticData:
         self.rotation_plane_angle = rotation_plane_angle
         self.rotation_plane_orientation = rotation_plane_orientation
         self.plots = plots
+        self.pad = pad
+        self.background_value = background_value
+
+    def integration_pipeline(
+        self,
+    ) -> np.ndarray:
+        """Integration pipeline that combines the incremental and sinusoidal
+        rotation pipelines to derotate a 3D image stack.
+
+        The pipeline rotates the image stack incrementally and sinusoidally
+        and then derotates the sinusoidal stack using the center of rotation
+        estimated by the incremental pipeline.
+
+        The pipeline also plots debugging plots if the plots parameter is set
+        to True.
+        """
+
+        # -----------------------------------------------------
+        # Create sample image with two cells
+        self.image = self.create_sample_image_with_two_cells()
+
+        # Create the 3D image stack
+        image_stack = self.create_image_stack()
+
+        # Generate rotation angles
+        incremental_angles, sinusoidal_angles = self.create_rotation_angles(
+            image_stack.shape
+        )
+
+        #  -----------------------------------------------------
+        # Initialize Rotator for incremental rotation
+        rotator_incremental = Rotator(
+            incremental_angles,
+            image_stack,
+            center_offset=self.center_of_rotation_offset,
+            rotation_plane_angle=self.rotation_plane_angle,
+            rotation_plane_orientation=self.rotation_plane_orientation,
+        )
+        # Rotate the image stack incrementally
+        rotated_stack_incremental = rotator_incremental.rotate_by_line()
+
+        # Initialize Rotator for sinusoidal rotation
+        rotator_sinusoidal = Rotator(
+            sinusoidal_angles,
+            image_stack,
+            center_offset=self.center_of_rotation_offset,
+            rotation_plane_angle=self.rotation_plane_angle,
+            rotation_plane_orientation=self.rotation_plane_orientation,
+        )
+        # Rotate the image stack sinusoidally
+        self.rotated_stack_sinusoidal = rotator_sinusoidal.rotate_by_line()
+
+        #  -----------------------------------------------------
+        # Derotate the sinusoidal stack using the center of rotation
+        # estimated by the incremental pipeline
+
+        # Get the center of rotation with a mock of the IncrementalPipeline
+        center_of_rotation, ellipse_fits = self.get_center_of_rotation(
+            rotated_stack_incremental, incremental_angles
+        )
+
+        self.center = rotator_sinusoidal.post_homography_center
+        self.fitted_center = center_of_rotation
+
+        # derive orientation and angle from the ellipse fits
+        if self.rotation_plane_angle != 0:
+            theta, orientation = derive_angles_from_ellipse_fits(ellipse_fits)
+            print(
+                f"rotation_plane_angle: {theta}, "
+                f"rotation_plane_orientation: {orientation}"
+            )
+            self.rotation_plane_angle = np.round(theta, 1)
+            self.rotation_plane_orientation = np.round(orientation, 1)
+
+        # Derotate the sinusoidal stack
+        self.derotated_sinusoidal = derotate_an_image_array_line_by_line(
+            self.rotated_stack_sinusoidal,
+            sinusoidal_angles,
+            center=self.fitted_center,
+            use_homography=True if (self.rotation_plane_angle != 0) else False,
+            rotation_plane_angle=self.rotation_plane_angle,
+            rotation_plane_orientation=self.rotation_plane_orientation,
+        )
+
+        #  -----------------------------------------------------
+        #  Debugging plots
+        #  Will be run if the script is run as a standalone script
+        if self.plots:
+            self.plot_original_image()
+            self.plot_each_frame()
+            self.plot_mean_projection()
+            self.plot_angles(incremental_angles, sinusoidal_angles)
+            self.plot_a_few_rotated_frames(
+                rotated_stack_incremental, self.rotated_stack_sinusoidal
+            )
+            self.plot_derotated_frames(self.derotated_sinusoidal)
 
     #  -----------------------------------------------------
     #  Prepare the 3D image stack and the rotation angles
@@ -99,6 +213,9 @@ class SyntheticData:
 
         Location of the circles can be changed by providing the
         center_of_bright_cell and center_of_dimmer_cell parameters.
+
+        If specified, the image will be padded and the background value
+        will be set to the background_value.
 
         Parameters
         ----------
@@ -119,50 +236,60 @@ class SyntheticData:
             2D image with two circles, one bright and one dim
         """
 
+        def make_circle(image, center, intensity):
+            y, x = np.ogrid[: image.shape[0], : image.shape[1]]
+            mask = (x - center[0]) ** 2 + (
+                y - center[1]
+            ) ** 2 <= self.radius**2
+            image[mask] = intensity
+
+            return image
+
         # Initialize a black image of size 100x100
         image = np.zeros(
             (self.lines_per_frame, self.lines_per_frame), dtype=np.uint8
         )
 
-        # Define the circle's parameters
-        white_value = 255  # white color for the circle
-
         # Draw a white circle in the top center
-        y, x = np.ogrid[: image.shape[0], : image.shape[1]]
-        mask = (x - self.center_of_bright_cell[0]) ** 2 + (
-            y - self.center_of_bright_cell[1]
-        ) ** 2 <= self.radius**2
-        image[mask] = white_value
+        image = make_circle(image, self.center_of_bright_cell, 255)
 
         if self.second_cell:
             #  add an extra gray circle at the bottom right
-            gray_value = 128
-            # Draw a gray circle in the bottom right
-            mask2 = (x - self.center_of_dimmer_cell[0]) ** 2 + (
-                y - self.center_of_dimmer_cell[1]
-            ) ** 2 <= self.radius**2
-            image[mask2] = gray_value
+            image = make_circle(image, self.center_of_dimmer_cell, 128)
+
+        if self.pad > 0:
+            image = np.pad(
+                image,
+                ((self.pad, self.pad), (self.pad, self.pad)),
+                mode="constant",
+            )
+            #  adjust the center of the bright cell
+            self.center_of_bright_cell = (
+                self.center_of_bright_cell[0] + self.pad,
+                self.center_of_bright_cell[1] + self.pad,
+            )
+            #  adjust the center of the dimmer cell
+            self.center_of_dimmer_cell = (
+                self.center_of_dimmer_cell[0] + self.pad,
+                self.center_of_dimmer_cell[1] + self.pad,
+            )
+            self.lines_per_frame = image.shape[0]
+
+        if self.background_value != 0:
+            image[image == 0] = 80
 
         return image
 
-    @staticmethod
-    def create_image_stack(image: np.ndarray, num_frames: int) -> np.ndarray:
+    def create_image_stack(self) -> np.ndarray:
         """Create a 3D image stack by repeating the 2D image
         for a given number of frames.
-
-        Parameters
-        ----------
-        image : np.ndarray
-            A 2D image
-        num_frames : int
-            Number of frames in the 3D image stack
 
         Returns
         -------
         np.ndarray
             3D image stack
         """
-        return np.array([image for _ in range(num_frames)])
+        return np.array([self.image for _ in range(self.num_frames)])
 
     @staticmethod
     def create_rotation_angles(
@@ -280,126 +407,6 @@ class SyntheticData:
         center_of_rotation = pipeline.find_center_of_rotation()
         return center_of_rotation, pipeline.all_ellipse_fits
 
-    def integration_pipeline(
-        self,
-        test_image: np.ndarray,
-    ) -> np.ndarray:
-        """Integration pipeline that combines the incremental and sinusoidal
-        rotation pipelines to derotate a 3D image stack.
-
-        The pipeline rotates the image stack incrementally and sinusoidally
-        and then derotates the sinusoidal stack using the center of rotation
-        estimated by the incremental pipeline.
-
-        Parameters
-        ----------
-        test_image : np.ndarray
-            A 2D image
-        center_of_rotation_initial : Tuple[int, int]
-            Initial center of rotation
-        num_frames : int
-            Number of frames in the 3D image stack
-
-        Returns
-        -------
-        np.ndarray
-            Derotated 3D image stack
-        """
-
-        # -----------------------------------------------------
-        # Create the 3D image stack
-        image_stack = self.create_image_stack(test_image, self.num_frames)
-
-        # Generate rotation angles
-        incremental_angles, sinusoidal_angles = self.create_rotation_angles(
-            image_stack.shape
-        )
-
-        #  -----------------------------------------------------
-        # Initialize Rotator for incremental rotation
-        rotator_incremental = Rotator(
-            incremental_angles,
-            image_stack,
-            center_offset=self.center_of_rotation_offset,
-            # blank_pixel_val=0,
-            rotation_plane_angle=self.rotation_plane_angle,
-            rotation_plane_orientation=self.rotation_plane_orientation,
-        )
-        # Rotate the image stack incrementally
-        rotated_stack_incremental = rotator_incremental.rotate_by_line()
-
-        # Initialize Rotator for sinusoidal rotation
-        rotator_sinusoidal = Rotator(
-            sinusoidal_angles,
-            image_stack,
-            center_offset=self.center_of_rotation_offset,
-            # blank_pixel_val=0,
-            rotation_plane_angle=self.rotation_plane_angle,
-            rotation_plane_orientation=self.rotation_plane_orientation,
-        )
-        # Rotate the image stack sinusoidally
-        self.rotated_stack_sinusoidal = rotator_sinusoidal.rotate_by_line()
-
-        #  -----------------------------------------------------
-        # Derotate the sinusoidal stack using the center of rotation
-        # estimated by the incremental pipeline
-
-        # Get the center of rotation with a mock of the IncrementalPipeline
-        center_of_rotation, ellipse_fits = self.get_center_of_rotation(
-            rotated_stack_incremental, incremental_angles
-        )
-        print(center_of_rotation)
-        print(ellipse_fits)
-        self.center = rotator_sinusoidal.post_homography_center
-        self.fitted_center = center_of_rotation
-
-        # derive orientation and angle from the ellipse fits
-        if self.rotation_plane_angle != 0:
-            if ellipse_fits["a"] < ellipse_fits["b"]:
-                print("a < b")
-                rotation_plane_angle = np.degrees(
-                    np.arccos(ellipse_fits["a"] / ellipse_fits["b"])
-                )
-                rotation_plane_orientation = np.degrees(ellipse_fits["theta"])
-            else:
-                print("a > b")
-                rotation_plane_angle = np.degrees(
-                    np.arccos(ellipse_fits["b"] / ellipse_fits["a"])
-                )
-                theta = ellipse_fits["theta"] + np.pi / 2
-                rotation_plane_orientation = np.degrees(theta)
-
-            print(
-                f"rotation_plane_angle: {rotation_plane_angle}, "
-                f"rotation_plane_orientation: {rotation_plane_orientation}"
-            )
-            self.rotation_plane_angle = np.round(rotation_plane_angle, 1)
-            self.rotation_plane_orientation = np.round(
-                rotation_plane_orientation, 1
-            )
-
-        # Derotate the sinusoidal stack
-        derotated_sinusoidal = derotate_an_image_array_line_by_line(
-            self.rotated_stack_sinusoidal,
-            sinusoidal_angles,
-            center=self.fitted_center,
-            use_homography=True if (self.rotation_plane_angle != 0) else False,
-            rotation_plane_angle=self.rotation_plane_angle,
-            rotation_plane_orientation=self.rotation_plane_orientation,
-        )
-
-        #  -----------------------------------------------------
-        #  Debugging plots
-        #  Will be run if the script is run as a standalone script
-        if self.plots:
-            self.plot_angles(incremental_angles, sinusoidal_angles)
-            self.plot_a_few_rotated_frames(
-                rotated_stack_incremental, self.rotated_stack_sinusoidal
-            )
-            self.plot_derotated_frames(derotated_sinusoidal)
-
-        return derotated_sinusoidal
-
     # -----------------------------------------------------
     # Debugging plots
     # -----------------------------------------------------
@@ -498,4 +505,52 @@ class SyntheticData:
             f"debug/derotated_sinusoidal{self.center_of_rotation_offset}_{self.rotation_plane_angle}_{self.rotation_plane_orientation}.png"
         )
 
+        plt.close()
+
+    def plot_original_image(self):
+        """
+        Plot the original image with the two circles.
+        """
+
+        fig, ax = plt.subplots()
+        fig.patch.set_facecolor("black")
+        ax.imshow(self.image, cmap="gray", vmin=0, vmax=255)
+        plt.savefig(
+            f"debug/image_{self.center_of_rotation_offset}_{self.rotation_plane_angle}_{self.rotation_plane_orientation}.png"
+        )
+        plt.close()
+
+    def plot_each_frame(self):
+        """Plot each frame of the rotated and derotated stacks as an image."""
+        Path("debug/frames_rotator_orig/").mkdir(parents=True, exist_ok=True)
+        for i, frame in enumerate(self.rotated_stack_sinusoidal):
+            plt.close()
+            fig, ax = plt.subplots()
+            #  background black
+            fig.patch.set_facecolor("black")
+            ax.imshow(frame, cmap="gray", vmin=0, vmax=255)
+            plt.savefig(
+                f"debug/frames_rotator_orig/rotated_image_{i}_{self.center_of_rotation_offset}_{self.rotation_plane_angle}_{self.rotation_plane_orientation}.png"
+            )
+            plt.close()
+
+        Path("debug/frames_rotator/").mkdir(parents=True, exist_ok=True)
+        for i, frame in enumerate(self.derotated_sinusoidal):
+            fig, ax = plt.subplots()
+            #  background black
+            fig.patch.set_facecolor("black")
+            ax.imshow(frame, cmap="gray")
+            plt.savefig(
+                f"debug/frames_rotator/derotated_image_{i}_{self.center_of_rotation_offset}_{self.rotation_plane_angle}_{self.rotation_plane_orientation}.png"
+            )
+            plt.close()
+
+    def plot_mean_projection(self):
+        """Plot the mean projection of the derotated sinusoidal stack."""
+        mean_projection = np.mean(self.derotated_sinusoidal, axis=0)
+        fig, ax = plt.subplots()
+        ax.imshow(mean_projection, cmap="gray")
+        plt.savefig(
+            f"debug/mean_projection_{self.center_of_rotation_offset}_{self.rotation_plane_angle}_{self.rotation_plane_orientation}.png"
+        )
         plt.close()

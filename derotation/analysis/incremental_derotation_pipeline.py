@@ -7,15 +7,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from scipy.ndimage import rotate
-from skimage.feature import blob_log
 from tqdm import tqdm
 
+from derotation.analysis.blob_detection import BlobDetection
 from derotation.analysis.fit_ellipse import (
     fit_ellipse_to_points,
     plot_ellipse_fit_and_centers,
 )
 from derotation.analysis.full_derotation_pipeline import FullPipeline
-from blob_detection import BlobDetection
+
 
 class IncrementalPipeline(FullPipeline):
     """Derotate the image stack that was acquired using the incremental
@@ -486,12 +486,15 @@ class IncrementalPipeline(FullPipeline):
         mean_images = self.calculate_mean_images(self.image_stack)
 
         logging.info("Finding blobs...")
-        coord_first_blob_of_every_image = BlobDetection(
-            self.debugging_plots, self.debug_plots_folder
-        ).get_coords_of_largest_blob(
+        if self.debugging_plots:
+            bd = BlobDetection(self.debugging_plots, self.debug_plots_folder)
+        else:
+            bd = BlobDetection(debugging_plots=False)
+
+        coord_first_blob_of_every_image = bd.get_coords_of_largest_blob(
             mean_images
         )
-        
+
         # Fit an ellipse to the largest blob centers and get its center
         center_x, center_y, a, b, theta = fit_ellipse_to_points(
             coord_first_blob_of_every_image
@@ -520,10 +523,10 @@ class IncrementalPipeline(FullPipeline):
         )
         logging.info(f"Variation from a perfect circle: {a - b:.2f}")
 
-        #  if the variation from a perfect circle is too high, log a warning and store it in a variable
+        #  Raise a warning if the eccentricity is too high
         if np.abs(a - b) > 10:
             logging.warning(
-                "The variation from a perfect circle is too high: "
+                "The ellipse is too eccentric: "
                 + f"{a - b:.2f}; likely due to a bad fit."
             )
 

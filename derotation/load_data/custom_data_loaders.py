@@ -64,7 +64,8 @@ def get_analog_signals(path_to_aux: str, channel_names: list) -> tuple:
     Returns
     -------
     tuple
-        _description_
+        Tuple containing the frame clock, line clock, full rotation and
+        rotation ticks.
     """
 
     data = np.fromfile(path_to_aux, dtype=np.int16)  # Has to be read as int16

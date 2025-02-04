@@ -14,7 +14,7 @@ from tests.test_regression.recreate_target.shared import (
 def test_center_50_50_is_same_to_None(image_stack, angles):
     """Test that the default center is the same as (50, 50)."""
     rotator_default = Rotator(angles, image_stack)
-    rotator_custom = Rotator(angles, image_stack, center=(50, 50))
+    rotator_custom = Rotator(angles, image_stack, center_offset=(0, 0))
 
     default_rotation = rotator_default.rotate_by_line()
     custom_rotation = rotator_custom.rotate_by_line()

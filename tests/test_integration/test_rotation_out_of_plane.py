@@ -9,7 +9,7 @@ from derotation.analysis.fit_ellipse import (
     plot_ellipse_fit_and_centers,
 )
 from derotation.simulate.line_scanning_microscope import Rotator
-from tests.test_integration.test_finding_center_of_rotation import (
+from tests.test_integration.test_derotation_with_simulated_data import (
     create_image_stack,
     create_rotation_angles,
     create_sample_image_with_two_cells,

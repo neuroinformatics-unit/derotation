@@ -78,6 +78,9 @@ def fit_ellipse_to_points(
     # Extract optimized parameters
     center_x, center_y, a, b, theta = result.x
 
+    #  sometimes the fitted theta is a multiple of of 2pi
+    theta = theta % (2 * np.pi)
+
     return center_x, center_y, a, b, theta
 
 

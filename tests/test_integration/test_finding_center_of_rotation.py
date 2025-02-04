@@ -308,6 +308,25 @@ def integration_pipeline(
     # Derotate the sinusoidal stack using the center of rotation
     # estimated by the incremental pipeline
 
+    # save every frame of the rotated stack as a separate image
+    if __name__ == "__main__":
+        Path("debug/rotated_incremental/").mkdir(parents=True, exist_ok=True)
+        Path("debug/rotated_sinusoidal/").mkdir(parents=True, exist_ok=True)
+
+        for i, img in enumerate(rotated_stack_incremental):
+            plt.imsave(
+                f"debug/rotated_incremental/rotated_frame_{i}.png",
+                img,
+                cmap="gray",
+            )
+
+        for i, img in enumerate(rotated_stack_sinusoidal):
+            plt.imsave(
+                f"debug/rotated_sinusoidal/rotated_frame_{i}.png",
+                img,
+                cmap="gray",
+            )
+
     # Get the center of rotation with a mock of the IncrementalPipeline
     center_of_rotation = get_center_of_rotation(
         rotated_stack_incremental, incremental_angles
@@ -512,4 +531,4 @@ def test_blob_detection_on_derotated_stack(
 
 if __name__ == "__main__":
     Path("debug/").mkdir(parents=True, exist_ok=True)
-    test_blob_detection_on_derotated_stack((44, 51))
+    test_blob_detection_on_derotated_stack((49, 51))

@@ -40,7 +40,7 @@ class SyntheticData:
         the location of the circles. If padding and background value are
         provided, the image will be padded and the background value will be
         set to the background_value.
-        Padding helps increasing the field of view in order to accomodate for
+        Padding helps increasing the field of view in order to accommodate for
         larger rotations and have more data to derotate.
         The background value is useful to distinguish pixels from the original
         image from those that are never evaluated, which will remain 0.
@@ -293,7 +293,7 @@ class SyntheticData:
 
     @staticmethod
     def create_rotation_angles(
-        image_stack_shape: Tuple[int, int]
+        image_stack_shape: Tuple[int, int],
     ) -> Tuple[np.ndarray, np.ndarray]:
         """Create rotation angles for incremental and sinusoidal rotation
         for a given 3D image stack.
@@ -534,14 +534,14 @@ class SyntheticData:
             )
             plt.close()
 
-        Path("debug/frames_rotator/").mkdir(parents=True, exist_ok=True)
+        Path("debug/frames_derotator/").mkdir(parents=True, exist_ok=True)
         for i, frame in enumerate(self.derotated_sinusoidal):
             fig, ax = plt.subplots()
             #  background black
             fig.patch.set_facecolor("black")
             ax.imshow(frame, cmap="gray")
             plt.savefig(
-                f"debug/frames_rotator/derotated_image_{i}_{self.center_of_rotation_offset}_{self.rotation_plane_angle}_{self.rotation_plane_orientation}.png"
+                f"debug/frames_derotator/derotated_image_{i}_{self.center_of_rotation_offset}_{self.rotation_plane_angle}_{self.rotation_plane_orientation}.png"
             )
             plt.close()
 

@@ -120,6 +120,7 @@ def test_derotation_with_rotation_out_of_plane(
         s_data.derotated_sinusoidal,
         s_data.center_of_bright_cell,
         s_data.center_of_rotation_offset,
+        plots=plots,
     )
 
 
@@ -127,6 +128,7 @@ def assert_blob_detection(
     derotated_sinusoidal: np.ndarray,
     center_1: Tuple[int, int],
     center_of_rotation_offset: Tuple[int, int],
+    plots: bool = False,
 ):
     """Assert that the brightest blob is detected in the derotated stack
     at the expected location. It allows some error tolerance in the center
@@ -153,8 +155,8 @@ def assert_blob_detection(
     # Detect the blobs in the derotated stack
     coords = BlobDetection(
         blob_log_params={"min_sigma": 3, "max_sigma": 7, "threshold_rel": 0.8},
+        debugging_plots=plots,
         debug_plots_folder=Path("debug"),
-        debugging_plots=True,
     ).get_coords_of_largest_blob(derotated_sinusoidal)
 
     # Compare the first and second blob to the expected values

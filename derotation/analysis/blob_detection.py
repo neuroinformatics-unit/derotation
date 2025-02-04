@@ -106,5 +106,6 @@ class BlobDetection:
                 a.text(x, y, str(j), color="red")
 
         # save the plot
+        Path(self.debug_plots_folder).mkdir(parents=True, exist_ok=True)
         plt.savefig(self.debug_plots_folder / "blobs.png")
         plt.close()

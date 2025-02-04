@@ -2,14 +2,41 @@
 #  aligned with the image plane.
 
 from pathlib import Path
+from typing import Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 from derotation.simulate.line_scanning_microscope import Rotator
-from tests.test_integration.test_rotation_out_of_plane import (
-    rotate_image_stack,
-)
+from derotation.simulate.synthetic_data import SyntheticData
+
+
+def rotate_image_stack(
+    plane_angle: float = 0,
+    num_frames: int = 50,
+    pad: int = 20,
+    orientation: float = 0,
+) -> Tuple[np.ndarray, np.ndarray, Rotator, int]:
+    s_data = SyntheticData(
+        radius=1,
+        second_cell=False,
+        pad=pad,
+        background_value=80,
+    )
+    s_data.image = s_data.create_sample_image_with_two_cells()
+    image_stack = s_data.create_image_stack()
+    _, angles = s_data.create_rotation_angles(image_stack.shape)
+
+    rotator = Rotator(
+        angles,
+        image_stack,
+        rotation_plane_angle=plane_angle,
+        blank_pixel_val=0,
+        rotation_plane_orientation=orientation,
+    )
+    rotated_image_stack = rotator.rotate_by_line()
+
+    return image_stack, rotated_image_stack, rotator, image_stack.shape[0]
 
 
 def make_plot(

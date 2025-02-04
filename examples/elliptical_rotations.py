@@ -13,7 +13,6 @@ from derotation.simulate.synthetic_data import SyntheticData
 
 def rotate_image_stack(
     plane_angle: float = 0,
-    num_frames: int = 50,
     pad: int = 20,
     orientation: float = 0,
 ) -> Tuple[np.ndarray, np.ndarray, Rotator, int]:
@@ -22,6 +21,7 @@ def rotate_image_stack(
         second_cell=False,
         pad=pad,
         background_value=80,
+        num_frames=50,
     )
     s_data.image = s_data.create_sample_image_with_two_cells()
     image_stack = s_data.create_image_stack()
@@ -109,7 +109,7 @@ def make_plot(
 Path("debug").mkdir(exist_ok=True)
 
 image_stack, rotated_image_stack, rotator, num_frames = rotate_image_stack(
-    plane_angle=25, num_frames=50, pad=20
+    plane_angle=25, pad=20
 )
 make_plot(
     image_stack,
@@ -120,7 +120,7 @@ make_plot(
 )
 
 image_stack, rotated_image_stack, rotator, num_frames = rotate_image_stack(
-    plane_angle=25, num_frames=50, pad=20, orientation=45
+    plane_angle=25, pad=20, orientation=45
 )
 make_plot(
     image_stack,

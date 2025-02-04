@@ -172,10 +172,6 @@ class SyntheticData:
         # derive orientation and angle from the ellipse fits
         if self.rotation_plane_angle != 0:
             theta, orientation = derive_angles_from_ellipse_fits(ellipse_fits)
-            print(
-                f"rotation_plane_angle: {theta}, "
-                f"rotation_plane_orientation: {orientation}"
-            )
             self.rotation_plane_angle = np.round(theta, 1)
             self.rotation_plane_orientation = np.round(orientation, 1)
 

@@ -115,7 +115,6 @@ def rotate_images(
 
     # initialize the Rotator object and rotate the images
     center_offset = get_center_offeset(center)
-    print(center_offset)
     rotator = Rotator(angles, image_stack, center_offset)
     return rotator.rotate_by_line()
 

@@ -14,7 +14,7 @@ from derotation.simulate.synthetic_data import SyntheticData
 
 @pytest.mark.parametrize("center_of_rotation_initial", [(44, 51), (51, 44)])
 def test_derotation_with_shifted_center(
-    center_of_rotation_initial: Tuple[int, int]
+    center_of_rotation_initial: Tuple[int, int],
 ):
     """Test if the two circles are detected in the derotated stack
     at the expected locations when the center of rotation is estimated
@@ -88,6 +88,7 @@ def test_derotation_with_rotation_out_of_plane(
     center_of_rotation_offset: Tuple[int, int],
     rotation_plane_angle: int,
     rotation_plane_orientation: int,
+    plots: bool = False,
 ):
     """Test if the two circles are detected in the derotated stack
     at the expected locations when the center of rotation is estimated
@@ -109,9 +110,9 @@ def test_derotation_with_rotation_out_of_plane(
         rotation_plane_angle=rotation_plane_angle,
         rotation_plane_orientation=rotation_plane_orientation,
         num_frames=50,
-        plots=True,
         pad=20,
         background_value=80,
+        plots=plots,
     )
     s_data.integration_pipeline()
 
@@ -179,4 +180,4 @@ def assert_blob_detection(
 
 if __name__ == "__main__":
     Path("debug/").mkdir(parents=True, exist_ok=True)
-    test_derotation_with_rotation_out_of_plane((0, 0), 0, 0)
+    test_derotation_with_rotation_out_of_plane((0, 0), 20, 45, plots=True)

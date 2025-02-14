@@ -180,7 +180,7 @@ class SyntheticData:
             self.rotated_stack_sinusoidal,
             sinusoidal_angles,
             center=self.fitted_center,
-            use_homography=True if (self.rotation_plane_angle != 0) else False,
+            use_homography=self.rotation_plane_angle != 0,
             rotation_plane_angle=self.rotation_plane_angle,
             rotation_plane_orientation=self.rotation_plane_orientation,
         )

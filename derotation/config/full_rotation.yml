@@ -37,3 +37,5 @@ analog_signals_processing:
 interpolation:
   line_use_start: True
   frame_use_start: True
+
+biased_center: [129, 121]

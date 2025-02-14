@@ -189,10 +189,14 @@ class FullPipeline:
         logging.info(f"Filename: {self.filename}")
 
         #  by default the center of rotation is the center of the image
-        self.center_of_rotation = (
-            self.num_lines_per_frame // 2,
-            self.num_lines_per_frame // 2,
-        )
+        if not self.config["biased_center"]:
+            self.center_of_rotation = (
+                self.num_lines_per_frame // 2,
+                self.num_lines_per_frame // 2,
+            )
+        else:
+            self.center_of_rotation = tuple(self.config["biased_center"])
+
         self.hooks = {}
         self.rotation_plane_angle = 0
         self.rotation_plane_orientation = 0

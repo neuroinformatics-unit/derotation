@@ -86,7 +86,7 @@ class Rotator:
         self.num_lines_per_frame = image_stack.shape[1]
 
         self.pre_homography_center = np.array(
-            [image_stack.shape[2] // 2, image_stack.shape[2] // 2]
+            [image_stack.shape[1] // 2, image_stack.shape[2] // 2]
         )
         if center_offset != (0, 0):
             self.pre_homography_center += np.array(center_offset)

@@ -10,6 +10,7 @@ from scipy.optimize import OptimizeResult, least_squares
 
 def fit_ellipse_to_points(
     centers: np.ndarray,
+    pixels_in_row: int = 256,
 ) -> Tuple[int, int, int, int, int]:
     """Fit an ellipse to the points using least squares optimization.
 
@@ -84,8 +85,15 @@ def fit_ellipse_to_points(
         args=(x, y),
         loss="huber",  # Minimize the influence of outliers
         bounds=(
+            #  center_x, center_y, a, b, theta
             [0, 0, 1e-3, 1e-3, -np.pi],
-            [np.inf, np.inf, np.inf, np.inf, np.pi],
+            [
+                pixels_in_row,
+                pixels_in_row,
+                pixels_in_row,
+                pixels_in_row,
+                np.pi,
+            ],
         ),
     )
 

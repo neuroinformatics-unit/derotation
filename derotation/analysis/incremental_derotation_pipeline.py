@@ -494,7 +494,8 @@ class IncrementalPipeline(FullPipeline):
 
         # Fit an ellipse to the largest blob centers and get its center
         center_x, center_y, a, b, theta = fit_ellipse_to_points(
-            coord_first_blob_of_every_image
+            coord_first_blob_of_every_image,
+            pixels_in_row=self.num_lines_per_frame,
         )
 
         if self.debugging_plots:

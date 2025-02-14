@@ -114,7 +114,9 @@ def test_max_projection(
     #  invert centers to (x, y) format
     centers = np.array([(x, y) for y, x in centers])
 
-    xc, yc, a, b, orientation = fit_ellipse_to_points(centers)
+    xc, yc, a, b, orientation = fit_ellipse_to_points(
+        centers, pixels_in_row=rotated_image_stack.shape[1]
+    )
 
     if exp_orientation is None and plane_angle == 0:
         #  lower tolerance for the major and minor axes

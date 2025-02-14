@@ -181,12 +181,12 @@ def derotate_an_image_array_line_by_line(
 
             previous_image_completed = False
 
-            empty_image = np.ones_like(derotated_filled_image) * np.nan
-            empty_image[
-                final_coords[0][valid_mask], final_coords[1][valid_mask]
-            ] = line[valid_mask]
-
             if plotting_hook_line_addition is not None:
+                empty_image = np.ones_like(derotated_filled_image) * np.nan
+                empty_image[
+                    final_coords[0][valid_mask], final_coords[1][valid_mask]
+                ] = line[valid_mask]
+
                 plotting_hook_line_addition(
                     derotated_filled_image,
                     empty_image,

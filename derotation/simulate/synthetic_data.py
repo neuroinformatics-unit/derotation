@@ -272,7 +272,7 @@ class SyntheticData:
             self.lines_per_frame = image.shape[0]
 
         if self.background_value != 0:
-            image[image == 0] = 80
+            image[image == 0] = self.background_value
 
         return image
 

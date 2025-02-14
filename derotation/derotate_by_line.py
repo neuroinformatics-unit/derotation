@@ -256,72 +256,59 @@ def apply_homography(
     """
     #  derotation should happen in the plane in which the rotation is circular.
     #  scanning to rotation plane
-    homography_matrix = np.array(
-        [
-            [1, 0],
-            # shear happens in the x direction (columns)
-            [0, np.cos(np.deg2rad(rotation_plane_angle))],
-        ]
-    )
-    # rotation matrix for plane orientation
-    # invert the angle to get the correct rotation
+
+    # Convert angles to radians
     angle_rad = np.deg2rad(rotation_plane_orientation)
-    cos, sin = np.cos(angle_rad), np.sin(angle_rad)
+    shear_rad = np.deg2rad(rotation_plane_angle)
 
-    orientation = np.array(
+    cos_theta, sin_theta = np.cos(angle_rad), np.sin(angle_rad)
+    cos_alpha = np.cos(shear_rad)
+
+    # Rotation matrix for plane orientation
+    R = np.array(
+        [[cos_theta, -sin_theta, 0], [sin_theta, cos_theta, 0], [0, 0, 1]]
+    )
+
+    # Shear (homography-like) matrix for scanning into rotation plane
+    H = np.array([[1, 0, 0], [0, cos_alpha, 0], [0, 0, 1]])
+
+    # Inverse rotation matrix
+    R_inv = np.array(
+        [[cos_theta, sin_theta, 0], [-sin_theta, cos_theta, 0], [0, 0, 1]]
+    )
+
+    # Compute the combined transformation matrix
+    A = R_inv @ H @ R  # Rotation -> Shear -> Inverse rotation
+
+    # Convert `center` into homogeneous coordinates correctly
+    center_homogeneous = np.append(center, 1)  # Fix
+
+    # Compute offset
+    offset = center_homogeneous - A @ center_homogeneous
+
+    # Adjust transformation matrix to include offset
+    A[:2, 2] = offset[:2]
+
+    # Apply single affine transformation
+    new_image_stack = np.array(
         [
-            [cos, -sin],
-            [sin, cos],
+            affine_transform(
+                image,
+                A[:2, :2],  # Extract the 2x2 part for transformation
+                offset=A[:2, 2],  # Apply the computed offset
+                output_shape=image.shape,
+                order=0,
+                mode="constant",
+                cval=blank_pixels_value,
+            )
+            for image in image_stack
         ]
     )
 
-    h_offset = center.T[0] - homography_matrix @ center.T[0]
-    o_offset = center.T[0] - orientation @ center.T[0]
-    io_offset = center.T[0] - orientation.T @ center.T[0]
-
-    #  shear the image stack (i.e. shift it to the rotation plane)
-    new_image_stack = []
-    for image in image_stack:
-        # first rotate according to orientation
-        transformed = affine_transform(
-            image,
-            orientation,
-            offset=o_offset,
-            output_shape=image.shape,
-            order=0,
-            mode="constant",
-            cval=blank_pixels_value,
-        )
-
-        # then apply homography
-        transformed = affine_transform(
-            transformed,
-            homography_matrix,
-            offset=h_offset,
-            output_shape=image.shape,
-            order=0,
-            mode="constant",
-            cval=blank_pixels_value,
-        )
-
-        # rotate it back to the original orientation
-        transformed = affine_transform(
-            transformed,
-            orientation.T,
-            offset=io_offset,
-            output_shape=image.shape,
-            order=0,
-            mode="constant",
-            cval=blank_pixels_value,
-        )
-
-        new_image_stack.append(transformed)
-
-    hom_image_stack = np.asarray(new_image_stack)
     #  check shape
     assert (
-        hom_image_stack.shape == image_stack.shape
-    ), f"Shape mismatch: {hom_image_stack.shape} != {image_stack.shape}"
-    image_stack = hom_image_stack
+        new_image_stack.shape == image_stack.shape
+    ), f"Shape mismatch: {new_image_stack.shape} != {image_stack.shape}"
+    image_stack = new_image_stack
 
     return image_stack

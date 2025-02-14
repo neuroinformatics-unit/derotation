@@ -124,7 +124,7 @@ class SyntheticData:
 
         # -----------------------------------------------------
         # Create sample image with two cells
-        self.image = self.create_sample_image_with_two_cells()
+        self.image = self.create_sample_image_with_cells()
 
         # Create the 3D image stack
         image_stack = self.create_image_stack()
@@ -202,7 +202,7 @@ class SyntheticData:
     #  Prepare the 3D image stack and the rotation angles
     #  -----------------------------------------------------
 
-    def create_sample_image_with_two_cells(self) -> np.ndarray:
+    def create_sample_image_with_cells(self) -> np.ndarray:
         """Create a 2D image with two circles, one bright and one dim
         (optional) by default in the top center and bottom right,
         respectively.
@@ -379,6 +379,7 @@ class SyntheticData:
 
                 self.debugging_plots = make_plots
                 self.debug_plots_folder = Path("debug/")
+
             def calculate_mean_images(self, image_stack: np.ndarray) -> list:
                 #  Overwrite original method as it is too bound
                 #  to signal coming from a real motor

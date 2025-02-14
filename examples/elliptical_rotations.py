@@ -23,7 +23,7 @@ def rotate_image_stack(
         background_value=80,
         num_frames=50,
     )
-    s_data.image = s_data.create_sample_image_with_two_cells()
+    s_data.image = s_data.create_sample_image_with_cells()
     image_stack = s_data.create_image_stack()
     _, angles = s_data.create_rotation_angles(image_stack.shape)
 

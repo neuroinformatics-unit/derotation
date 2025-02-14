@@ -376,6 +376,7 @@ class SyntheticData:
                     :: rotated_stack_incremental.shape[1]
                 ][: rotated_stack_incremental.shape[0]]
                 self.num_frames = rotated_stack_incremental.shape[0]
+                self.num_lines_per_frame = rotated_stack_incremental.shape[1]
 
                 self.debugging_plots = make_plots
                 self.debug_plots_folder = Path("debug/")

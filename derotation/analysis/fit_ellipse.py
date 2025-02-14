@@ -180,7 +180,7 @@ def derive_angles_from_ellipse_fits(
     Returns
     -------
     Tuple[int, int]
-        The rotation plane angle and orientation
+        The rotation plane (in degrees) angle and orientation
     """
     if ellipse_fits["a"] < ellipse_fits["b"]:
         rotation_plane_angle = np.degrees(

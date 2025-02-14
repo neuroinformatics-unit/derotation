@@ -486,10 +486,7 @@ class IncrementalPipeline(FullPipeline):
         mean_images = self.calculate_mean_images(self.image_stack)
 
         logging.info("Finding blobs...")
-        if self.debugging_plots:
-            bd = BlobDetection(self.debugging_plots, self.debug_plots_folder)
-        else:
-            bd = BlobDetection(debugging_plots=False)
+       bd = BlobDetection(self.debugging_plots, self.debug_plots_folder)
 
         coord_first_blob_of_every_image = bd.get_coords_of_largest_blob(
             mean_images

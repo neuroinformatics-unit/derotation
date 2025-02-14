@@ -24,6 +24,8 @@ rot_deg: 360
 
 debugging_plots: True
 
+frame_rate: 6.74
+
 analog_signals_processing:
   find_rotation_ticks_peaks:
     height: 4

@@ -1,4 +1,3 @@
-import copy
 import logging
 from pathlib import Path
 from typing import Dict, Tuple
@@ -221,7 +220,7 @@ class IncrementalPipeline(FullPipeline):
         if start.shape[0] != 1:
             raise ValueError("Number of rotations is not as expected")
 
-    def plot_rotation_angles(self):
+    def plot_rotation_angles_and_velocity(self):
         """Plots example rotation angles by line and frame for each speed.
         This plot will be saved in the debug_plots folder.
         Please inspect it to check that the rotation angles are correctly
@@ -254,38 +253,6 @@ class IncrementalPipeline(FullPipeline):
             Path(self.config["paths_write"]["debug_plots_folder"])
             / "rotation_angles.png"
         )
-
-    def calculate_mean_images(self, image_stack: np.ndarray) -> list:
-        """Calculate the mean images for each rotation angle. This required
-        to calculate the shifts using phase cross correlation.
-
-        Parameters
-        ----------
-        rotated_image_stack : np.ndarray
-            The rotated image stack.
-
-        Returns
-        -------
-        list
-            The list of mean images.
-        """
-        logging.info("Calculating mean images...")
-
-        #  correct for a mismatch in the total number of frames
-        #  and the number of angles, given by instrument error
-        angles_subset = copy.deepcopy(self.rot_deg_frame[2:])
-        # also there is a bias on the angles
-        angles_subset += -0.1
-        rounded_angles = np.round(angles_subset, 2)
-
-        mean_images = []
-        for i in np.arange(10, 360, 10):
-            images = image_stack[rounded_angles == i]
-            mean_image = np.mean(images, axis=0)
-
-            mean_images.append(mean_image)
-
-        return mean_images
 
     def save_csv_with_derotation_data(self):
         """Saves a csv file with the rotation angles by line and frame,

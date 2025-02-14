@@ -377,12 +377,8 @@ class SyntheticData:
                 ][: rotated_stack_incremental.shape[0]]
                 self.num_frames = rotated_stack_incremental.shape[0]
 
-                if make_plots:
-                    self.debugging_plots = True
-                    self.debug_plots_folder = Path("debug/")
-                else:
-                    self.debugging_plots = False
-
+                self.debugging_plots = make_plots
+                self.debug_plots_folder = Path("debug/")
             def calculate_mean_images(self, image_stack: np.ndarray) -> list:
                 #  Overwrite original method as it is too bound
                 #  to signal coming from a real motor

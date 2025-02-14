@@ -7,9 +7,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from scipy.ndimage import rotate
-from skimage.feature import blob_log
 from tqdm import tqdm
 
+from derotation.analysis.blob_detection import BlobDetection
 from derotation.analysis.fit_ellipse import (
     fit_ellipse_to_points,
     plot_ellipse_fit_and_centers,
@@ -486,7 +486,9 @@ class IncrementalPipeline(FullPipeline):
         mean_images = self.calculate_mean_images(self.image_stack)
 
         logging.info("Finding blobs...")
-        coord_first_blob_of_every_image = self.get_coords_of_largest_blob(
+        bd = BlobDetection(self.debugging_plots, self.debug_plots_folder)
+
+        coord_first_blob_of_every_image = bd.get_coords_of_largest_blob(
             mean_images
         )
 
@@ -503,7 +505,7 @@ class IncrementalPipeline(FullPipeline):
                 a,
                 b,
                 theta,
-                image_stack=mean_images,
+                image_stack=self.image_stack,
                 debug_plots_folder=self.debug_plots_folder,
                 saving_name="ellipse_fit.png",
             )
@@ -518,79 +520,18 @@ class IncrementalPipeline(FullPipeline):
         )
         logging.info(f"Variation from a perfect circle: {a - b:.2f}")
 
-        return int(center_x), int(center_y)
-
-    def get_coords_of_largest_blob(
-        self, image_stack: np.ndarray
-    ) -> np.ndarray:
-        """Get the coordinates of the largest blob in each image.
-
-        Parameters
-        ----------
-        image_stack : np.ndarray
-            The image stack.
-
-        Returns
-        -------
-        np.ndarray
-            The coordinates of the largest blob in each image.
-        """
-
-        blobs = [
-            blob_log(img, max_sigma=12, min_sigma=7, threshold=0.95, overlap=0)
-            for img in tqdm(image_stack)
-        ]
-
-        # sort blobs by size
-        blobs = [
-            blobs[i][blobs[i][:, 2].argsort()] for i in range(len(image_stack))
-        ]
-
-        try:
-            coord_first_blob_of_every_image = [
-                blobs[i][0][:2].astype(int) for i in range(len(image_stack))
-            ]
-        except IndexError:
-            raise ValueError(
-                "No blobs were found. Try changing the parameters of the "
-                + "blob detection algorithm."
+        #  Raise a warning if the eccentricity is too high
+        if np.abs(a - b) > 10:
+            logging.warning(
+                "The ellipse is too eccentric: "
+                + f"{a - b:.2f}; likely due to a bad fit."
             )
 
-        #  invert x, y order
-        coord_first_blob_of_every_image = [
-            (coord[1], coord[0]) for coord in coord_first_blob_of_every_image
-        ]
-
-        # plot blobs on top of every frame
-        if self.debugging_plots:
-            self.plot_blob_detection(blobs, image_stack)
-
-        return np.asarray(coord_first_blob_of_every_image)
-
-    def plot_blob_detection(self, blobs: list, image_stack: np.ndarray):
-        """Plot the first 4 blobs in each image. This is useful to check if
-        the blob detection is working correctly and to see if the identity of
-        the largest blob is consistent across the images.
-
-        Parameters
-        ----------
-        blobs : list
-            The list of blobs in each image.
-        image_stack : np.ndarray
-            The image stack.
-        """
-
-        fig, ax = plt.subplots(4, 3, figsize=(10, 10))
-        for i, a in tqdm(enumerate(ax.flatten())):
-            a.imshow(image_stack[i])
-            a.set_title(f"{i*5} degrees")
-            a.axis("off")
-
-            for j, blob in enumerate(blobs[i][:4]):
-                y, x, r = blob
-                c = plt.Circle((x, y), r, color="red", linewidth=2, fill=False)
-                a.add_patch(c)
-                a.text(x, y, str(j), color="red")
-
-        # save the plot
-        plt.savefig(self.debug_plots_folder / "blobs.png")
+        self.all_ellipse_fits = {
+            "center_x": center_x,
+            "center_y": center_y,
+            "a": a,
+            "b": b,
+            "theta": theta,
+        }
+        return int(center_x), int(center_y)

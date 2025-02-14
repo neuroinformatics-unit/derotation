@@ -114,8 +114,19 @@ def rotate_images(
     """
 
     # initialize the Rotator object and rotate the images
-    rotator = Rotator(angles, image_stack, center=center)
+    center_offset = get_center_offeset(center)
+    rotator = Rotator(angles, image_stack, center_offset)
     return rotator.rotate_by_line()
+
+
+def get_center_offeset(center: Optional[Tuple[int, int]]) -> Tuple[int, int]:
+    """Calculate the center offset for a given center of rotation."""
+    expected_center = (NUM_LINES // 2, NUM_LINES // 2)
+    return (
+        (0, 0)
+        if center is None
+        else (center[0] - expected_center[0], center[1] - expected_center[1])
+    )
 
 
 def load_rotated_images(

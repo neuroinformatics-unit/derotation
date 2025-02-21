@@ -5,7 +5,6 @@ from pathlib import Path
 import yaml
 
 from derotation.analysis.full_derotation_pipeline import FullPipeline
-from derotation.analysis.metrics import stability_of_most_detected_blob
 
 
 def update_config_paths(
@@ -68,16 +67,7 @@ def derotate(dataset_folder: Path, output_folder):
     try:
         derotator = FullPipeline(config)
         derotator()
-        mean_images_no_adj = derotator.calculate_mean_images(
-            derotator.masked_image_volume, round_decimals=0
-        )
-
-        debug_plots_folder = Path(config["paths_write"]["debug_plots_folder"])
-        metrics = stability_of_most_detected_blob(
-            (mean_images_no_adj, debug_plots_folder)
-        )
-        del derotator
-        return metrics
+        return derotator.metrics
     except Exception as e:
         logging.error("Full derotation pipeline failed")
         logging.error(e.args)

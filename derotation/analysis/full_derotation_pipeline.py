@@ -14,12 +14,14 @@ from scipy.signal import find_peaks
 from sklearn.mixture import GaussianMixture
 from tifffile import imsave
 
+from derotation.analysis.bayesian_optimization import BO_for_derotation
+from derotation.analysis.metrics import ptd_of_most_detected_blob
 from derotation.derotate_by_line import derotate_an_image_array_line_by_line
 from derotation.load_data.custom_data_loaders import (
     get_analog_signals,
     read_randomized_stim_table,
 )
-
+from derotation.analysis.mean_images import calculate_mean_images
 
 class FullPipeline:
     """DerotationPipeline is a class that derotates an image stack
@@ -61,17 +63,27 @@ class FullPipeline:
         - saving the masked image stack
         """
         self.process_analog_signals()
+
+        self.offset = self.find_image_offset(self.image_stack[0])
+        self.find_optimal_parameters()
+
         rotated_images = self.derotate_frames_line_by_line()
         self.masked_image_volume = self.add_circle_mask(
             rotated_images, self.mask_diameter
         )
+        self.mean_images = calculate_mean_images(self.masked_image_volume, self.rot_deg_frame)
+        self.metrics = ptd_of_most_detected_blob(
+            self.mean_images,
+            plot=self.debugging_plots,
+            debug_plots_folder=self.debug_plots_folder,
+        )
+
         self.save(self.masked_image_volume)
         self.save_csv_with_derotation_data()
 
     def get_config(self, config_name: str) -> dict:
         """Loads config file from derotation/config folder.
         Please edit it to change the parameters of the analysis.
-
         Parameters
         ----------
         config_name : str
@@ -102,6 +114,8 @@ class FullPipeline:
             filename="derotation",
             verbose=False,
         )
+        #  suppress debug messages from matplotlib  
+        logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
 
     def load_data(self):
         """Loads data from the paths specified in the config file.
@@ -200,6 +214,8 @@ class FullPipeline:
         self.hooks = {}
         self.rotation_plane_angle = 0
         self.rotation_plane_orientation = 0
+
+        self.delta = self.config["delta_center"]
 
     ### ----------------- Analog signals processing pipeline ------------- ###
     def process_analog_signals(self):
@@ -843,6 +859,56 @@ class FullPipeline:
 
     ### ----------------- Derotation ----------------- ###
 
+    def find_optimal_parameters(self):
+        # sample_rotations_idx = [
+        #     0, 
+        #     self.number_of_rotations // 4,
+        #     self.number_of_rotations // 2, 
+        #     3 * self.number_of_rotations // 4,
+        #     -1
+        # ]
+
+        # chunked_movie = []
+        # chunked_angle_array = []
+        # for i in sample_rotations_idx:
+        #     start = self.clock_to_latest_frame_start(
+        #         self.rot_blocks_idx["start"][i]
+        #     )
+        #     end = self.clock_to_latest_frame_start(
+        #         self.rot_blocks_idx["end"][i]
+        #     )
+        #     chunked_movie.append(self.image_stack[start:end])
+
+        #     start = self.clock_to_latest_line_start(
+        #         self.rot_blocks_idx["start"][i]
+        #     )
+        #     end = self.clock_to_latest_line_start(
+        #         self.rot_blocks_idx["end"][i]
+        #     )
+        #     chunked_angle_array.append(self.interpolated_angles[start:end])
+
+        # chunked_movie = np.concatenate(chunked_movie)
+        # chunked_angle_array = np.concatenate(chunked_angle_array)
+
+        bo = BO_for_derotation(
+            self.image_stack,
+            self.rot_deg_line,
+            self.offset,
+            self.center_of_rotation,
+            self.delta,
+        )
+
+        maximum = bo.optimize()
+
+        logging.info(f"Optimal parameters: {maximum}")
+        logging.info("Setting the optimal parameters...")
+        logging.info(f"Target: {maximum['target']}")
+        phi, theta, x_center, y_center = maximum["params"].values()
+
+        self.center_of_rotation = (x_center, y_center)
+        self.rotation_plane_angle = theta
+        self.rotation_plane_orientation = phi
+
     def plot_max_projection_with_center(self):
         """Plots the maximum projection of the image stack with the center
         of rotation.
@@ -887,15 +953,13 @@ class FullPipeline:
         if self.debugging_plots:
             self.plot_max_projection_with_center()
 
-        offset = self.find_image_offset(self.image_stack[0])
-
         #  By default rotation_plane_angle and rotation_plane_orientation are 0
         #  they have to be overwritten before calling the function.
         #  To calculate them please use the ellipse fit.
         rotated_image_stack = derotate_an_image_array_line_by_line(
             self.image_stack,
             self.rot_deg_line,
-            blank_pixels_value=offset,
+            blank_pixels_value=self.offset,
             center=self.center_of_rotation,
             plotting_hook_line_addition=self.hooks.get(
                 "plotting_hook_line_addition"
@@ -1084,42 +1148,4 @@ class FullPipeline:
             index=False,
         )
 
-    ### ----------------- Additional methods ---------------- ###
-
-    def calculate_mean_images(
-        self, image_stack: np.ndarray, round_decimals: int = 2
-    ) -> list:
-        """Calculate the mean images for each rotation angle. This required
-        to calculate the shifts using phase cross correlation.
-
-        Parameters
-        ----------
-        rotated_image_stack : np.ndarray
-            The rotated image stack.
-
-        Returns
-        -------
-        list
-            The list of mean images.
-        """
-        logging.info("Calculating mean images...")
-
-        #  correct for a mismatch in the total number of frames
-        angles_subset = copy.deepcopy(self.rot_deg_frame)
-        angles_subset = angles_subset[: len(image_stack)]
-
-        # also there is a bias on the angles
-        angles_subset += -0.1
-        rounded_angles = np.round(angles_subset, round_decimals)
-
-        mean_images = []
-        for i in np.arange(10, 360, 10):
-            try:
-                images = image_stack[rounded_angles == i]
-                mean_image = np.mean(images, axis=0)
-
-                mean_images.append(mean_image)
-            except IndexError:
-                logging.warning(f"Angle {i} not found in the image stack")
-
-        return np.asarray(mean_images)
+    

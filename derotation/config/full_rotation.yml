@@ -39,3 +39,6 @@ interpolation:
   frame_use_start: True
 
 biased_center: [129, 121]
+delta_center: 20
+init_points: 2
+n_iter: 10

@@ -4,10 +4,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 from skimage.feature import blob_log
 from sklearn.cluster import DBSCAN
+import logging
 
-
-def stability_of_most_detected_blob(
-    data,
+def ptd_of_most_detected_blob(
+    mean_images_by_angle,
     plot=True,
     blob_log_kwargs={
         "min_sigma": 7,
@@ -15,19 +15,14 @@ def stability_of_most_detected_blob(
         "threshold": 0.95,
         "overlap": 0,
     },
-    clip=True,
+    debug_plots_folder="/debug_plots",
 ):
-    mean_images_by_angle, debug_plots_folder = data
-
     #  clip all the images to the same contrast
-    if clip:
-        clipped_images = [
-            np.clip(img, np.percentile(img, 99), np.percentile(img, 99.99))
-            for img in mean_images_by_angle
-        ]
-    else:
-        clipped_images = mean_images_by_angle
-
+    clipped_images = [
+        np.clip(img, np.percentile(img, 99), np.percentile(img, 99.99))
+        for img in mean_images_by_angle
+    ]
+    
     # Detect the blobs in the derotated stack in each frame
     # blobs is a list(list(x, y, sigma)) of the detected blobs for every frame
     blobs = [
@@ -62,6 +57,9 @@ def stability_of_most_detected_blob(
     all_blobs = np.array(all_blobs)
 
     # Use DBSCAN to cluster blobs based on proximity
+    logging.info(all_blobs)
+    logging.info(all_blobs.shape)
+    
     coords = all_blobs[:, :3]  # x, y, radius
     clustering = DBSCAN(eps=10, min_samples=2).fit(
         coords
@@ -78,10 +76,6 @@ def stability_of_most_detected_blob(
 
     #  Calculate range (peak to peak)
     ptp = np.ptp(most_detected_blobs[:, 0]) + np.ptp(most_detected_blobs[:, 1])
-    #  Calculate stability (standard deviation)
-    std = np.sqrt(
-        np.var(most_detected_blobs[:, 0]) + np.var(most_detected_blobs[:, 1])
-    )
 
     #  plot the most detected blobs centers
     if plot:
@@ -96,4 +90,4 @@ def stability_of_most_detected_blob(
         plt.savefig(debug_plots_folder / "most_detected_blob_centers.png")
         plt.close()
 
-    return ptp, std
+    return ptp

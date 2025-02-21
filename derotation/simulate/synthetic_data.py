@@ -381,12 +381,15 @@ class SyntheticData:
                 self.debugging_plots = make_plots
                 self.debug_plots_folder = Path("debug/")
 
+            @staticmethod
             def calculate_mean_images(
-                self, image_stack: np.ndarray, round_decimals: int = 0
+                image_stack: np.ndarray, 
+                rot_deg_frame: np.ndarray,
+                round_decimals: int = 0
             ) -> list:
                 #  Override original method as it is too bound
                 #  to signal coming from a real motor
-                angles_subset = copy.deepcopy(self.rot_deg_frame)
+                angles_subset = copy.deepcopy(rot_deg_frame)
                 rounded_angles = np.round(angles_subset, round_decimals)
 
                 mean_images = []

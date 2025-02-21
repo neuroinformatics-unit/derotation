@@ -10,6 +10,7 @@ from scipy.optimize import OptimizeResult, least_squares
 
 def fit_ellipse_to_points(
     centers: np.ndarray,
+    pixels_in_row: int = 256,
 ) -> Tuple[int, int, int, int, int]:
     """Fit an ellipse to the points using least squares optimization.
 
@@ -26,14 +27,19 @@ def fit_ellipse_to_points(
     """
     # Convert centers to numpy array
     centers = np.array(centers)
-    x = centers[:, 0]
-    y = centers[:, 1]
+    valid_points = centers[
+        ~np.isnan(centers).any(axis=1)
+    ]  # Remove rows with NaN
+    if len(valid_points) < 5:
+        raise ValueError("Not enough valid points to fit an ellipse.")
 
-    # Find the extreme points for the initial ellipse estimate
-    topmost = centers[np.argmin(y)]
-    rightmost = centers[np.argmax(x)]
-    bottommost = centers[np.argmax(y)]
-    leftmost = centers[np.argmin(x)]
+    x, y = valid_points[:, 0], valid_points[:, 1]
+
+    # Find extreme points for the initial ellipse estimate
+    topmost = valid_points[np.argmin(y)]
+    rightmost = valid_points[np.argmax(x)]
+    bottommost = valid_points[np.argmax(y)]
+    leftmost = valid_points[np.argmin(x)]
 
     # Initial parameters: (center_x, center_y, semi_major_axis,
     # semi_minor_axis, rotation_angle)
@@ -42,8 +48,12 @@ def fit_ellipse_to_points(
     )
     semi_major_axis = np.linalg.norm(rightmost - leftmost) / 2
     semi_minor_axis = np.linalg.norm(topmost - bottommost) / 2
-    rotation_angle = 0  # Start with no rotation
 
+    # Ensure axes are not zero
+    if semi_major_axis < 1e-3 or semi_minor_axis < 1e-3:
+        raise ValueError("Points are degenerate; cannot fit an ellipse.")
+
+    rotation_angle = 0  # Start with no rotation
     initial_params = [
         initial_center[0],
         initial_center[1],
@@ -53,6 +63,7 @@ def fit_ellipse_to_points(
     ]
 
     logging.info("Fitting ellipse to points...")
+    logging.info(f"Initial parameters: {initial_params}")
 
     # Objective function to minimize: sum of squared distances to ellipse
     def ellipse_residuals(params, x, y):
@@ -72,14 +83,25 @@ def fit_ellipse_to_points(
         ellipse_residuals,
         initial_params,
         args=(x, y),
-        loss="huber",  # minimize the influence of outliers
+        loss="huber",  # Minimize the influence of outliers
+        bounds=(
+            #  center_x, center_y, a, b, theta
+            [0, 0, 1e-3, 1e-3, -np.pi],
+            [
+                pixels_in_row,
+                pixels_in_row,
+                pixels_in_row,
+                pixels_in_row,
+                np.pi,
+            ],
+        ),
     )
+
+    if not result.success:
+        raise RuntimeError("Ellipse fitting did not converge.")
 
     # Extract optimized parameters
     center_x, center_y, a, b, theta = result.x
-
-    #  sometimes the fitted theta is a multiple of of 2pi
-    theta = theta % (2 * np.pi)
 
     return center_x, center_y, a, b, theta
 

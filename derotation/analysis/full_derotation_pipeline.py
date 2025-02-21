@@ -2,7 +2,7 @@ import copy
 import logging
 import sys
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -14,12 +14,14 @@ from scipy.signal import find_peaks
 from sklearn.mixture import GaussianMixture
 from tifffile import imsave
 
+from derotation.analysis.bayesian_optimization import BO_for_derotation
+from derotation.analysis.metrics import ptd_of_most_detected_blob
 from derotation.derotate_by_line import derotate_an_image_array_line_by_line
 from derotation.load_data.custom_data_loaders import (
     get_analog_signals,
     read_randomized_stim_table,
 )
-
+from derotation.analysis.mean_images import calculate_mean_images
 
 class FullPipeline:
     """DerotationPipeline is a class that derotates an image stack
@@ -27,7 +29,7 @@ class FullPipeline:
     """
 
     ### ----------------- Main pipeline ----------------- ###
-    def __init__(self, config_name):
+    def __init__(self, _config: Union[dict, str]):
         """DerotationPipeline is a class that derotates an image stack
         acquired with a rotating sample under a microscope.
         In the constructor, it loads the config file, starts the logging
@@ -38,10 +40,15 @@ class FullPipeline:
 
         Parameters
         ----------
-        config_name : str
-            Name of the config file without extension.
+        _config : Union[dict, str]
+            Name of the config file without extension that will be retrieved
+            in the derotation/config folder, or the config dictionary.
         """
-        self.config = self.get_config(config_name)
+        if isinstance(_config, dict):
+            self.config = _config
+        else:
+            self.config = self.get_config(_config)
+
         self.start_logging()
         self.load_data()
 
@@ -56,15 +63,27 @@ class FullPipeline:
         - saving the masked image stack
         """
         self.process_analog_signals()
+
+        self.offset = self.find_image_offset(self.image_stack[0])
+        self.find_optimal_parameters()
+
         rotated_images = self.derotate_frames_line_by_line()
-        masked = self.add_circle_mask(rotated_images, self.mask_diameter)
-        self.save(masked)
+        self.masked_image_volume = self.add_circle_mask(
+            rotated_images, self.mask_diameter
+        )
+        self.mean_images = calculate_mean_images(self.masked_image_volume, self.rot_deg_frame)
+        self.metrics = ptd_of_most_detected_blob(
+            self.mean_images,
+            plot=self.debugging_plots,
+            debug_plots_folder=self.debug_plots_folder,
+        )
+
+        self.save(self.masked_image_volume)
         self.save_csv_with_derotation_data()
 
     def get_config(self, config_name: str) -> dict:
         """Loads config file from derotation/config folder.
         Please edit it to change the parameters of the analysis.
-
         Parameters
         ----------
         config_name : str
@@ -95,6 +114,8 @@ class FullPipeline:
             filename="derotation",
             verbose=False,
         )
+        #  suppress debug messages from matplotlib  
+        logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
 
     def load_data(self):
         """Loads data from the paths specified in the config file.
@@ -119,7 +140,7 @@ class FullPipeline:
         data from your setup.
         """
         logging.info("Loading data...")
-
+        logging.info(f"Loading {self.config['paths_read']['path_to_tif']}")
         self.image_stack = tiff.imread(
             self.config["paths_read"]["path_to_tif"]
         )
@@ -157,7 +178,10 @@ class FullPipeline:
             self.config["paths_read"]["path_to_tif"]
         ).stem.split(".")[0]
         self.filename = self.config["paths_write"]["saving_name"]
-
+        self.file_saving_path_with_name = (
+            Path(self.config["paths_write"]["derotated_tiff_folder"])
+            / self.filename
+        )
         self.std_coef = self.config["analog_signals_processing"][
             "squared_pulse_k"
         ]
@@ -167,21 +191,31 @@ class FullPipeline:
 
         self.debugging_plots = self.config["debugging_plots"]
 
+        self.frame_rate = self.config["frame_rate"]
+
         if self.debugging_plots:
             self.debug_plots_folder = Path(
                 self.config["paths_write"]["debug_plots_folder"]
             )
-            self.debug_plots_folder.mkdir(parents=True, exist_ok=True)
+            Path(self.debug_plots_folder).mkdir(parents=True, exist_ok=True)
 
         logging.info(f"Dataset {self.filename_raw} loaded")
         logging.info(f"Filename: {self.filename}")
 
         #  by default the center of rotation is the center of the image
-        self.center_of_rotation = (
-            self.num_lines_per_frame // 2,
-            self.num_lines_per_frame // 2,
-        )
+        if not self.config["biased_center"]:
+            self.center_of_rotation = (
+                self.num_lines_per_frame // 2,
+                self.num_lines_per_frame // 2,
+            )
+        else:
+            self.center_of_rotation = tuple(self.config["biased_center"])
+
         self.hooks = {}
+        self.rotation_plane_angle = 0
+        self.rotation_plane_orientation = 0
+
+        self.delta = self.config["delta_center"]
 
     ### ----------------- Analog signals processing pipeline ------------- ###
     def process_analog_signals(self):
@@ -244,7 +278,7 @@ class FullPipeline:
 
         if self.debugging_plots:
             self.plot_rotation_on_and_ticks()
-            self.plot_rotation_angles()
+            self.plot_rotation_angles_and_velocity()
 
         logging.info("✨ Analog signals processed ✨")
 
@@ -442,7 +476,7 @@ class FullPipeline:
             )
         if self.rot_blocks_idx["start"].shape[0] != self.number_of_rotations:
             logging.info(
-                f"Number of rotations is {self.number_of_rotations}."
+                f"Number of rotations is not {self.number_of_rotations}."
                 + f"Adjusting to {self.rot_blocks_idx['start'].shape[0]}"
             )
             self.number_of_rotations = self.rot_blocks_idx["start"].shape[0]
@@ -610,7 +644,11 @@ class FullPipeline:
                 "Start and end of rotations have different lengths"
             )
         if start.shape[0] != self.number_of_rotations:
-            raise ValueError(
+            #  plot the rotation on signal and the interpolated angles
+            #  this is useful to debug the interpolation
+            self.plot_rotation_on_and_ticks()
+
+            logging.warning(
                 "Number of rotations is not as expected after interpolation, "
                 + f"{start.shape[0]} instead of {self.number_of_rotations}"
             )
@@ -692,6 +730,16 @@ class FullPipeline:
         """
         return np.where(self.rot_blocks_idx["start"] < clock_time)[0][-1]
 
+    def calculate_velocity(self):
+        """Calculates the velocity of the rotation by line."""
+        #  use the line clock frame rate to calculate the sampling rate
+        sampling_rate = 1 / (self.frame_rate * self.num_lines_per_frame)
+
+        velocity = np.diff(self.rot_deg_line)
+        velocity /= sampling_rate
+
+        return velocity
+
     def plot_rotation_on_and_ticks(self):
         """Plots the rotation ticks and the rotation on signal.
         This plot will be saved in the debug_plots folder.
@@ -732,12 +780,14 @@ class FullPipeline:
         plt.savefig(
             self.debug_plots_folder / "rotation_ticks_and_rotation_on.png"
         )
+        plt.close()
 
-    def plot_rotation_angles(self):
+    def plot_rotation_angles_and_velocity(self):
         """Plots example rotation angles by line and frame for each speed.
-        This plot will be saved in the debug_plots folder.
-        Please inspect it to check that the rotation angles are correctly
-        calculated.
+        The velocity is also plotted on top of the rotation angles.
+
+        This plot will be saved in the debug_plots folder. Please inspect it
+        to check that the rotation angles are correctly calculated.
         """
         logging.info("Plotting rotation angles...")
 
@@ -749,6 +799,8 @@ class FullPipeline:
             np.where(self.speed == s)[0][-1] for s in speeds
         ]
         last_idx_for_each_speed = sorted(last_idx_for_each_speed)
+
+        velocity = self.calculate_velocity()
 
         for i, id in enumerate(last_idx_for_each_speed):
             col = i // 2
@@ -789,14 +841,73 @@ class FullPipeline:
                 + f" direction: {'cw' if self.direction[id] == 1 else 'ccw'}"
             )
 
+            #  plot velocity on top in red
+            ax2 = ax.twinx()
+            ax2.plot(
+                velocity[start_line_idx:end_line_idx] * -1,
+                color="red",
+                label="velocity",
+            )
+
         fig.suptitle("Rotation angles by line and frame")
 
         handles, labels = ax.get_legend_handles_labels()
         fig.legend(handles, labels, loc="upper right")
 
         plt.savefig(self.debug_plots_folder / "rotation_angles.png")
+        plt.close()
 
     ### ----------------- Derotation ----------------- ###
+
+    def find_optimal_parameters(self):
+        # sample_rotations_idx = [
+        #     0, 
+        #     self.number_of_rotations // 4,
+        #     self.number_of_rotations // 2, 
+        #     3 * self.number_of_rotations // 4,
+        #     -1
+        # ]
+
+        # chunked_movie = []
+        # chunked_angle_array = []
+        # for i in sample_rotations_idx:
+        #     start = self.clock_to_latest_frame_start(
+        #         self.rot_blocks_idx["start"][i]
+        #     )
+        #     end = self.clock_to_latest_frame_start(
+        #         self.rot_blocks_idx["end"][i]
+        #     )
+        #     chunked_movie.append(self.image_stack[start:end])
+
+        #     start = self.clock_to_latest_line_start(
+        #         self.rot_blocks_idx["start"][i]
+        #     )
+        #     end = self.clock_to_latest_line_start(
+        #         self.rot_blocks_idx["end"][i]
+        #     )
+        #     chunked_angle_array.append(self.interpolated_angles[start:end])
+
+        # chunked_movie = np.concatenate(chunked_movie)
+        # chunked_angle_array = np.concatenate(chunked_angle_array)
+
+        bo = BO_for_derotation(
+            self.image_stack,
+            self.rot_deg_line,
+            self.offset,
+            self.center_of_rotation,
+            self.delta,
+        )
+
+        maximum = bo.optimize()
+
+        logging.info(f"Optimal parameters: {maximum}")
+        logging.info("Setting the optimal parameters...")
+        logging.info(f"Target: {maximum['target']}")
+        phi, theta, x_center, y_center = maximum["params"].values()
+
+        self.center_of_rotation = (x_center, y_center)
+        self.rotation_plane_angle = theta
+        self.rotation_plane_orientation = phi
 
     def plot_max_projection_with_center(self):
         """Plots the maximum projection of the image stack with the center
@@ -825,6 +936,7 @@ class FullPipeline:
         ax.axis("off")
 
         plt.savefig(self.debug_plots_folder / "max_projection_with_center.png")
+        plt.close()
 
     def derotate_frames_line_by_line(self) -> np.ndarray:
         """Wrapper for the function `derotate_an_image_array_line_by_line`.
@@ -841,12 +953,13 @@ class FullPipeline:
         if self.debugging_plots:
             self.plot_max_projection_with_center()
 
-        offset = self.find_image_offset(self.image_stack[0])
-
+        #  By default rotation_plane_angle and rotation_plane_orientation are 0
+        #  they have to be overwritten before calling the function.
+        #  To calculate them please use the ellipse fit.
         rotated_image_stack = derotate_an_image_array_line_by_line(
             self.image_stack,
             self.rot_deg_line,
-            blank_pixels_value=offset,
+            blank_pixels_value=self.offset,
             center=self.center_of_rotation,
             plotting_hook_line_addition=self.hooks.get(
                 "plotting_hook_line_addition"
@@ -854,6 +967,9 @@ class FullPipeline:
             plotting_hook_image_completed=self.hooks.get(
                 "plotting_hook_image_completed"
             ),
+            use_homography=True if self.rotation_plane_angle != 0 else False,
+            rotation_plane_angle=self.rotation_plane_angle,
+            rotation_plane_orientation=self.rotation_plane_orientation,
         )
 
         logging.info("✨ Image stack rotated ✨")
@@ -971,14 +1087,11 @@ class FullPipeline:
         masked : np.ndarray
             The masked derotated image stack.
         """
-        path = self.config["paths_write"]["derotated_tiff_folder"]
-        Path(path).mkdir(parents=True, exist_ok=True)
-
         imsave(
-            path + self.config["paths_write"]["saving_name"] + ".tif",
+            str(self.file_saving_path_with_name) + ".tif",
             np.array(masked),
         )
-        logging.info(f"Masked image saved in {path}")
+        logging.info(f"Saving {str(self.file_saving_path_with_name) + '.tif'}")
 
     def save_csv_with_derotation_data(self):
         """Saves a csv file with the rotation angles by line and frame,
@@ -994,7 +1107,20 @@ class FullPipeline:
         )
 
         df["frame"] = np.arange(self.num_frames)
-        df["rotation_angle"] = self.rot_deg_frame[: self.num_frames]
+        if len(self.rot_deg_frame) > self.num_frames:
+            df["rotation_angle"] = self.rot_deg_frame[: self.num_frames]
+            logging.warning(
+                "Number of rotation angles by frame is higher than the"
+                " number of frames"
+            )
+        elif len(self.rot_deg_frame) < self.num_frames:
+            df["rotation_angle"] = self.rot_deg_frame
+            logging.warning(
+                "Number of rotation angles by frame is lower than the"
+                " number of frames"
+            )
+        else:
+            df["rotation_angle"] = self.rot_deg_frame
         df["clock"] = self.frame_start[: self.num_frames]
 
         df["direction"] = np.nan * np.ones(len(df))
@@ -1017,13 +1143,9 @@ class FullPipeline:
                 rotation_counter += 1
                 adding_roatation = False
 
-        Path(self.config["paths_write"]["derotated_tiff_folder"]).mkdir(
-            parents=True, exist_ok=True
-        )
-
         df.to_csv(
-            self.config["paths_write"]["derotated_tiff_folder"]
-            + self.config["paths_write"]["saving_name"]
-            + ".csv",
+            str(self.file_saving_path_with_name) + ".csv",
             index=False,
         )
+
+    

@@ -67,7 +67,7 @@ def derotate(dataset_folder: Path, output_folder):
     try:
         derotator = FullPipeline(config)
         derotator()
-        return derotator.metrics
+        return derotator.metric
     except Exception as e:
         logging.error("Full derotation pipeline failed")
         logging.error(e.args)

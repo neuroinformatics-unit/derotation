@@ -71,8 +71,8 @@ class FullPipeline:
         self.masked_image_volume = self.add_circle_mask(
             rotated_images, self.mask_diameter
         )
-        self.mean_images = calculate_mean_images(self.masked_image_volume, self.rot_deg_frame)
-        self.metrics = ptd_of_most_detected_blob(
+        self.mean_images = calculate_mean_images(self.masked_image_volume, self.rot_deg_frame, round_decimals=0) 
+        self.metric = ptd_of_most_detected_blob(
             self.mean_images,
             plot=self.debugging_plots,
             debug_plots_folder=self.debug_plots_folder,
@@ -199,6 +199,14 @@ class FullPipeline:
             )
             Path(self.debug_plots_folder).mkdir(parents=True, exist_ok=True)
 
+            #  unlink previous debug plots
+            for item in self.debug_plots_folder.iterdir():
+                if item.is_dir():
+                    for file in item.iterdir():
+                        file.unlink()
+                else:
+                    item.unlink()
+
         logging.info(f"Dataset {self.filename_raw} loaded")
         logging.info(f"Filename: {self.filename}")
 
@@ -216,6 +224,8 @@ class FullPipeline:
         self.rotation_plane_orientation = 0
 
         self.delta = self.config["delta_center"]
+        self.init_points = self.config["init_points"]
+        self.n_iter = self.config["n_iter"]
 
     ### ----------------- Analog signals processing pipeline ------------- ###
     def process_analog_signals(self):
@@ -262,7 +272,9 @@ class FullPipeline:
             self.line_start,
             self.line_end,
         ) = self.get_start_end_times_with_threshold(
-            self.line_clock, self.std_coef
+            # when there is a new frame the corresponding new line is not registered
+            self.line_clock + self.frame_clock, 
+            self.std_coef
         )
         (
             self.frame_start,
@@ -733,10 +745,12 @@ class FullPipeline:
     def calculate_velocity(self):
         """Calculates the velocity of the rotation by line."""
         #  use the line clock frame rate to calculate the sampling rate
-        sampling_rate = 1 / (self.frame_rate * self.num_lines_per_frame)
+        self.sampling_rate = 1 / (self.frame_rate * self.num_lines_per_frame)
 
-        velocity = np.diff(self.rot_deg_line)
-        velocity /= sampling_rate
+        #  unwrap the angles to get the velocity
+        warr = np.rad2deg(np.unwrap(np.deg2rad(self.rot_deg_line)))
+        velocity = np.diff(warr)
+        velocity /= self.sampling_rate
 
         return velocity
 
@@ -791,18 +805,18 @@ class FullPipeline:
         """
         logging.info("Plotting rotation angles...")
 
-        fig, axs = plt.subplots(2, 2, figsize=(10, 10))
+        fig, axs = plt.subplots(2, 2, figsize=(15, 10))
 
         speeds = set(self.speed)
 
-        last_idx_for_each_speed = [
-            np.where(self.speed == s)[0][-1] for s in speeds
+        first_idx_for_each_speed = [
+            np.where(self.speed == s)[0][0] for s in speeds
         ]
-        last_idx_for_each_speed = sorted(last_idx_for_each_speed)
+        first_idx_for_each_speed = sorted(first_idx_for_each_speed)
 
         velocity = self.calculate_velocity()
 
-        for i, id in enumerate(last_idx_for_each_speed):
+        for i, id in enumerate(first_idx_for_each_speed):
             col = i // 2
             row = i % 2
 
@@ -844,10 +858,25 @@ class FullPipeline:
             #  plot velocity on top in red
             ax2 = ax.twinx()
             ax2.plot(
+                self.line_start[start_line_idx:end_line_idx],  # Align x-axis with line_start
                 velocity[start_line_idx:end_line_idx] * -1,
-                color="red",
+                color="gray",
                 label="velocity",
             )
+
+            # change x ticks to seconds by using sampling rate
+            ticks = ax.get_xticks()
+            new_ticks = [int(tick * self.sampling_rate) for tick in ticks]
+            ax.set_xticklabels(new_ticks)
+
+            #  set x label
+            ax.set_xlabel("Time (s)")
+
+            #  set y label left
+            ax.set_ylabel("Rotation angle (°)", color="black")
+
+            #  set y label right
+            ax2.set_ylabel("Velocity (°/s)", color="gray")
 
         fig.suptitle("Rotation angles by line and frame")
 
@@ -860,56 +889,34 @@ class FullPipeline:
     ### ----------------- Derotation ----------------- ###
 
     def find_optimal_parameters(self):
-        # sample_rotations_idx = [
-        #     0, 
-        #     self.number_of_rotations // 4,
-        #     self.number_of_rotations // 2, 
-        #     3 * self.number_of_rotations // 4,
-        #     -1
-        # ]
 
-        # chunked_movie = []
-        # chunked_angle_array = []
-        # for i in sample_rotations_idx:
-        #     start = self.clock_to_latest_frame_start(
-        #         self.rot_blocks_idx["start"][i]
-        #     )
-        #     end = self.clock_to_latest_frame_start(
-        #         self.rot_blocks_idx["end"][i]
-        #     )
-        #     chunked_movie.append(self.image_stack[start:end])
-
-        #     start = self.clock_to_latest_line_start(
-        #         self.rot_blocks_idx["start"][i]
-        #     )
-        #     end = self.clock_to_latest_line_start(
-        #         self.rot_blocks_idx["end"][i]
-        #     )
-        #     chunked_angle_array.append(self.interpolated_angles[start:end])
-
-        # chunked_movie = np.concatenate(chunked_movie)
-        # chunked_angle_array = np.concatenate(chunked_angle_array)
+        logging.info("Finding optimal parameters...")
 
         bo = BO_for_derotation(
             self.image_stack,
             self.rot_deg_line,
+            self.rot_deg_frame,
             self.offset,
             self.center_of_rotation,
             self.delta,
+            self.init_points,
+            self.n_iter,
+            self.debug_plots_folder,
         )
 
         maximum = bo.optimize()
 
         logging.info(f"Optimal parameters: {maximum}")
-        logging.info("Setting the optimal parameters...")
         logging.info(f"Target: {maximum['target']}")
-        phi, theta, x_center, y_center = maximum["params"].values()
+        
+        if maximum['target'] > -50:
+            # Consider a value of -50 as a threshold for the quality of the fit
+            logging.info("Using fitted center of rotation...")
+            x_center, y_center = maximum["params"].values()
+            self.center_of_rotation = (x_center, y_center)
+            
 
-        self.center_of_rotation = (x_center, y_center)
-        self.rotation_plane_angle = theta
-        self.rotation_plane_orientation = phi
-
-    def plot_max_projection_with_center(self):
+    def plot_max_projection_with_center(self, stack, name="max_projection_with_center"):
         """Plots the maximum projection of the image stack with the center
         of rotation.
         This plot will be saved in the debug_plots folder.
@@ -918,7 +925,7 @@ class FullPipeline:
         """
         logging.info("Plotting max projection with center...")
 
-        max_projection = np.max(self.image_stack, axis=0)
+        max_projection = np.max(stack, axis=0)
 
         fig, ax = plt.subplots(1, 1, figsize=(5, 5))
 
@@ -935,7 +942,7 @@ class FullPipeline:
 
         ax.axis("off")
 
-        plt.savefig(self.debug_plots_folder / "max_projection_with_center.png")
+        plt.savefig(str(self.debug_plots_folder / name) + ".png")
         plt.close()
 
     def derotate_frames_line_by_line(self) -> np.ndarray:
@@ -951,7 +958,7 @@ class FullPipeline:
         logging.info("Starting derotation by line...")
 
         if self.debugging_plots:
-            self.plot_max_projection_with_center()
+            self.plot_max_projection_with_center(self.image_stack)
 
         #  By default rotation_plane_angle and rotation_plane_orientation are 0
         #  they have to be overwritten before calling the function.
@@ -971,6 +978,9 @@ class FullPipeline:
             rotation_plane_angle=self.rotation_plane_angle,
             rotation_plane_orientation=self.rotation_plane_orientation,
         )
+
+        if self.debugging_plots:
+            self.plot_max_projection_with_center(rotated_image_stack, name="derotated_max_projection_with_center")
 
         logging.info("✨ Image stack rotated ✨")
         return rotated_image_stack

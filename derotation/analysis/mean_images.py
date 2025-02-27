@@ -21,11 +21,19 @@ def calculate_mean_images(
     np.ndarray
         The mean images for each rotation angle.
     """
-    logging.info("Calculating mean images...")
+    # logging.info("Calculating mean images...")
 
     #  correct for a mismatch in the total number of frames
     angles_subset = copy.deepcopy(rot_deg_frame)
-    angles_subset = angles_subset[: len(image_stack)]
+    if len(angles_subset) > len(image_stack):
+        angles_subset = angles_subset[: len(image_stack)]
+    else:
+        image_stack = image_stack[: len(angles_subset)]
+
+    logging.info(f"Number of images: {len(image_stack)}")
+    logging.info(f"Number of angles: {len(angles_subset)}")
+
+    assert len(image_stack) == len(angles_subset), "Mismatch in the number of images and angles"
 
     # also there is a bias on the angles
     angles_subset += -0.1
@@ -38,7 +46,11 @@ def calculate_mean_images(
             mean_image = np.mean(images, axis=0)
 
             mean_images.append(mean_image)
-        except IndexError:
+        except IndexError as e:
             logging.warning(f"Angle {i} not found in the image stack")
+            logging.warning(e)
+
+            example_angles = np.random.choice(rounded_angles, 100)
+            logging.info(f"Example angles: {example_angles}")
 
     return np.asarray(mean_images)

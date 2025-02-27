@@ -182,4 +182,4 @@ def assert_blob_detection(
 
 if __name__ == "__main__":
     Path("debug/").mkdir(parents=True, exist_ok=True)
-    test_derotation_with_rotation_out_of_plane((0, 0), 20, 45, plots=True)
+    test_derotation_with_rotation_out_of_plane((0, 0), 0, 0, plots=True)

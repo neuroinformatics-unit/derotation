@@ -16,6 +16,8 @@ def ptd_of_most_detected_blob(
         "overlap": 0,
     },
     debug_plots_folder="/debug_plots",
+    image_names=["detected_blobs.png", "most_detected_blob_centers.png"],
+    DBSCAN_max_distance=10,
 ):
     #  clip all the images to the same contrast
     clipped_images = [
@@ -46,7 +48,7 @@ def ptd_of_most_detected_blob(
             plt.gca().add_artist(c)
 
         # save
-        plt.savefig(debug_plots_folder / "detected_blobs.png")
+        plt.savefig(debug_plots_folder / image_names[0])
         plt.close()
 
     # Flatten the blob list and add frame indices
@@ -57,13 +59,13 @@ def ptd_of_most_detected_blob(
     all_blobs = np.array(all_blobs)
 
     # Use DBSCAN to cluster blobs based on proximity
-    logging.info(all_blobs)
-    logging.info(all_blobs.shape)
-    
+
     coords = all_blobs[:, :3]  # x, y, radius
-    clustering = DBSCAN(eps=10, min_samples=2).fit(
-        coords
-    )  # Adjust eps as needed
+    DBSCAN_max_distance = float(DBSCAN_max_distance)
+    clustering = DBSCAN(
+        eps=DBSCAN_max_distance,
+        min_samples=2,
+        ).fit(coords)  
     all_blobs = np.column_stack(
         (all_blobs, clustering.labels_)
     )  # Add cluster labels
@@ -87,7 +89,7 @@ def ptd_of_most_detected_blob(
             plt.scatter(x, y, color="red", marker="x")
 
         # save
-        plt.savefig(debug_plots_folder / "most_detected_blob_centers.png")
+        plt.savefig(debug_plots_folder / image_names[1])
         plt.close()
 
     return ptp

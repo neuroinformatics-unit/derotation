@@ -36,7 +36,7 @@ def calculate_mean_images(
     assert len(image_stack) == len(angles_subset), "Mismatch in the number of images and angles"
 
     # also there is a bias on the angles
-    angles_subset += -0.1
+    # angles_subset += -0.1
     rounded_angles = np.round(angles_subset, round_decimals)
 
     mean_images = []

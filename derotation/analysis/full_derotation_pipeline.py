@@ -273,7 +273,7 @@ class FullPipeline:
             self.line_end,
         ) = self.get_start_end_times_with_threshold(
             # when there is a new frame the corresponding new line is not registered
-            self.line_clock + self.frame_clock, 
+            self.line_clock, #+ self.frame_clock, 
             self.std_coef
         )
         (
@@ -981,6 +981,8 @@ class FullPipeline:
 
         if self.debugging_plots:
             self.plot_max_projection_with_center(rotated_image_stack, name="derotated_max_projection_with_center")
+        # self.find_optimal_parameters()
+            self.mean_image_for_each_rotation(rotated_image_stack)
 
         logging.info("✨ Image stack rotated ✨")
         return rotated_image_stack
@@ -1017,6 +1019,23 @@ class FullPipeline:
         )
         offset = np.min(gm.means_)
         return offset
+    
+    def mean_image_for_each_rotation(
+        self,
+        rotated_image_stack
+    ):
+        folder = self.debug_plots_folder / "mean_images"
+        Path(folder).mkdir(parents=True, exist_ok=True)
+        for i, (start, end) in enumerate(zip(self.rot_blocks_idx["start"], self.rot_blocks_idx["end"])):
+            frame_start = self.clock_to_latest_frame_start(start)
+            frame_end = self.clock_to_latest_frame_start(end
+            )
+            mean_image = np.mean(rotated_image_stack[frame_start:frame_end], axis=0)
+            fig, ax = plt.subplots(1, 1, figsize=(10, 10))
+            ax.imshow(mean_image, cmap="viridis")
+            ax.axis("off")
+            plt.savefig(str(folder / f"mean_image_rotation_{i}.png"))
+            plt.close()
 
     ### ----------------- Saving ----------------- ###
     @staticmethod

@@ -12,7 +12,7 @@ import yaml
 from fancylog import fancylog
 from scipy.signal import find_peaks
 from sklearn.mixture import GaussianMixture
-from tifffile import imsave
+from tifffile import imwrite
 
 from derotation.analysis.bayesian_optimization import BO_for_derotation
 from derotation.analysis.mean_images import calculate_mean_images
@@ -1122,7 +1122,7 @@ class FullPipeline:
         masked : np.ndarray
             The masked derotated image stack.
         """
-        imsave(
+        imwrite(
             str(self.file_saving_path_with_name) + ".tif",
             np.array(masked),
         )

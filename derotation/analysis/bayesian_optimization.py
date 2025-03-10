@@ -1,4 +1,6 @@
 import logging
+from pathlib import Path
+from typing import Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -16,11 +18,11 @@ class BO_for_derotation:
         rot_deg_line: np.ndarray,
         rot_deg_frame: np.ndarray,
         blank_pixels_value: float,
-        center: int,
+        center: Tuple[int, int],
         delta: int,
         init_points: int = 2,
         n_iter: int = 10,
-        debug_plots_folder: str = "/debug_plots",
+        debug_plots_folder: Path = Path("./debug_plots"),
     ):
         self.movie = movie
         self.rot_deg_line = rot_deg_line
@@ -52,7 +54,7 @@ class BO_for_derotation:
                 image_stack=self.movie,
                 rot_deg_line=self.rot_deg_line,
                 blank_pixels_value=self.blank_pixels_value,
-                center=(x, y),
+                center=(int(x), int(y)),
             )
 
             mean_images = calculate_mean_images(

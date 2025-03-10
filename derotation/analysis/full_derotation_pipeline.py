@@ -275,7 +275,6 @@ class FullPipeline:
             self.line_start,
             self.line_end,
         ) = self.get_start_end_times_with_threshold(
-            # when there is a new frame the corresponding new line is not registered
             self.line_clock,
             self.std_coef,
         )

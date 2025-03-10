@@ -30,9 +30,9 @@ def calculate_mean_images(
     logging.info(f"Number of images: {len(image_stack)}")
     logging.info(f"Number of angles: {len(angles_subset)}")
 
-    assert len(image_stack) == len(
-        angles_subset
-    ), "Mismatch in the number of images and angles"
+    assert len(image_stack) == len(angles_subset), (
+        "Mismatch in the number of images and angles"
+    )
 
     rounded_angles = np.round(angles_subset, round_decimals)
 

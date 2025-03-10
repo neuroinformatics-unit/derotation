@@ -16,9 +16,9 @@ def test_adjust_rotation_increment_360(
     new_increments = np.round(new_increments, 0)
 
     assert np.all(new_increments == corrected_increments), f"{new_increments}"
-    assert np.all(
-        new_ticks_per_rotation == ticks_per_rotation_calculated
-    ), f"{new_ticks_per_rotation}"
+    assert np.all(new_ticks_per_rotation == ticks_per_rotation_calculated), (
+        f"{new_ticks_per_rotation}"
+    )
 
 
 def test_adjust_rotation_increment_5(
@@ -37,6 +37,6 @@ def test_adjust_rotation_increment_5(
         [0.139, 0.119, 0.152, 0.128, 0.147, 0.179, 0.2, 0.167, 0.139, 0.152]
     )
 
-    assert np.all(
-        new_increments == correct_increments
-    ), f"new_increments: {new_increments}"
+    assert np.all(new_increments == correct_increments), (
+        f"new_increments: {new_increments}"
+    )

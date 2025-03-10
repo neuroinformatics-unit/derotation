@@ -16,6 +16,7 @@ from derotation.analysis.fit_ellipse import (
 from derotation.analysis.full_derotation_pipeline import FullPipeline
 from derotation.analysis.mean_images import calculate_mean_images
 
+
 class IncrementalPipeline(FullPipeline):
     """Derotate the image stack that was acquired using the incremental
     rotation method.
@@ -45,7 +46,9 @@ class IncrementalPipeline(FullPipeline):
         derotated_images = self.deroatate_by_frame()
         masked_unregistered = self.add_circle_mask(derotated_images)
 
-        mean_images = calculate_mean_images(masked_unregistered, self.rot_deg_frame)
+        mean_images = calculate_mean_images(
+            masked_unregistered, self.rot_deg_frame
+        )
         target_image = self.get_target_image(masked_unregistered)
         shifts = self.get_shifts_using_phase_cross_correlation(
             mean_images, target_image
@@ -450,7 +453,9 @@ class IncrementalPipeline(FullPipeline):
             "Fitting an ellipse to the largest blob centers "
             + "to find the center of rotation..."
         )
-        mean_images = calculate_mean_images(self.image_stack, self.rot_deg_frame)
+        mean_images = calculate_mean_images(
+            self.image_stack, self.rot_deg_frame
+        )
 
         logging.info("Finding blobs...")
         bd = BlobDetection(self.debugging_plots, self.debug_plots_folder)

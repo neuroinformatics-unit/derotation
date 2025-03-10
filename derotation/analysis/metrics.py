@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from skimage.feature import blob_log
 from sklearn.cluster import DBSCAN
-import logging
+
 
 def ptd_of_most_detected_blob(
     mean_images_by_angle,
@@ -24,7 +24,7 @@ def ptd_of_most_detected_blob(
         np.clip(img, np.percentile(img, 99), np.percentile(img, 99.99))
         for img in mean_images_by_angle
     ]
-    
+
     # Detect the blobs in the derotated stack in each frame
     # blobs is a list(list(x, y, sigma)) of the detected blobs for every frame
     blobs = [
@@ -65,7 +65,7 @@ def ptd_of_most_detected_blob(
     clustering = DBSCAN(
         eps=DBSCAN_max_distance,
         min_samples=2,
-        ).fit(coords)  
+    ).fit(coords)
     all_blobs = np.column_stack(
         (all_blobs, clustering.labels_)
     )  # Add cluster labels

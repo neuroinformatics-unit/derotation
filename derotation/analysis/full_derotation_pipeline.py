@@ -15,13 +15,14 @@ from sklearn.mixture import GaussianMixture
 from tifffile import imsave
 
 from derotation.analysis.bayesian_optimization import BO_for_derotation
+from derotation.analysis.mean_images import calculate_mean_images
 from derotation.analysis.metrics import ptd_of_most_detected_blob
 from derotation.derotate_by_line import derotate_an_image_array_line_by_line
 from derotation.load_data.custom_data_loaders import (
     get_analog_signals,
     read_randomized_stim_table,
 )
-from derotation.analysis.mean_images import calculate_mean_images
+
 
 class FullPipeline:
     """DerotationPipeline is a class that derotates an image stack
@@ -71,7 +72,9 @@ class FullPipeline:
         self.masked_image_volume = self.add_circle_mask(
             rotated_images, self.mask_diameter
         )
-        self.mean_images = calculate_mean_images(self.masked_image_volume, self.rot_deg_frame, round_decimals=0) 
+        self.mean_images = calculate_mean_images(
+            self.masked_image_volume, self.rot_deg_frame, round_decimals=0
+        )
         self.metric = ptd_of_most_detected_blob(
             self.mean_images,
             plot=self.debugging_plots,
@@ -114,8 +117,8 @@ class FullPipeline:
             filename="derotation",
             verbose=False,
         )
-        #  suppress debug messages from matplotlib  
-        logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
+        #  suppress debug messages from matplotlib
+        logging.getLogger("matplotlib.font_manager").setLevel(logging.ERROR)
 
     def load_data(self):
         """Loads data from the paths specified in the config file.
@@ -273,8 +276,8 @@ class FullPipeline:
             self.line_end,
         ) = self.get_start_end_times_with_threshold(
             # when there is a new frame the corresponding new line is not registered
-            self.line_clock, #+ self.frame_clock, 
-            self.std_coef
+            self.line_clock,
+            self.std_coef,
         )
         (
             self.frame_start,
@@ -858,7 +861,9 @@ class FullPipeline:
             #  plot velocity on top in red
             ax2 = ax.twinx()
             ax2.plot(
-                self.line_start[start_line_idx:end_line_idx],  # Align x-axis with line_start
+                self.line_start[
+                    start_line_idx:end_line_idx
+                ],  # Align x-axis with line_start
                 velocity[start_line_idx:end_line_idx] * -1,
                 color="gray",
                 label="velocity",
@@ -889,7 +894,6 @@ class FullPipeline:
     ### ----------------- Derotation ----------------- ###
 
     def find_optimal_parameters(self):
-
         logging.info("Finding optimal parameters...")
 
         bo = BO_for_derotation(
@@ -908,15 +912,16 @@ class FullPipeline:
 
         logging.info(f"Optimal parameters: {maximum}")
         logging.info(f"Target: {maximum['target']}")
-        
-        if maximum['target'] > -50:
+
+        if maximum["target"] > -50:
             # Consider a value of -50 as a threshold for the quality of the fit
             logging.info("Using fitted center of rotation...")
             x_center, y_center = maximum["params"].values()
             self.center_of_rotation = (x_center, y_center)
-            
 
-    def plot_max_projection_with_center(self, stack, name="max_projection_with_center"):
+    def plot_max_projection_with_center(
+        self, stack, name="max_projection_with_center"
+    ):
         """Plots the maximum projection of the image stack with the center
         of rotation.
         This plot will be saved in the debug_plots folder.
@@ -980,8 +985,10 @@ class FullPipeline:
         )
 
         if self.debugging_plots:
-            self.plot_max_projection_with_center(rotated_image_stack, name="derotated_max_projection_with_center")
-        # self.find_optimal_parameters()
+            self.plot_max_projection_with_center(
+                rotated_image_stack,
+                name="derotated_max_projection_with_center",
+            )
             self.mean_image_for_each_rotation(rotated_image_stack)
 
         logging.info("✨ Image stack rotated ✨")
@@ -1019,18 +1026,18 @@ class FullPipeline:
         )
         offset = np.min(gm.means_)
         return offset
-    
-    def mean_image_for_each_rotation(
-        self,
-        rotated_image_stack
-    ):
+
+    def mean_image_for_each_rotation(self, rotated_image_stack):
         folder = self.debug_plots_folder / "mean_images"
         Path(folder).mkdir(parents=True, exist_ok=True)
-        for i, (start, end) in enumerate(zip(self.rot_blocks_idx["start"], self.rot_blocks_idx["end"])):
+        for i, (start, end) in enumerate(
+            zip(self.rot_blocks_idx["start"], self.rot_blocks_idx["end"])
+        ):
             frame_start = self.clock_to_latest_frame_start(start)
-            frame_end = self.clock_to_latest_frame_start(end
+            frame_end = self.clock_to_latest_frame_start(end)
+            mean_image = np.mean(
+                rotated_image_stack[frame_start:frame_end], axis=0
             )
-            mean_image = np.mean(rotated_image_stack[frame_start:frame_end], axis=0)
             fig, ax = plt.subplots(1, 1, figsize=(10, 10))
             ax.imshow(mean_image, cmap="viridis")
             ax.axis("off")
@@ -1176,5 +1183,3 @@ class FullPipeline:
             str(self.file_saving_path_with_name) + ".csv",
             index=False,
         )
-
-    

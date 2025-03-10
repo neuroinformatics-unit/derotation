@@ -1,12 +1,11 @@
 import copy
 import logging
+
 import numpy as np
 
 
 def calculate_mean_images(
-    image_stack: np.ndarray, 
-    rot_deg_frame: np.ndarray,
-    round_decimals: int = 2
+    image_stack: np.ndarray, rot_deg_frame: np.ndarray, round_decimals: int = 2
 ) -> np.ndarray:
     """Calculate the mean images for each rotation angle. This required
     to calculate the shifts using phase cross correlation.
@@ -21,8 +20,6 @@ def calculate_mean_images(
     np.ndarray
         The mean images for each rotation angle.
     """
-    # logging.info("Calculating mean images...")
-
     #  correct for a mismatch in the total number of frames
     angles_subset = copy.deepcopy(rot_deg_frame)
     if len(angles_subset) > len(image_stack):
@@ -33,10 +30,10 @@ def calculate_mean_images(
     logging.info(f"Number of images: {len(image_stack)}")
     logging.info(f"Number of angles: {len(angles_subset)}")
 
-    assert len(image_stack) == len(angles_subset), "Mismatch in the number of images and angles"
+    assert len(image_stack) == len(
+        angles_subset
+    ), "Mismatch in the number of images and angles"
 
-    # also there is a bias on the angles
-    # angles_subset += -0.1
     rounded_angles = np.round(angles_subset, round_decimals)
 
     mean_images = []

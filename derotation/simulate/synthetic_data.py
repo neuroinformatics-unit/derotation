@@ -383,9 +383,9 @@ class SyntheticData:
 
             @staticmethod
             def calculate_mean_images(
-                image_stack: np.ndarray, 
+                image_stack: np.ndarray,
                 rot_deg_frame: np.ndarray,
-                round_decimals: int = 0
+                round_decimals: int = 0,
             ) -> list:
                 #  Override original method as it is too bound
                 #  to signal coming from a real motor

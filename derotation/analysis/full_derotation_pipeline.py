@@ -11,6 +11,7 @@ import tifffile as tiff
 import yaml
 from fancylog import fancylog
 from scipy.signal import find_peaks
+from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
 from tifffile import imwrite
 
@@ -156,6 +157,15 @@ class FullPipeline:
         self.direction, self.speed = read_randomized_stim_table(
             self.config["paths_read"]["path_to_randperm"]
         )
+        logging.info(f"Number of rotations: {len(self.direction)}")
+
+        rotation_direction = pd.DataFrame(
+            {"direction": self.direction, "speed": self.speed}
+        ).pivot_table(
+            index="direction", columns="speed", aggfunc="size", fill_value=0
+        )
+        #  print pivot table
+        logging.info(f"Rotation direction: \n{rotation_direction}")
 
         self.number_of_rotations = len(self.direction)
 
@@ -489,13 +499,40 @@ class FullPipeline:
                 "Start and end of rotations have different lengths"
             )
         if self.rot_blocks_idx["start"].shape[0] != self.number_of_rotations:
-            logging.info(
+            logging.warning(
                 f"Number of rotations is not {self.number_of_rotations}."
-                + f"Adjusting to {self.rot_blocks_idx['start'].shape[0]}"
+                + f"Found {self.rot_blocks_idx['start'].shape[0]} rotations."
+                + "Adjusting starting and ending times..."
             )
-            self.number_of_rotations = self.rot_blocks_idx["start"].shape[0]
+            self.find_missing_rotation_on_periods()
 
         logging.info("Number of rotations is as expected")
+
+    def find_missing_rotation_on_periods(self):
+        """
+        Find the missing rotation on periods by looking at the rotation ticks
+        and the rotation on signal. This is useful when the number of rotations
+        is not as expected.
+        Uses k-means to cluster the ticks and pick the first and last for each
+        cluster. These are the starting and ending times.
+        """
+
+        kmeans = KMeans(
+            n_clusters=self.number_of_rotations, random_state=0
+        ).fit(self.rotation_ticks_peaks.reshape(-1, 1))
+
+        new_start = np.zeros(self.number_of_rotations, dtype=int)
+        new_end = np.zeros(self.number_of_rotations, dtype=int)
+        for i in range(self.number_of_rotations):
+            new_start[i] = self.rotation_ticks_peaks[kmeans.labels_ == i].min()
+            new_end[i] = self.rotation_ticks_peaks[kmeans.labels_ == i].max()
+
+        #  cluster number is not the same as the number of rotations
+        self.rot_blocks_idx["start"] = sorted(new_start)
+        self.rot_blocks_idx["end"] = sorted(new_end)
+
+        #  update the rotation on signal
+        self.rotation_on = self.create_signed_rotation_array()
 
     def is_number_of_ticks_correct(self) -> bool:
         """Compares the total number of ticks with the expected number of

@@ -1181,19 +1181,25 @@ class FullPipeline:
         df["frame"] = np.arange(self.num_frames)
         if len(self.rot_deg_frame) > self.num_frames:
             df["rotation_angle"] = self.rot_deg_frame[: self.num_frames]
+            df["clock"] = self.frame_start[: self.num_frames]
             logging.warning(
                 "Number of rotation angles by frame is higher than the"
                 " number of frames"
             )
         elif len(self.rot_deg_frame) < self.num_frames:
-            df["rotation_angle"] = self.rot_deg_frame
+            missing_frames = self.num_frames - len(self.rot_deg_frame)
+            df["rotation_angle"] = np.append(
+                self.rot_deg_frame, [0] * missing_frames
+            )
+            df["clock"] = np.append(self.frame_start, [0] * missing_frames)
+
             logging.warning(
                 "Number of rotation angles by frame is lower than the"
-                " number of frames"
+                " number of frames. Adjusted."
             )
         else:
             df["rotation_angle"] = self.rot_deg_frame
-        df["clock"] = self.frame_start[: self.num_frames]
+            df["clock"] = self.frame_start
 
         df["direction"] = np.nan * np.ones(len(df))
         df["speed"] = np.nan * np.ones(len(df))

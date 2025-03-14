@@ -27,9 +27,6 @@ def calculate_mean_images(
     else:
         image_stack = image_stack[: len(angles_subset)]
 
-    logging.info(f"Number of images: {len(image_stack)}")
-    logging.info(f"Number of angles: {len(angles_subset)}")
-
     assert len(image_stack) == len(angles_subset), (
         "Mismatch in the number of images and angles"
     )

@@ -1,4 +1,5 @@
 import copy
+import itertools
 import logging
 import sys
 from pathlib import Path
@@ -10,7 +11,7 @@ import pandas as pd
 import tifffile as tiff
 import yaml
 from fancylog import fancylog
-from scipy.signal import find_peaks
+from scipy.signal import butter, find_peaks, sosfilt
 from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
 from tifffile import imwrite
@@ -67,7 +68,7 @@ class FullPipeline:
         self.process_analog_signals()
 
         self.offset = self.find_image_offset(self.image_stack[0])
-        self.find_optimal_parameters()
+        # self.find_optimal_parameters()
 
         rotated_images = self.derotate_frames_line_by_line()
         self.masked_image_volume = self.add_circle_mask(
@@ -303,6 +304,7 @@ class FullPipeline:
         if self.debugging_plots:
             self.plot_rotation_on_and_ticks()
             self.plot_rotation_angles_and_velocity()
+            self.plot_rotation_speeds()
 
         logging.info("✨ Analog signals processed ✨")
 
@@ -783,15 +785,26 @@ class FullPipeline:
 
     def calculate_velocity(self):
         """Calculates the velocity of the rotation by line."""
-        #  use the line clock frame rate to calculate the sampling rate
-        self.sampling_rate = 1 / (self.frame_rate * self.num_lines_per_frame)
+        # Compute the correct sampling rate
+        self.sampling_rate = (
+            self.frame_rate * self.num_lines_per_frame
+        )  # 1725.44 Hz
 
-        #  unwrap the angles to get the velocity
+        # Unwrap angles and compute velocity
         warr = np.rad2deg(np.unwrap(np.deg2rad(self.rot_deg_line)))
-        velocity = np.diff(warr)
-        velocity /= self.sampling_rate
+        velocity = np.diff(warr) / self.sampling_rate
 
-        return velocity
+        # Butterworth low-pass filter
+        order = 3
+        nyq = 0.5 * self.sampling_rate  # Nyquist frequency
+        cutoff = 10 / nyq  # Normalized cutoff frequency
+
+        sos = butter(
+            order, cutoff, btype="low", output="sos"
+        )  # Use 'sos' for stability
+        filtered = sosfilt(sos, velocity)  # Apply filter correctly
+
+        return filtered
 
     def plot_rotation_on_and_ticks(self):
         """Plots the rotation ticks and the rotation on signal.
@@ -925,6 +938,57 @@ class FullPipeline:
         fig.legend(handles, labels, loc="upper right")
 
         plt.savefig(self.debug_plots_folder / "rotation_angles.png")
+        plt.close()
+
+    def plot_rotation_speeds(self):
+        fig, ax = plt.subplots(2, 4, figsize=(15, 7))
+
+        unique_speeds = sorted(set(self.speed))
+        unique_directions = sorted(set(self.direction))
+
+        velocity = self.calculate_velocity()
+
+        #  row clockwise, column speed
+        for i, (direction, speed) in enumerate(
+            itertools.product(unique_directions, unique_speeds)
+        ):
+            row = i // 4
+            col = i % 4
+            idx_this_speed = np.where(
+                np.logical_and(
+                    self.speed == speed, self.direction == direction
+                )
+            )[0]
+
+            #  linspace of colors depending on repetition number
+            colors = plt.cm.viridis(np.linspace(0, 1, len(idx_this_speed)))
+
+            for j, idx in enumerate(idx_this_speed):
+                this_velocity = velocity[
+                    self.clock_to_latest_line_start(
+                        self.rot_blocks_idx["start"][idx]
+                    ) : self.clock_to_latest_line_start(
+                        self.rot_blocks_idx["end"][idx]
+                    )
+                ]
+                ax[row, col].plot(
+                    np.linspace(
+                        0,
+                        len(this_velocity) * self.sampling_rate,
+                        len(this_velocity),
+                    ),
+                    this_velocity,
+                    label=f"repetition {idx}",
+                    color=colors[j],
+                )
+            # ax[row, col].legend()
+            ax[row, col].set_title(f"Speed: {speed}, direction: {direction}")
+            # ax[row, col].set_ylim(-1.5, 1.5)
+            ax[row, col].spines["top"].set_visible(False)
+            ax[row, col].spines["right"].set_visible(False)
+
+        fig.suptitle("Rotation on signal for each speed")
+        plt.savefig(self.debug_plots_folder / "all_speeds.png")
         plt.close()
 
     ### ----------------- Derotation ----------------- ###

@@ -1,4 +1,6 @@
 from collections import Counter
+from pathlib import Path
+from typing import List
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -7,21 +9,56 @@ from sklearn.cluster import DBSCAN
 
 
 def ptd_of_most_detected_blob(
-    mean_images_by_angle,
-    plot=True,
-    blob_log_kwargs={
+    mean_images_by_angle: np.ndarray,
+    plot: bool = True,
+    blob_log_kwargs: dict = {
         "min_sigma": 7,
         "max_sigma": 10,
         "threshold": 0.95,
         "overlap": 0,
     },
-    debug_plots_folder="/debug_plots",
-    image_names=["detected_blobs.png", "most_detected_blob_centers.png"],
-    DBSCAN_max_distance=10,
-):
+    debug_plots_folder: Path = Path("/debug_plots"),
+    image_names: List[str] = [
+        "detected_blobs.png",
+        "most_detected_blob_centers.png",
+    ],
+    DBSCAN_max_distance: float = 10.0,
+    clipping_percentiles: List[float] = [99.0, 99.99],
+) -> float:
+    """Calculate the peak to peak distance of the centers of the most
+    detected blob in the derotated stack across all frames.
+
+    Parameters
+    ----------
+    mean_images_by_angle : np.ndarray
+        The derotated stack of images.
+    plot : bool, optional
+        Whether to plot the detected blobs, by default True
+    blob_log_kwargs : _type_, optional
+        The parameters for the blob detection algorithm, by default
+        { "min_sigma": 7, "max_sigma": 10, "threshold": 0.95, "overlap": 0, }
+    debug_plots_folder : str, optional
+        The folder to save the debugging plots, by default "/debug_plots"
+    image_names : List[str], optional
+       The names of the images to save if plot is True, by default
+       ["detected_blobs.png", "most_detected_blob_centers.png"]
+    DBSCAN_max_distance : float, optional
+        The maximum distance between two samples for one to be considered as
+        in the neighborhood of the other, by default 10.0
+    clipping_percentiles : List[float], optional
+        The percentiles to clip the images to, by default [99.0, 99.99]
+    Returns
+    -------
+    float
+        The peak to peak distance of the centers of the most detected blob.
+    """
     #  clip all the images to the same contrast
     clipped_images = [
-        np.clip(img, np.percentile(img, 99), np.percentile(img, 99.99))
+        np.clip(
+            img,
+            np.percentile(img, clipping_percentiles[0]),
+            np.percentile(img, clipping_percentiles[1]),
+        )
         for img in mean_images_by_angle
     ]
 
@@ -52,11 +89,11 @@ def ptd_of_most_detected_blob(
         plt.close()
 
     # Flatten the blob list and add frame indices
-    all_blobs = []
+    _blobs = []
     for frame_idx, frame_blobs in enumerate(blobs):
         for blob in frame_blobs:
-            all_blobs.append([*blob, frame_idx])
-    all_blobs = np.array(all_blobs)
+            _blobs.append([*blob, frame_idx])
+    all_blobs = np.array(_blobs)
 
     # Use DBSCAN to cluster blobs based on proximity
 
@@ -71,7 +108,7 @@ def ptd_of_most_detected_blob(
     )  # Add cluster labels
 
     cluster_counts = Counter(all_blobs[:, -1])  # Cluster labels
-    most_detected_label = max(cluster_counts, key=cluster_counts.get)
+    most_detected_label = max(cluster_counts, key=lambda k: cluster_counts[k])
 
     # Extract blobs belonging to the most detected cluster
     most_detected_blobs = all_blobs[all_blobs[:, -1] == most_detected_label]

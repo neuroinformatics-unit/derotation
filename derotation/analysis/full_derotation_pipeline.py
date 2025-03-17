@@ -214,12 +214,15 @@ class FullPipeline:
             Path(self.debug_plots_folder).mkdir(parents=True, exist_ok=True)
 
             #  unlink previous debug plots
+            logging.info("Deleting previous debug plots...")
             for item in self.debug_plots_folder.iterdir():
                 if item.is_dir():
                     for file in item.iterdir():
-                        file.unlink()
+                        if file.suffix == ".png":
+                            file.unlink()
                 else:
-                    item.unlink()
+                    if item.suffix == ".png":
+                        item.unlink()
 
         logging.info(f"Dataset {self.filename_raw} loaded")
         logging.info(f"Filename: {self.filename}")

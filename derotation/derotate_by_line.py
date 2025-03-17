@@ -306,9 +306,9 @@ def apply_homography(
     )
 
     #  check shape
-    assert (
-        new_image_stack.shape == image_stack.shape
-    ), f"Shape mismatch: {new_image_stack.shape} != {image_stack.shape}"
+    assert new_image_stack.shape == image_stack.shape, (
+        f"Shape mismatch: {new_image_stack.shape} != {image_stack.shape}"
+    )
     image_stack = new_image_stack
 
     return image_stack

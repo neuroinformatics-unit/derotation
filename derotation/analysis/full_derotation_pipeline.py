@@ -1,8 +1,9 @@
 import copy
+import itertools
 import logging
 import sys
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -10,10 +11,14 @@ import pandas as pd
 import tifffile as tiff
 import yaml
 from fancylog import fancylog
-from scipy.signal import find_peaks
+from scipy.signal import butter, find_peaks, sosfilt
+from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
-from tifffile import imsave
+from tifffile import imwrite
 
+from derotation.analysis.bayesian_optimization import BO_for_derotation
+from derotation.analysis.mean_images import calculate_mean_images
+from derotation.analysis.metrics import ptd_of_most_detected_blob
 from derotation.derotate_by_line import derotate_an_image_array_line_by_line
 from derotation.load_data.custom_data_loaders import (
     get_analog_signals,
@@ -27,7 +32,7 @@ class FullPipeline:
     """
 
     ### ----------------- Main pipeline ----------------- ###
-    def __init__(self, config_name):
+    def __init__(self, _config: Union[dict, str]):
         """DerotationPipeline is a class that derotates an image stack
         acquired with a rotating sample under a microscope.
         In the constructor, it loads the config file, starts the logging
@@ -38,10 +43,15 @@ class FullPipeline:
 
         Parameters
         ----------
-        config_name : str
-            Name of the config file without extension.
+        _config : Union[dict, str]
+            Name of the config file without extension that will be retrieved
+            in the derotation/config folder, or the config dictionary.
         """
-        self.config = self.get_config(config_name)
+        if isinstance(_config, dict):
+            self.config = _config
+        else:
+            self.config = self.get_config(_config)
+
         self.start_logging()
         self.load_data()
 
@@ -56,15 +66,29 @@ class FullPipeline:
         - saving the masked image stack
         """
         self.process_analog_signals()
+
+        self.offset = self.find_image_offset(self.image_stack[0])
+        self.set_optimal_center()
+
         rotated_images = self.derotate_frames_line_by_line()
-        masked = self.add_circle_mask(rotated_images, self.mask_diameter)
-        self.save(masked)
+        self.masked_image_volume = self.add_circle_mask(
+            rotated_images, self.mask_diameter
+        )
+        self.mean_images = calculate_mean_images(
+            self.masked_image_volume, self.rot_deg_frame, round_decimals=0
+        )
+        self.metric = ptd_of_most_detected_blob(
+            self.mean_images,
+            plot=self.debugging_plots,
+            debug_plots_folder=self.debug_plots_folder,
+        )
+
+        self.save(self.masked_image_volume)
         self.save_csv_with_derotation_data()
 
     def get_config(self, config_name: str) -> dict:
         """Loads config file from derotation/config folder.
         Please edit it to change the parameters of the analysis.
-
         Parameters
         ----------
         config_name : str
@@ -76,7 +100,10 @@ class FullPipeline:
         dict
             Config dictionary.
         """
-        path_config = "derotation/config/" + config_name + ".yml"
+
+        path_config = (
+            Path(__file__).parent.parent / f"config/{config_name}.yml"
+        )
 
         with open(Path(path_config), "r") as f:
             config = yaml.load(f, Loader=yaml.FullLoader)
@@ -95,6 +122,8 @@ class FullPipeline:
             filename="derotation",
             verbose=False,
         )
+        #  suppress debug messages from matplotlib
+        logging.getLogger("matplotlib.font_manager").setLevel(logging.ERROR)
 
     def load_data(self):
         """Loads data from the paths specified in the config file.
@@ -119,7 +148,7 @@ class FullPipeline:
         data from your setup.
         """
         logging.info("Loading data...")
-
+        logging.info(f"Loading {self.config['paths_read']['path_to_tif']}")
         self.image_stack = tiff.imread(
             self.config["paths_read"]["path_to_tif"]
         )
@@ -132,6 +161,15 @@ class FullPipeline:
         self.direction, self.speed = read_randomized_stim_table(
             self.config["paths_read"]["path_to_randperm"]
         )
+        logging.info(f"Number of rotations: {len(self.direction)}")
+
+        rotation_direction = pd.DataFrame(
+            {"direction": self.direction, "speed": self.speed}
+        ).pivot_table(
+            index="direction", columns="speed", aggfunc="size", fill_value=0
+        )
+        #  print pivot table
+        logging.info(f"Rotation direction: \n{rotation_direction}")
 
         self.number_of_rotations = len(self.direction)
 
@@ -157,7 +195,13 @@ class FullPipeline:
             self.config["paths_read"]["path_to_tif"]
         ).stem.split(".")[0]
         self.filename = self.config["paths_write"]["saving_name"]
-
+        Path(self.config["paths_write"]["derotated_tiff_folder"]).mkdir(
+            parents=True, exist_ok=True
+        )
+        self.file_saving_path_with_name = (
+            Path(self.config["paths_write"]["derotated_tiff_folder"])
+            / self.filename
+        )
         self.std_coef = self.config["analog_signals_processing"][
             "squared_pulse_k"
         ]
@@ -167,21 +211,44 @@ class FullPipeline:
 
         self.debugging_plots = self.config["debugging_plots"]
 
+        self.frame_rate = self.config["frame_rate"]
+
         if self.debugging_plots:
             self.debug_plots_folder = Path(
                 self.config["paths_write"]["debug_plots_folder"]
             )
-            self.debug_plots_folder.mkdir(parents=True, exist_ok=True)
+            Path(self.debug_plots_folder).mkdir(parents=True, exist_ok=True)
+
+            #  unlink previous debug plots
+            logging.info("Deleting previous debug plots...")
+            for item in self.debug_plots_folder.iterdir():
+                if item.is_dir():
+                    for file in item.iterdir():
+                        if file.suffix == ".png":
+                            file.unlink()
+                else:
+                    if item.suffix == ".png":
+                        item.unlink()
 
         logging.info(f"Dataset {self.filename_raw} loaded")
         logging.info(f"Filename: {self.filename}")
 
         #  by default the center of rotation is the center of the image
-        self.center_of_rotation = (
-            self.num_lines_per_frame // 2,
-            self.num_lines_per_frame // 2,
-        )
+        if not self.config["biased_center"]:
+            self.center_of_rotation = (
+                self.num_lines_per_frame // 2,
+                self.num_lines_per_frame // 2,
+            )
+        else:
+            self.center_of_rotation = tuple(self.config["biased_center"])
+
         self.hooks = {}
+        self.rotation_plane_angle = 0
+        self.rotation_plane_orientation = 0
+
+        self.delta = self.config["delta_center"]
+        self.init_points = self.config["init_points"]
+        self.n_iter = self.config["n_iter"]
 
     ### ----------------- Analog signals processing pipeline ------------- ###
     def process_analog_signals(self):
@@ -228,7 +295,8 @@ class FullPipeline:
             self.line_start,
             self.line_end,
         ) = self.get_start_end_times_with_threshold(
-            self.line_clock, self.std_coef
+            self.line_clock,
+            self.std_coef,
         )
         (
             self.frame_start,
@@ -244,7 +312,8 @@ class FullPipeline:
 
         if self.debugging_plots:
             self.plot_rotation_on_and_ticks()
-            self.plot_rotation_angles()
+            self.plot_rotation_angles_and_velocity()
+            self.plot_rotation_speeds()
 
         logging.info("✨ Analog signals processed ✨")
 
@@ -441,13 +510,40 @@ class FullPipeline:
                 "Start and end of rotations have different lengths"
             )
         if self.rot_blocks_idx["start"].shape[0] != self.number_of_rotations:
-            logging.info(
-                f"Number of rotations is {self.number_of_rotations}."
-                + f"Adjusting to {self.rot_blocks_idx['start'].shape[0]}"
+            logging.warning(
+                f"Number of rotations is not {self.number_of_rotations}."
+                + f"Found {self.rot_blocks_idx['start'].shape[0]} rotations."
+                + "Adjusting starting and ending times..."
             )
-            self.number_of_rotations = self.rot_blocks_idx["start"].shape[0]
+            self.find_missing_rotation_on_periods()
 
         logging.info("Number of rotations is as expected")
+
+    def find_missing_rotation_on_periods(self):
+        """
+        Find the missing rotation on periods by looking at the rotation ticks
+        and the rotation on signal. This is useful when the number of rotations
+        is not as expected.
+        Uses k-means to cluster the ticks and pick the first and last for each
+        cluster. These are the starting and ending times.
+        """
+
+        kmeans = KMeans(
+            n_clusters=self.number_of_rotations, random_state=0
+        ).fit(self.rotation_ticks_peaks.reshape(-1, 1))
+
+        new_start = np.zeros(self.number_of_rotations, dtype=int)
+        new_end = np.zeros(self.number_of_rotations, dtype=int)
+        for i in range(self.number_of_rotations):
+            new_start[i] = self.rotation_ticks_peaks[kmeans.labels_ == i].min()
+            new_end[i] = self.rotation_ticks_peaks[kmeans.labels_ == i].max()
+
+        #  cluster number is not the same as the number of rotations
+        self.rot_blocks_idx["start"] = sorted(new_start)
+        self.rot_blocks_idx["end"] = sorted(new_end)
+
+        #  update the rotation on signal
+        self.rotation_on = self.create_signed_rotation_array()
 
     def is_number_of_ticks_correct(self) -> bool:
         """Compares the total number of ticks with the expected number of
@@ -610,7 +706,11 @@ class FullPipeline:
                 "Start and end of rotations have different lengths"
             )
         if start.shape[0] != self.number_of_rotations:
-            raise ValueError(
+            #  plot the rotation on signal and the interpolated angles
+            #  this is useful to debug the interpolation
+            self.plot_rotation_on_and_ticks()
+
+            logging.warning(
                 "Number of rotations is not as expected after interpolation, "
                 + f"{start.shape[0]} instead of {self.number_of_rotations}"
             )
@@ -692,6 +792,29 @@ class FullPipeline:
         """
         return np.where(self.rot_blocks_idx["start"] < clock_time)[0][-1]
 
+    def calculate_velocity(self):
+        """Calculates the velocity of the rotation by line."""
+        # Compute the correct sampling rate
+        self.sampling_rate = (
+            self.frame_rate * self.num_lines_per_frame
+        )  # 1725.44 Hz
+
+        # Unwrap angles and compute velocity
+        warr = np.rad2deg(np.unwrap(np.deg2rad(self.rot_deg_line)))
+        velocity = np.diff(warr) * self.sampling_rate
+
+        # Butterworth low-pass filter
+        order = 3
+        nyq = 0.5 * self.sampling_rate  # Nyquist frequency
+        cutoff = 10 / nyq  # Normalized cutoff frequency
+
+        sos = butter(
+            order, cutoff, btype="low", output="sos"
+        )  # Use 'sos' for stability
+        filtered = sosfilt(sos, velocity)  # Apply filter correctly
+
+        return filtered
+
     def plot_rotation_on_and_ticks(self):
         """Plots the rotation ticks and the rotation on signal.
         This plot will be saved in the debug_plots folder.
@@ -732,25 +855,29 @@ class FullPipeline:
         plt.savefig(
             self.debug_plots_folder / "rotation_ticks_and_rotation_on.png"
         )
+        plt.close()
 
-    def plot_rotation_angles(self):
+    def plot_rotation_angles_and_velocity(self):
         """Plots example rotation angles by line and frame for each speed.
-        This plot will be saved in the debug_plots folder.
-        Please inspect it to check that the rotation angles are correctly
-        calculated.
+        The velocity is also plotted on top of the rotation angles.
+
+        This plot will be saved in the debug_plots folder. Please inspect it
+        to check that the rotation angles are correctly calculated.
         """
         logging.info("Plotting rotation angles...")
 
-        fig, axs = plt.subplots(2, 2, figsize=(10, 10))
+        fig, axs = plt.subplots(2, 2, figsize=(15, 10))
 
         speeds = set(self.speed)
 
-        last_idx_for_each_speed = [
-            np.where(self.speed == s)[0][-1] for s in speeds
+        first_idx_for_each_speed = [
+            np.where(self.speed == s)[0][0] for s in speeds
         ]
-        last_idx_for_each_speed = sorted(last_idx_for_each_speed)
+        first_idx_for_each_speed = sorted(first_idx_for_each_speed)
 
-        for i, id in enumerate(last_idx_for_each_speed):
+        velocity = self.calculate_velocity()
+
+        for i, id in enumerate(first_idx_for_each_speed):
             col = i // 2
             row = i % 2
 
@@ -789,16 +916,147 @@ class FullPipeline:
                 + f" direction: {'cw' if self.direction[id] == 1 else 'ccw'}"
             )
 
+            #  plot velocity on top in red
+            ax2 = ax.twinx()
+            ax2.plot(
+                self.line_start[
+                    start_line_idx:end_line_idx
+                ],  # Align x-axis with line_start
+                velocity[start_line_idx:end_line_idx] * -1,
+                color="gray",
+                label="velocity",
+            )
+
+            # remove top axis
+            ax2.spines["top"].set_visible(False)
+
+            #  set x label
+            ax.set_xlabel("Time (s)")
+
+            #  set y label left
+            ax.set_ylabel("Rotation angle (°)", color="black")
+
+            #  set y label right
+            ax2.set_ylabel("Velocity (°/s)", color="gray")
+
         fig.suptitle("Rotation angles by line and frame")
 
         handles, labels = ax.get_legend_handles_labels()
         fig.legend(handles, labels, loc="upper right")
 
         plt.savefig(self.debug_plots_folder / "rotation_angles.png")
+        plt.close()
+
+    def plot_rotation_speeds(self):
+        fig, ax = plt.subplots(2, 4, figsize=(15, 7))
+
+        unique_speeds = sorted(set(self.speed))
+        unique_directions = sorted(set(self.direction))
+
+        velocity = self.calculate_velocity()
+
+        #  row clockwise, column speed
+        for i, (direction, speed) in enumerate(
+            itertools.product(unique_directions, unique_speeds)
+        ):
+            row = i // 4
+            col = i % 4
+            idx_this_speed = np.where(
+                np.logical_and(
+                    self.speed == speed, self.direction == direction
+                )
+            )[0]
+
+            #  linspace of colors depending on repetition number
+            colors = plt.cm.viridis(np.linspace(0, 1, len(idx_this_speed)))
+
+            for j, idx in enumerate(idx_this_speed):
+                this_velocity = velocity[
+                    self.clock_to_latest_line_start(
+                        self.rot_blocks_idx["start"][idx]
+                    ) : self.clock_to_latest_line_start(
+                        self.rot_blocks_idx["end"][idx]
+                    )
+                ]
+                ax[row, col].plot(
+                    np.linspace(
+                        0,
+                        len(this_velocity) * self.sampling_rate,
+                        len(this_velocity),
+                    ),
+                    this_velocity,
+                    label=f"repetition {idx}",
+                    color=colors[j],
+                )
+            ax[row, col].set_title(f"Speed: {speed}, direction: {direction}")
+            ax[row, col].spines["top"].set_visible(False)
+            ax[row, col].spines["right"].set_visible(False)
+
+            #  set titles of axis
+            ax[row, col].set_xlabel("Time (s)")
+            ax[row, col].set_ylabel("Velocity (°/s)")
+
+            #  leave more space between subplots
+            plt.subplots_adjust(hspace=0.5, wspace=0.5)
+
+        fig.suptitle("Rotation on signal for each speed")
+        plt.savefig(self.debug_plots_folder / "all_speeds.png")
+        plt.close()
 
     ### ----------------- Derotation ----------------- ###
 
-    def plot_max_projection_with_center(self):
+    def find_optimal_parameters(self):
+        logging.info("Finding optimal parameters...")
+
+        bo = BO_for_derotation(
+            self.image_stack,
+            self.rot_deg_line,
+            self.rot_deg_frame,
+            self.offset,
+            self.center_of_rotation,
+            self.delta,
+            self.init_points,
+            self.n_iter,
+            self.debug_plots_folder,
+        )
+
+        maximum = bo.optimize()
+
+        logging.info(f"Optimal parameters: {maximum}")
+        logging.info(f"Target: {maximum['target']}")
+
+        if maximum["target"] > -50:
+            # Consider a value of -50 as a threshold for the quality of the fit
+            logging.info("Using fitted center of rotation...")
+            x_center, y_center = maximum["params"].values()
+            self.center_of_rotation = (x_center, y_center)
+
+            #  write optimal center in a text file
+            with open(
+                self.debug_plots_folder / "optimal_center_of_rotation.txt", "w"
+            ) as f:
+                f.write(f"Optimal center of rotation: {x_center}, {y_center}")
+
+    def set_optimal_center(self):
+        """Checks if the optimal center of rotation is calculated.
+        If it is not calculated, it will calculate it.
+        """
+        try:
+            with open(
+                self.debug_plots_folder / "optimal_center_of_rotation.txt", "r"
+            ) as f:
+                optimal_center = f.read()
+                self.center_of_rotation = tuple(
+                    map(float, optimal_center.split(":")[1].split(","))
+                )
+                logging.info("Optimal center of rotation found.")
+        except FileNotFoundError:
+            logging.info("Optimal center of rotation not found.")
+            self.find_optimal_parameters()
+
+    def plot_max_projection_with_center(
+        self, stack, name="max_projection_with_center"
+    ):
         """Plots the maximum projection of the image stack with the center
         of rotation.
         This plot will be saved in the debug_plots folder.
@@ -807,7 +1065,7 @@ class FullPipeline:
         """
         logging.info("Plotting max projection with center...")
 
-        max_projection = np.max(self.image_stack, axis=0)
+        max_projection = np.max(stack, axis=0)
 
         fig, ax = plt.subplots(1, 1, figsize=(5, 5))
 
@@ -824,7 +1082,8 @@ class FullPipeline:
 
         ax.axis("off")
 
-        plt.savefig(self.debug_plots_folder / "max_projection_with_center.png")
+        plt.savefig(str(self.debug_plots_folder / name) + ".png")
+        plt.close()
 
     def derotate_frames_line_by_line(self) -> np.ndarray:
         """Wrapper for the function `derotate_an_image_array_line_by_line`.
@@ -839,14 +1098,15 @@ class FullPipeline:
         logging.info("Starting derotation by line...")
 
         if self.debugging_plots:
-            self.plot_max_projection_with_center()
+            self.plot_max_projection_with_center(self.image_stack)
 
-        offset = self.find_image_offset(self.image_stack[0])
-
+        #  By default rotation_plane_angle and rotation_plane_orientation are 0
+        #  they have to be overwritten before calling the function.
+        #  To calculate them please use the ellipse fit.
         rotated_image_stack = derotate_an_image_array_line_by_line(
             self.image_stack,
             self.rot_deg_line,
-            blank_pixels_value=offset,
+            blank_pixels_value=self.offset,
             center=self.center_of_rotation,
             plotting_hook_line_addition=self.hooks.get(
                 "plotting_hook_line_addition"
@@ -854,7 +1114,17 @@ class FullPipeline:
             plotting_hook_image_completed=self.hooks.get(
                 "plotting_hook_image_completed"
             ),
+            use_homography=self.rotation_plane_angle != 0,
+            rotation_plane_angle=self.rotation_plane_angle,
+            rotation_plane_orientation=self.rotation_plane_orientation,
         )
+
+        if self.debugging_plots:
+            self.plot_max_projection_with_center(
+                rotated_image_stack,
+                name="derotated_max_projection_with_center",
+            )
+            self.mean_image_for_each_rotation(rotated_image_stack)
 
         logging.info("✨ Image stack rotated ✨")
         return rotated_image_stack
@@ -891,6 +1161,23 @@ class FullPipeline:
         )
         offset = np.min(gm.means_)
         return offset
+
+    def mean_image_for_each_rotation(self, rotated_image_stack):
+        folder = self.debug_plots_folder / "mean_images"
+        Path(folder).mkdir(parents=True, exist_ok=True)
+        for i, (start, end) in enumerate(
+            zip(self.rot_blocks_idx["start"], self.rot_blocks_idx["end"])
+        ):
+            frame_start = self.clock_to_latest_frame_start(start)
+            frame_end = self.clock_to_latest_frame_start(end)
+            mean_image = np.mean(
+                rotated_image_stack[frame_start:frame_end], axis=0
+            )
+            fig, ax = plt.subplots(1, 1, figsize=(10, 10))
+            ax.imshow(mean_image, cmap="viridis")
+            ax.axis("off")
+            plt.savefig(str(folder / f"mean_image_rotation_{i}.png"))
+            plt.close()
 
     ### ----------------- Saving ----------------- ###
     @staticmethod
@@ -971,14 +1258,11 @@ class FullPipeline:
         masked : np.ndarray
             The masked derotated image stack.
         """
-        path = self.config["paths_write"]["derotated_tiff_folder"]
-        Path(path).mkdir(parents=True, exist_ok=True)
-
-        imsave(
-            path + self.config["paths_write"]["saving_name"] + ".tif",
+        imwrite(
+            str(self.file_saving_path_with_name) + ".tif",
             np.array(masked),
         )
-        logging.info(f"Masked image saved in {path}")
+        logging.info(f"Saving {str(self.file_saving_path_with_name) + '.tif'}")
 
     def save_csv_with_derotation_data(self):
         """Saves a csv file with the rotation angles by line and frame,
@@ -994,8 +1278,27 @@ class FullPipeline:
         )
 
         df["frame"] = np.arange(self.num_frames)
-        df["rotation_angle"] = self.rot_deg_frame[: self.num_frames]
-        df["clock"] = self.frame_start[: self.num_frames]
+        if len(self.rot_deg_frame) > self.num_frames:
+            df["rotation_angle"] = self.rot_deg_frame[: self.num_frames]
+            df["clock"] = self.frame_start[: self.num_frames]
+            logging.warning(
+                "Number of rotation angles by frame is higher than the"
+                " number of frames"
+            )
+        elif len(self.rot_deg_frame) < self.num_frames:
+            missing_frames = self.num_frames - len(self.rot_deg_frame)
+            df["rotation_angle"] = np.append(
+                self.rot_deg_frame, [0] * missing_frames
+            )
+            df["clock"] = np.append(self.frame_start, [0] * missing_frames)
+
+            logging.warning(
+                "Number of rotation angles by frame is lower than the"
+                " number of frames. Adjusted."
+            )
+        else:
+            df["rotation_angle"] = self.rot_deg_frame
+            df["clock"] = self.frame_start
 
         df["direction"] = np.nan * np.ones(len(df))
         df["speed"] = np.nan * np.ones(len(df))
@@ -1017,13 +1320,7 @@ class FullPipeline:
                 rotation_counter += 1
                 adding_roatation = False
 
-        Path(self.config["paths_write"]["derotated_tiff_folder"]).mkdir(
-            parents=True, exist_ok=True
-        )
-
         df.to_csv(
-            self.config["paths_write"]["derotated_tiff_folder"]
-            + self.config["paths_write"]["saving_name"]
-            + ".csv",
+            str(self.file_saving_path_with_name) + ".csv",
             index=False,
         )

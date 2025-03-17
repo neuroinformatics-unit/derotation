@@ -376,15 +376,21 @@ class SyntheticData:
                     :: rotated_stack_incremental.shape[1]
                 ][: rotated_stack_incremental.shape[0]]
                 self.num_frames = rotated_stack_incremental.shape[0]
+                self.num_lines_per_frame = rotated_stack_incremental.shape[1]
 
                 self.debugging_plots = make_plots
                 self.debug_plots_folder = Path("debug/")
 
-            def calculate_mean_images(self, image_stack: np.ndarray) -> list:
-                #  Overwrite original method as it is too bound
+            @staticmethod
+            def calculate_mean_images(
+                image_stack: np.ndarray,
+                rot_deg_frame: np.ndarray,
+                round_decimals: int = 0,
+            ) -> list:
+                #  Override original method as it is too bound
                 #  to signal coming from a real motor
-                angles_subset = copy.deepcopy(self.rot_deg_frame)
-                rounded_angles = np.round(angles_subset)
+                angles_subset = copy.deepcopy(rot_deg_frame)
+                rounded_angles = np.round(angles_subset, round_decimals)
 
                 mean_images = []
                 for i in np.arange(10, 360, 10):

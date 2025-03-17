@@ -96,7 +96,7 @@ class BlobDetection:
         fig, ax = plt.subplots(4, 3, figsize=(10, 10))
         for i, a in tqdm(enumerate(ax.flatten())):
             a.imshow(image_stack[i])
-            a.set_title(f"{i*5} degrees")
+            a.set_title(f"{i * 5} degrees")
             a.axis("off")
 
             for j, blob in enumerate(blobs[i][:4]):

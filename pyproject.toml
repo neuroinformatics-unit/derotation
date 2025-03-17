@@ -31,6 +31,7 @@ dependencies = [
     "tqdm",
     "scikit-learn",
     "scikit-image",
+    "bayesian-optimization",
 ]
 
 [project.urls]
@@ -128,4 +129,5 @@ commands =
 
 [tool.codespell]
 skip = '.git'
+ignore-words-list = "ptd"
 check-hidden = true

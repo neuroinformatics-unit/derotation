@@ -48,6 +48,9 @@ def test_derotation_by_line(n_lines, n_total_lines, len_stack, image_stack):
         pipeline.center_of_rotation = (n_lines // 2, n_lines // 2)
         pipeline.hooks = {}
         pipeline.debugging_plots = False
+        pipeline.offset = pipeline.find_image_offset(pipeline.image_stack[0])
+        pipeline.rotation_plane_angle = 0
+        pipeline.rotation_plane_orientation = 0
 
         derotated_images = pipeline.derotate_frames_line_by_line()
 

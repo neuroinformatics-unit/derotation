@@ -114,7 +114,9 @@ def test_max_projection(
     #  invert centers to (x, y) format
     centers = np.array([(x, y) for y, x in centers])
 
-    xc, yc, a, b, orientation = fit_ellipse_to_points(centers)
+    xc, yc, a, b, orientation = fit_ellipse_to_points(
+        centers, pixels_in_row=rotated_image_stack.shape[1]
+    )
 
     if exp_orientation is None and plane_angle == 0:
         #  lower tolerance for the major and minor axes
@@ -130,9 +132,9 @@ def test_max_projection(
                 debug_plots_folder=Path("debug/"),
                 saving_name=f"ellipse_fit_{plane_angle}_{exp_orientation}.png",
             )
-            assert (
-                False
-            ), f"Major and minor axes should be close, instead got {a} and {b}"
+            assert False, (
+                f"Major and minor axes should be close,instead got {a} and {b}"
+            )
     elif exp_orientation is not None:
         #  Major axis orientation in clockwise direction as radians.
         exp_orientation = np.deg2rad(exp_orientation)

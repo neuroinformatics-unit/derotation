@@ -1,4 +1,3 @@
-import copy
 import logging
 from pathlib import Path
 from typing import Dict, Tuple
@@ -15,6 +14,7 @@ from derotation.analysis.fit_ellipse import (
     plot_ellipse_fit_and_centers,
 )
 from derotation.analysis.full_derotation_pipeline import FullPipeline
+from derotation.analysis.mean_images import calculate_mean_images
 
 
 class IncrementalPipeline(FullPipeline):
@@ -46,7 +46,9 @@ class IncrementalPipeline(FullPipeline):
         derotated_images = self.deroatate_by_frame()
         masked_unregistered = self.add_circle_mask(derotated_images)
 
-        mean_images = self.calculate_mean_images(masked_unregistered)
+        mean_images = calculate_mean_images(
+            masked_unregistered, self.rot_deg_frame
+        )
         target_image = self.get_target_image(masked_unregistered)
         shifts = self.get_shifts_using_phase_cross_correlation(
             mean_images, target_image
@@ -221,7 +223,7 @@ class IncrementalPipeline(FullPipeline):
         if start.shape[0] != 1:
             raise ValueError("Number of rotations is not as expected")
 
-    def plot_rotation_angles(self):
+    def plot_rotation_angles_and_velocity(self):
         """Plots example rotation angles by line and frame for each speed.
         This plot will be saved in the debug_plots folder.
         Please inspect it to check that the rotation angles are correctly
@@ -254,38 +256,6 @@ class IncrementalPipeline(FullPipeline):
             Path(self.config["paths_write"]["debug_plots_folder"])
             / "rotation_angles.png"
         )
-
-    def calculate_mean_images(self, image_stack: np.ndarray) -> list:
-        """Calculate the mean images for each rotation angle. This required
-        to calculate the shifts using phase cross correlation.
-
-        Parameters
-        ----------
-        rotated_image_stack : np.ndarray
-            The rotated image stack.
-
-        Returns
-        -------
-        list
-            The list of mean images.
-        """
-        logging.info("Calculating mean images...")
-
-        #  correct for a mismatch in the total number of frames
-        #  and the number of angles, given by instrument error
-        angles_subset = copy.deepcopy(self.rot_deg_frame[2:])
-        # also there is a bias on the angles
-        angles_subset += -0.1
-        rounded_angles = np.round(angles_subset, 2)
-
-        mean_images = []
-        for i in np.arange(10, 360, 10):
-            images = image_stack[rounded_angles == i]
-            mean_image = np.mean(images, axis=0)
-
-            mean_images.append(mean_image)
-
-        return mean_images
 
     def save_csv_with_derotation_data(self):
         """Saves a csv file with the rotation angles by line and frame,
@@ -483,7 +453,9 @@ class IncrementalPipeline(FullPipeline):
             "Fitting an ellipse to the largest blob centers "
             + "to find the center of rotation..."
         )
-        mean_images = self.calculate_mean_images(self.image_stack)
+        mean_images = calculate_mean_images(
+            self.image_stack, self.rot_deg_frame
+        )
 
         logging.info("Finding blobs...")
         bd = BlobDetection(self.debugging_plots, self.debug_plots_folder)
@@ -494,7 +466,8 @@ class IncrementalPipeline(FullPipeline):
 
         # Fit an ellipse to the largest blob centers and get its center
         center_x, center_y, a, b, theta = fit_ellipse_to_points(
-            coord_first_blob_of_every_image
+            coord_first_blob_of_every_image,
+            pixels_in_row=self.num_lines_per_frame,
         )
 
         if self.debugging_plots:

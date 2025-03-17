@@ -100,7 +100,10 @@ class FullPipeline:
         dict
             Config dictionary.
         """
-        path_config = "derotation/config/" + config_name + ".yml"
+
+        path_config = (
+            Path(__file__).parent.parent / f"config/{config_name}.yml"
+        )
 
         with open(Path(path_config), "r") as f:
             config = yaml.load(f, Loader=yaml.FullLoader)
@@ -192,6 +195,9 @@ class FullPipeline:
             self.config["paths_read"]["path_to_tif"]
         ).stem.split(".")[0]
         self.filename = self.config["paths_write"]["saving_name"]
+        Path(self.config["paths_write"]["derotated_tiff_folder"]).mkdir(
+            parents=True, exist_ok=True
+        )
         self.file_saving_path_with_name = (
             Path(self.config["paths_write"]["derotated_tiff_folder"])
             / self.filename

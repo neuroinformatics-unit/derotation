@@ -1047,7 +1047,7 @@ class FullPipeline:
             ) as f:
                 optimal_center = f.read()
                 self.center_of_rotation = tuple(
-                    map(int, optimal_center.split(":")[1].split(","))
+                    map(float, optimal_center.split(":")[1].split(","))
                 )
                 logging.info("Optimal center of rotation found.")
         except FileNotFoundError:

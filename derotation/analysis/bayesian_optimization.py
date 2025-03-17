@@ -24,6 +24,31 @@ class BO_for_derotation:
         n_iter: int = 10,
         debug_plots_folder: Path = Path("./debug_plots"),
     ):
+        """Initializes the BO_for_derotation class.
+        Bayesian optimization to find the best center of rotation.
+
+        Parameters
+        ----------
+        movie : np.ndarray
+            The calcium imaging movie to derotate.
+        rot_deg_line : np.ndarray
+            The rotation angles of the rotation plane.
+        rot_deg_frame : np.ndarray
+            The rotation angles of the frames.
+        blank_pixels_value : float
+            The value of the blank pixels.
+        center : Tuple[int, int]
+            The initial center of rotation.
+        delta : int
+            The variation allowed in the boundaries of the center of rotation.
+        init_points : int, optional
+            The number of initial points to evaluate, by default 2
+        n_iter : int, optional
+            The number of iterations to run the optimization, by default 10
+        debug_plots_folder : Path, optional
+            The folder to save the debugging plots, by default
+            Path("./debug_plots")
+        """
         self.movie = movie
         self.rot_deg_line = rot_deg_line
         self.rot_deg_frame = rot_deg_frame
@@ -38,12 +63,6 @@ class BO_for_derotation:
         self.debug_plots_folder = debug_plots_folder
 
         self.subfolder = self.debug_plots_folder / "bo"
-        #  remove previous dir
-        if self.subfolder.exists():
-            for file in self.subfolder.iterdir():
-                file.unlink()
-        else:
-            self.subfolder.mkdir(parents=True, exist_ok=True)
 
     def optimize(self):
         def derotate_and_get_metric(

@@ -792,7 +792,7 @@ class FullPipeline:
 
         # Unwrap angles and compute velocity
         warr = np.rad2deg(np.unwrap(np.deg2rad(self.rot_deg_line)))
-        velocity = np.diff(warr) / self.sampling_rate
+        velocity = np.diff(warr) * self.sampling_rate
 
         # Butterworth low-pass filter
         order = 3
@@ -918,10 +918,8 @@ class FullPipeline:
                 label="velocity",
             )
 
-            # change x ticks to seconds by using sampling rate
-            ticks = ax.get_xticks()
-            new_ticks = [int(tick * self.sampling_rate) for tick in ticks]
-            ax.set_xticklabels(new_ticks)
+            # remove top axis
+            ax2.spines["top"].set_visible(False)
 
             #  set x label
             ax.set_xlabel("Time (s)")
@@ -981,11 +979,16 @@ class FullPipeline:
                     label=f"repetition {idx}",
                     color=colors[j],
                 )
-            # ax[row, col].legend()
             ax[row, col].set_title(f"Speed: {speed}, direction: {direction}")
-            # ax[row, col].set_ylim(-1.5, 1.5)
             ax[row, col].spines["top"].set_visible(False)
             ax[row, col].spines["right"].set_visible(False)
+
+            #  set titles of axis
+            ax[row, col].set_xlabel("Time (s)")
+            ax[row, col].set_ylabel("Velocity (°/s)")
+
+            #  leave more space between subplots
+            plt.subplots_adjust(hspace=0.5, wspace=0.5)
 
         fig.suptitle("Rotation on signal for each speed")
         plt.savefig(self.debug_plots_folder / "all_speeds.png")

@@ -1108,7 +1108,7 @@ class FullPipeline:
             plotting_hook_image_completed=self.hooks.get(
                 "plotting_hook_image_completed"
             ),
-            use_homography=True if self.rotation_plane_angle != 0 else False,
+            use_homography=self.rotation_plane_angle != 0,
             rotation_plane_angle=self.rotation_plane_angle,
             rotation_plane_orientation=self.rotation_plane_orientation,
         )

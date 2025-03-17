@@ -68,7 +68,7 @@ class FullPipeline:
         self.process_analog_signals()
 
         self.offset = self.find_image_offset(self.image_stack[0])
-        # self.find_optimal_parameters()
+        self.set_optimal_center()
 
         rotated_images = self.derotate_frames_line_by_line()
         self.masked_image_volume = self.add_circle_mask(
@@ -1018,6 +1018,29 @@ class FullPipeline:
             logging.info("Using fitted center of rotation...")
             x_center, y_center = maximum["params"].values()
             self.center_of_rotation = (x_center, y_center)
+
+            #  write optimal center in a text file
+            with open(
+                self.debug_plots_folder / "optimal_center_of_rotation.txt", "w"
+            ) as f:
+                f.write(f"Optimal center of rotation: {x_center}, {y_center}")
+
+    def set_optimal_center(self):
+        """Checks if the optimal center of rotation is calculated.
+        If it is not calculated, it will calculate it.
+        """
+        try:
+            with open(
+                self.debug_plots_folder / "optimal_center_of_rotation.txt", "r"
+            ) as f:
+                optimal_center = f.read()
+                self.center_of_rotation = tuple(
+                    map(int, optimal_center.split(":")[1].split(","))
+                )
+                logging.info("Optimal center of rotation found.")
+        except FileNotFoundError:
+            logging.info("Optimal center of rotation not found.")
+            self.find_optimal_parameters()
 
     def plot_max_projection_with_center(
         self, stack, name="max_projection_with_center"

@@ -63,6 +63,7 @@ class BO_for_derotation:
         self.debug_plots_folder = debug_plots_folder
 
         self.subfolder = self.debug_plots_folder / "bo"
+        Path(self.subfolder).mkdir(parents=True, exist_ok=True)
 
     def optimize(self):
         def derotate_and_get_metric(

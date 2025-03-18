@@ -675,7 +675,7 @@ class FullPipeline:
             "angle_interpolation_artifact_threshold"
         ]
         thresholded = np.zeros_like(self.interpolated_angles)
-        thresholded[np.abs(self.interpolated_angles) > 0.15] = 1
+        thresholded[np.abs(self.interpolated_angles) > 0.2] = 1
         rotation_start = np.where(np.diff(thresholded) > 0)[0]
         rotation_end = np.where(np.diff(thresholded) < 0)[0]
 

@@ -8,3 +8,4 @@ sphinx
 sphinx-argparse
 sphinx-autodoc-typehints
 sphinx_design
+-e .

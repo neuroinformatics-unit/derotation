@@ -122,6 +122,9 @@ html_theme_options = {
             "icon": "fa-brands fa-github",
             # The type of image to be used (see below for details)
             "type": "fontawesome",
+            "use_edit_page_button": False,  # Ensure the edit button doesn't interfere
+            "navigation_with_keys": False,  # Disable keyboard navigation between sections
+            "collapse_navigation": False,  # Ensure full page loads rather than AJAX content swap
         }
     ],
     "logo": {

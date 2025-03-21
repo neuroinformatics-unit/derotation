@@ -1,41 +1,64 @@
-"""
-Generate the API index page for all modules.
-Inspired by `movement` package.
-"""
-
 import os
 from pathlib import Path
 
 # Modules to exclude from the API index
-exclude_modules = [
-    "cli_entrypoint",
-    "loader_widgets",
-    "meta_widget",
-]
+EXCLUDE_MODULES = {"cli_entrypoint", "loader_widgets", "meta_widget"}
 
 # Set the current working directory to the directory of this script
-script_dir = Path(__file__).resolve().parent
-os.chdir(script_dir)
+SCRIPT_DIR = Path(__file__).resolve().parent
+os.chdir(SCRIPT_DIR)
 
 
 def make_api_index():
-    """Create a doctree of all ``movement`` modules."""
-    doctree = "\n"
+    """Generate a properly formatted `api_index.rst` file for Sphinx documentation."""
+
     api_path = Path("../derotation")
+    module_entries = []
+
     for path in sorted(api_path.rglob("*.py")):
         # Convert file path to module name
         rel_path = path.relative_to(api_path.parent)
         module_name = str(rel_path.with_suffix("")).replace(os.sep, ".")
-        if rel_path.stem not in exclude_modules:
-            doctree += f"    {module_name}\n"
-    # # Get the header
-    api_head_path = Path("source") / "_templates" / "api_index_head.rst"
-    api_head = api_head_path.read_text()
-    # Write api_index.rst with header + doctree
+
+        if rel_path.stem not in EXCLUDE_MODULES:
+            module_entries.append(module_name)
+
+    # Construct the API index content
+    api_index_content = """\
+.. _target-api:
+
+API Reference
+=============
+
+This section contains automatically generated documentation for the `derotation` package.
+
+.. toctree::
+   :maxdepth: 2
+   :caption: API Documentation
+
+"""
+
+    # Add module entries for the toctree
+    api_index_content += "\n".join(f"   {module}" for module in module_entries) + "\n\n"
+
+    # Add the autosummary directive
+    api_index_content += """\
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree: api
+   :nosignatures:
+
+"""
+
+    # Add module entries for autosummary
+    api_index_content += "\n".join(f"   {module}" for module in module_entries) + "\n"
+
+    # Write the generated content to `api_index.rst`
     output_path = Path("source") / "api_index.rst"
-    with output_path.open("w") as f:
-        f.write(api_head)
-        f.write(doctree)
+    output_path.write_text(api_index_content, encoding="utf-8")
+
+    print(f"Generated {output_path}")
 
 
 if __name__ == "__main__":

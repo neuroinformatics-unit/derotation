@@ -1133,9 +1133,7 @@ class FullPipeline:
     def find_image_offset(img):
         """Find the "F0", also called "image offset" for a given image.
 
-        Explanations
-        ------------
-        What is the image offset?
+        Explanations: What is the image offset?
         The PMT (photo-multiplier tube) adds an arbitrary offset to the
         image that corresponds to 0 photons received. We can use a Gaussian
         Mixture Model to find this offset by assuming that it will be the

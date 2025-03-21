@@ -21,8 +21,8 @@ Understand how derotation works, from analog signals to line-based transforms.
 Explore how to structure config files and set paths for derotation.
 :::
 
-:::{grid-item-card} 📉 Limitations
-:link: limitations
+:::{grid-item-card} 📊 Use debugging plots
+:link: debugging_plots
 :link-type: doc
 
 Current constraints and assumptions of the pipeline.

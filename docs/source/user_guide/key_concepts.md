@@ -1,99 +1,89 @@
 (user_guide/key_concepts)=
 # Key Concepts
 
-`derotation` is a modular package for reconstructing rotating image stacks from line scanning microscopes. This page covers the core ideas, flow of information, and how the main modules interact.
+`derotation` is a modular package for reconstructing rotating image stacks acquired via line scanning microscopes. This page covers the core ideas, flow of information, and how the main modules interact.
+
 
 ## How derotation works
-Without derotation, the movies acquired with a line scanning microscope would have a distortion such that it is diffciult to register the images back to the original space with the current methods available.
-In the case the angle of rotations were recorded, the derotation package can be used to reconstruct the movies by assigning to each acquired line a rotation angle and then rotating the line back to its original position.
-This process incrementally reconstructs each frame. It can also include shear deformation corrections.
+
+Without derotation, movies acquired with a line scanning microscope are geometrically distorted — each line is captured at a slightly different angle, making it hard to register or interpret the resulting images.
+
+If the angle of rotation is recorded, `derotation` can reconstruct each frame by assigning a rotation angle to each acquired line and rotating it back to its original position. This process incrementally reconstructs each frame and can optionally include shear deformation correction.
 
 
 ## How to use derotation
 
 There are two main ways to use `derotation`:
-- using the `derotate_an_image_array_line_by_line` function to derotate a single image array. This is useful for testing and debugging. It requires the rotation angle per line and the center of rotation.
-- using a pre-made pipeline such as the `FullPipeline` class or the `IncrementalPipeline` class. These classes handle the entire process from reading the data to saving the derotated TIFFs. They hold assuptions on the nature of the analog signals acquired and the experimental protocol. 
 
-Please see the [API documentation](api_index) for more details.
+### 1. **Low-level core function**
+Use `derotate_an_image_array_line_by_line` to derotate an image stack, given:
+- Rotation angle per line
+- Center of rotation
 
-### Analog signal processing
-From a `.bin` file, Derotation extracts line and frame timestamps, motor state, and rotation tick events. It then reconstructs a time-aligned angle array via interpolation.
+This is ideal for testing and debugging with synthetic or preprocessed data.
 
-Common problems include:
-- Missing or duplicated ticks
-- Timing drift
-- Overlapping events (e.g. tick during frame transition)
+### 2. **Full or incremental pipeline classes**
+Use the pre-made pipelines to run end-to-end processing:
 
-These can be debugged with intermediate plots.
+- `FullPipeline`: assumes randomised complete clockwise and counter-clockwise rotations. It includes:
+  - Analog signal parsing
+  - Angle interpolation
+  - Bayesian optimization for center estimation
 
-### Rotation angle reconstruction
-Angles are reconstructed from stepper motor ticks. Each tick represents a fixed increment (e.g. 0.2°), and interpolation maps these ticks to precise line times. Optional smoothing or artifact filtering is applied.
+- `IncrementalPipeline`: assumes a continuous rotation performed in small increments. It inherits fuctionality from the `FullPipeline` but does not perform bayesian optimization. It can be useful to rack brightness across angles and estimate center via blob detection and ellipse fitting.
 
-### Line-by-line derotation
-This is performed by:
-```python
-rotate_an_image_array_line_by_line(image, angle_per_line, center)
-```
-Each line is rotated back to its expected position using the angle and a defined center.
+Both pipelines accept a configuration dictionary (see the [configuration guide](configuration)) and output:
+- Derotated TIFF
+- CSV with rotation angles and metadata
+- Debugging plots
+- Logs
 
-### Why finding the optimal center matters
-A small error in the rotation center leads to large distortions, especially near image edges. Estimating the correct center is critical for proper derotation.
+You can subclass `FullPipeline` to create custom pipelines by overwriting relevant methods.
 
 ---
 
-## Estimating the rotation center
+## Finding the center of rotation
 
-### Ellipse fitting and blob detection
-A bright spot is tracked through frames, and its trajectory is fit to an ellipse. The center of this ellipse estimates the rotation center. Blob detection methods locate candidate features, and filtering ensures a single clean trajectory.
+A small error in the rotation center can result in visible residual motion (e.g. cells drawing arcs).
 
-### Bayesian Optimization with PTD
-An alternative method uses Bayesian Optimization to minimize a metric:
-- **PTD (Pixel Temporal Deviation)**: measures the temporal variance of each pixel.
-- A well-aligned derotation should produce stable pixel values over time.
+Two approaches are provided:
 
-The optimizer searches over possible centers to minimize PTD, typically over 10–20 iterations.
+- **Ellipse fitting via IncrementalPipeline**: tracks bright blobs and fits ellipses to their trajectories.
+- **Bayesian optimization via FullPipeline**: minimizes the Point-to-Point Distance (PTD), a metric quantifying instability in pixel intensities across time.
 
 ---
 
-## FullPipeline and Rotator
+## Verifying derotation quality
 
-- `FullPipeline`: handles reading, preprocessing, signal parsing, angle reconstruction, and derotation. It accepts YAML or dict configs.
-- `Rotator`: core class that performs geometric rotation, interpolation, and angle alignment.
+Use debugging plots and logs to assess the quality of your reconstruction. These include:
+- Analog signal overlays
+- Angle interpolation traces
+- Center estimation visualizations
+- Derotated frame samples
 
----
-
-## Incremental pipeline use case
-The incremental pipeline is ideal when the sample is rotated in tiny steps (e.g. 0.2°), rather than in full turns. This allows building a single composite image over a sequence of steps, useful in high-resolution anatomical mapping.
-
----
-
-## Logs and CSV output
-Derotation saves logs and CSV summaries alongside the output TIFF. These include:
-- Rotation angles per frame
-- Center estimates
-- Runtime diagnostics
-
-They are saved in `logs_folder` and `derotated_tiff_folder`.
+You can also inject **custom plotting hooks** at defined pipeline stages. See the examples page for a demonstration. *Note: hooks may significantly slow down processing.*
 
 ---
 
-## Plotting hooks and debugging
-Plotting hooks allow injecting custom plots at defined pipeline stages. Combined with debug flags, this helps:
-- Visualize signal thresholds
-- Track center estimation results
-- Inspect derotated stacks
+## Simulated data
 
-A separate Debugging Guide will expand on how to interpret and act on these plots.
+Use the `Rotator` and `SyntheticData` classes to generate test data:
+
+- `Rotator`: applies line-by-line rotation to an image stack, simulating a rotating microscope.
+- `SyntheticData`: creates fake cell images, assigns rotation angles, and generates synthetic stacks. This is especially useful for validating both the incremental and full pipelines under known conditions.
 
 ---
 
-## Synthetic data
-Synthetic stacks can be created using:
-```python
-from derotation.simulate.synthetic_data import generate_elliptical_rotation_stack
-```
-This is helpful for:
-- Testing alignment tools
-- Validating optimization steps
-- Benchmarking under known ground truth
+See the [API documentation](api_index) for full reference.
+
+## Limitations
+
+Derotation supports two experimental configurations: randomized full rotations (in the `FullRotation` pipeline) and small-step incremental rotations (`IncrementalPipeline`). Other rotation paradigms are not currently supported out of the box.
+
+The package assumes strict input formats — TIFF stacks for images and `.bin` files with analog signals following a specific channel order. Both pipelines require:
+- timing of rotation ticks, which are used to compute rotation angles;
+- line clock signals, which indicate the start of a new line;s
+- frame clock signals, which indicate the start of a new frame;
+- a rotation on signal, which indicates when the rotation is happening.
+
+If your data is stored in different formats or structured differently, you can write a **custom data loader** that loads rotation angles and line/frame timing, then passes them directly to the core derotation function or integrates into a custom pipeline subclass.

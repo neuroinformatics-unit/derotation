@@ -24,6 +24,25 @@ These scripts demonstrate how to launch the two pipeline modes:
 
 They use YAML configs and produce logs, plots, and derotated TIFFs.
 
+We recommend loading a template configuration file and overriding the necessary fields:
+
+```python
+import yaml
+from pathlib import Path
+
+with open(Path("config/full_rotation.yml")) as f:
+    config = yaml.safe_load(f)
+
+# Override fields for your dataset
+config["paths_read"]["path_to_tif"] = "/my/data/image_stack.tif"
+config["paths_read"]["path_to_aux"] = "/my/data/signals.bin"
+config["paths_write"]["debug_plots_folder"] = "/my/debug/"
+
+from derotation.analysis.full_derotation_pipeline import FullPipeline
+pipeline = FullPipeline(config)
+pipeline()
+```
+
 ---
 
 ## 🎛️ Custom hooks and center re-use
@@ -53,8 +72,6 @@ Try line-by-line deformation of an image like a dog photo, just for fun and test
 - Use these scripts to validate your configuration and understand the behavior of core methods.
 - Debugging plots and logs are saved alongside outputs.
 - For headless or HPC environments, comment out `plt.show()`.
-
-For configuration details, see the [User Guide → Configuration](../configuration.md).
 
 If you want to contribute an example, check out our [contribution guide](../community/index.md).
 

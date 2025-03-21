@@ -1,19 +1,21 @@
 (user_guide/key_concepts)=
 # Key Concepts
 
-Derotation is a modular framework for reconstructing rotating image stacks from line scanning microscopes. This page covers the core ideas, flow of information, and how the main modules interact.
+`derotation` is a modular package for reconstructing rotating image stacks from line scanning microscopes. This page covers the core ideas, flow of information, and how the main modules interact.
 
----
+## How derotation works
+Without derotation, the movies acquired with a line scanning microscope would have a distortion such that it is diffciult to register the images back to the original space with the current methods available.
+In the case the angle of rotations were recorded, the derotation package can be used to reconstruct the movies by assigning to each acquired line a rotation angle and then rotating the line back to its original position.
+This process incrementally reconstructs each frame. It can also include shear deformation corrections.
 
-## Why derotation?
 
-In certain imaging experiments (e.g. 3-photon calcium imaging), the sample is rotated during acquisition. This introduces geometric distortions, as each line in the image is captured at a slightly different angle.
+## How to use derotation
 
-Derotation provides a mechanism to reverse this distortion by reconstructing each image line at its corresponding angle, ultimately recovering a coherent image.
+There are two main ways to use `derotation`:
+- using the `derotate_an_image_array_line_by_line` function to derotate a single image array. This is useful for testing and debugging. It requires the rotation angle per line and the center of rotation.
+- using a pre-made pipeline such as the `FullPipeline` class or the `IncrementalPipeline` class. These classes handle the entire process from reading the data to saving the derotated TIFFs. They hold assuptions on the nature of the analog signals acquired and the experimental protocol. 
 
----
-
-## Core components
+Please see the [API documentation](api_index) for more details.
 
 ### Analog signal processing
 From a `.bin` file, Derotation extracts line and frame timestamps, motor state, and rotation tick events. It then reconstructs a time-aligned angle array via interpolation.

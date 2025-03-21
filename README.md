@@ -8,9 +8,7 @@
 
 # Derotation
 
-The derotation package offers a robust solution for reconstructing images of rotating samples acquired with a line scanning microscope. Although it's tailored for calcium imaging data, this versatile tool is adaptable for any dataset where rotation angles are recorded, making it an essential utility for a wide array of image processing applications.
-
-The core algorithm, `rotate_an_image_array_line_by_line`, can also be used as a standalone function to deform images by a given angle.
+The derotation package offers a robust solution for reconstructing images of rotating samples acquired with a line scanning microscope. It provides a set of tools to undo distortions caused by the rotation, including line-by-line derotation and center of rotation estimation.
 
 ![](docs/source/_static/derotation_overview.png)
 
@@ -31,31 +29,17 @@ conda activate derotation-env
 > Read the [documentation](https://derotation.neuroinformatics.dev) for more information, including [full installation instructions](https://derotation.neuroinformatics.dev/user_guide/installation.html) and [examples](https://derotation.neuroinformatics.dev/examples/index.html).
 
 ## Overview
+To address certain neuroscience questions in rodents, it might be necessary to image the brain while the head or the body of the animal rotates. In such a case, and even more when the frame rate is low, the acquired movies are distorted by the rotation. These distortions have a peculiar pattern due to the line scanning nature of the microscope, which can be corrected by the derotation package. 
 
-Derotation is designed for reconstructing image stacks affected by controlled rotations delivered via a motor. It provides tools for estimating the center of rotation, optimizing alignment, and batch processing across multiple datasets. 
-
-- **Flexible Derotation**: Supports any rotation protocol, including continuous and discontinuous rotations.
-- **Optimized Center of Rotation Estimation**: Uses Bayesian Optimization or ellipse fitting.
-- **Batch Processing**: Automates derotation for multiple datasets.
-- **Simulated Data**: Generates synthetic datasets for testing and validation.
-- **Comprehensive Debugging Plots**: Visualize the derotation process at each step.
-
-Find out more in our [mission and scope](https://derotation.neuroinformatics.dev/community/mission-scope.html) statement and our [roadmap](https://derotation.neuroinformatics.dev/community/roadmaps.html).
-
-## Limitations
+`derotation` provides a set of tools to undo these distortions:
+- Recover calcium imaging movies by **line-by-line derotation** that can be fed into standard analysis pipelines such as suite2p;
+- Estimate the **center of rotation** using ellipse fitting or Bayesian optimization;
+- Validate improvements to the derotation algorithm and pipelines using synthetic data;
+- Use debugging plots and logs to verify the quality of the derotation;
+- Batch-process multiple datasets with consistent configuration files.
 
 > [!Warning]
-> 🏗️ The package is currently in early development and the interface is subject to change. Feel free to play around and provide feedback.
-
-The current version of Derotation has the following limitations:
-- It expects the image stack to be a TIFF file.
-- It expects to receive four analog signal inputs: 
-  - rotation on signal
-  - line clock
-  - frame clock
-  - rotation ticks (expects a step motor signal)
-  
-  Rotation ticks are used to determine the rotation angle at each frame.
+> 🏗️ The package is currently in early development and it requires rotation information coming from a step motor.
 
 ## Join the Development
 
@@ -66,9 +50,14 @@ Contributions to Derotation are encouraged, whether to fix a bug, develop a new 
 
 ## Citation
 
-If you use Derotation in your work, please cite the following Zenodo DOI:
+If you use `derotation` in your work, please cite the following Zenodo DOI:
 
 > Neuroinformatics Unit (2025). neuroinformatics-unit/derotation. Zenodo. [https://zenodo.org/doi/10.5281/zenodo.12755724](https://zenodo.org/doi/10.5281/zenodo.12755724)
+
+## References
+This package was built taking into account previous efforts on derotation algorithms, including:
+- Voigts et al
+- Hannestad et al
 
 ## License
 ⚖️ [BSD 3-Clause](./LICENSE)

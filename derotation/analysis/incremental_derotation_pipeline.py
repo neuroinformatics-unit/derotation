@@ -1,12 +1,10 @@
 import logging
 from pathlib import Path
-from typing import Dict, Tuple
+from typing import Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from scipy.ndimage import rotate
-from tqdm import tqdm
 
 from derotation.analysis.blob_detection import BlobDetection
 from derotation.analysis.fit_ellipse import (
@@ -42,28 +40,15 @@ class IncrementalPipeline(FullPipeline):
         After processing the analog signals, the image stack is rotated by
         frame and then registered using phase cross correlation.
         """
-        super().process_analog_signals()
-        derotated_images = self.deroatate_by_frame()
-        masked_unregistered = self.add_circle_mask(derotated_images)
+        self.process_analog_signals()
+        self.offset = self.find_image_offset(self.image_stack[0])
 
-        mean_images = calculate_mean_images(
-            masked_unregistered, self.rot_deg_frame
-        )
-        target_image = self.get_target_image(masked_unregistered)
-        shifts = self.get_shifts_using_phase_cross_correlation(
-            mean_images, target_image
-        )
-        x_fitted, y_fitted = self.polynomial_fit(shifts)
-        registered_images = self.register_rotated_images(
-            masked_unregistered, x_fitted, y_fitted
+        rotated_images = self.derotate_frames_line_by_line()
+        self.masked_image_volume = self.add_circle_mask(
+            rotated_images, self.mask_diameter
         )
 
-        self.new_diameter = self.num_lines_per_frame - 2 * max(
-            max(np.abs(shifts["x"])), max(np.abs(shifts["y"]))
-        )
-        masked = self.add_circle_mask(registered_images, self.new_diameter)
-
-        self.save(masked)
+        self.save(self.masked_image_volume)
         self.save_csv_with_derotation_data()
 
         self.center_of_rotation = self.find_center_of_rotation()
@@ -257,6 +242,11 @@ class IncrementalPipeline(FullPipeline):
             / "rotation_angles.png"
         )
 
+    def plot_rotation_speeds(self):
+        #  We don't need to plot the rotation speeds for incremental
+        #  rotation pipeline
+        pass
+
     def save_csv_with_derotation_data(self):
         """Saves a csv file with the rotation angles by line and frame,
         and the rotation on signal.
@@ -286,155 +276,6 @@ class IncrementalPipeline(FullPipeline):
         )
 
     ### ------- Methods unique to IncrementalPipeline ----------------- ###
-    def deroatate_by_frame(self) -> np.ndarray:
-        """Rotate the image stack by frame.
-
-        Returns
-        -------
-        np.ndarray
-            Description of returned object.
-        """
-        logging.info("Starting derotation by frame...")
-        min_value_img = np.min(self.image_stack)
-        new_rotated_image_stack = (
-            np.ones_like(self.image_stack) * min_value_img
-        )
-
-        for idx, frame in tqdm(
-            enumerate(self.image_stack), total=self.num_frames
-        ):
-            rotated_img = rotate(
-                frame,
-                self.rot_deg_frame[idx],
-                reshape=False,
-                order=0,
-                mode="constant",
-            )
-            rotated_img = np.where(
-                rotated_img == 0, min_value_img, rotated_img
-            )
-
-            new_rotated_image_stack[idx] = rotated_img
-
-        logging.info("Finished rotating the image stack")
-
-        return new_rotated_image_stack
-
-    @staticmethod
-    def get_target_image(rotated_image_stack: np.ndarray) -> np.ndarray:
-        """Get the target image for phase cross correlation. This is the mean
-        of the first 100 images.
-
-        Parameters
-        ----------
-        rotated_image_stack : np.ndarray
-            The rotated image stack.
-
-        Returns
-        -------
-        np.ndarray
-            The target image.
-        """
-        return np.mean(rotated_image_stack[:100], axis=0)
-
-    def get_shifts_using_phase_cross_correlation(
-        self, mean_images: list, target_image: np.ndarray
-    ) -> Dict[str, list]:
-        """Get the shifts (i.e. the number of pixels that the image needs to
-        be shifted in order to be registered) using phase cross correlation.
-
-        Parameters
-        ----------
-        mean_images : list
-            The list of mean images for each rotation increment.
-        target_image : np.ndarray
-            The target image.
-
-        Returns
-        -------
-        Dict[str, list]
-            The shifts in x and y.
-        """
-
-        logging.info("Calculating shifts using phase cross correlation...")
-        shifts: Dict[str, list] = {"x": [], "y": []}
-        image_center = self.num_lines_per_frame / 2
-        for offset_image in mean_images:
-            image_product = (
-                np.fft.fft2(target_image) * np.fft.fft2(offset_image).conj()
-            )
-            cc_image = np.fft.fftshift(np.fft.ifft2(image_product))
-            peaks = np.unravel_index(np.argmax(cc_image), cc_image.shape)
-
-            shift = np.asarray(peaks) - image_center
-            shifts["x"].append(int(shift[0]))
-            shifts["y"].append(int(shift[1]))
-
-        return shifts
-
-    def polynomial_fit(self, shifts: dict) -> Tuple[np.ndarray, np.ndarray]:
-        """Fit a polynomial to the shifts in order to get a smooth function
-        that can be used to register the images.
-
-        Parameters
-        ----------
-        shifts : dict
-            The shifts in x and y.
-
-        Returns
-        -------
-        Tuple[np.ndarray, np.ndarray]
-            The polynomial fit for x and y.
-        """
-        logging.info("Fitting polynomial to shifts...")
-
-        shifts["x"].insert(0, 0)
-        shifts["y"].insert(0, 0)
-
-        angles_range = np.arange(0, 360, 10)
-        x = shifts["x"]
-        y = shifts["y"]
-
-        x_fitted = np.polyfit(angles_range, x, 6)
-        y_fitted = np.polyfit(angles_range, y, 6)
-
-        return x_fitted, y_fitted
-
-    def register_rotated_images(
-        self,
-        rotated_image_stack: np.ndarray,
-        x_fitted: np.ndarray,
-        y_fitted: np.ndarray,
-    ) -> np.ndarray:
-        """Register the rotated images using the polynomial fit.
-
-        Parameters
-        ----------
-        rotated_image_stack : np.ndarray
-            The rotated image stack.
-        x_fitted : np.ndarray
-            The polynomial fit for x.
-        y_fitted : np.ndarray
-            The polynomial fit for y.
-
-        Returns
-        -------
-        np.ndarray
-            The registered image stack.
-        """
-
-        logging.info("Registering rotated images...")
-        registered_images = []
-        for i, img in enumerate(rotated_image_stack):
-            angle = self.rot_deg_frame[i]
-            x = np.polyval(x_fitted, angle)
-            y = np.polyval(y_fitted, angle)
-            shift = (int(x), int(y))
-            registered_images.append(np.roll(img, shift=shift, axis=(0, 1)))
-
-        registered_images = np.array(registered_images)
-
-        return registered_images
 
     def find_center_of_rotation(self) -> Tuple[int, int]:
         """Find the center of rotation by fitting an ellipse to the largest

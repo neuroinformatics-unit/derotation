@@ -9,7 +9,6 @@ This section contains automatically generated documentation for the `derotation`
    :maxdepth: 2
    :caption: API Documentation
 
-   derotation.__init__
    derotation.analysis.bayesian_optimization
    derotation.analysis.blob_detection
    derotation.analysis.fit_ellipse
@@ -30,7 +29,6 @@ This section contains automatically generated documentation for the `derotation`
    :toctree: api
    :nosignatures:
 
-   derotation.__init__
    derotation.analysis.bayesian_optimization
    derotation.analysis.blob_detection
    derotation.analysis.fit_ellipse

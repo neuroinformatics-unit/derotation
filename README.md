@@ -49,6 +49,15 @@ cd derotation
 pip install .
 ```
 
+## Running Tests
+
+This project uses [pytest](https://docs.pytest.org/) for unit testing. To run the tests, use the following command from the repository root:
+
+```bash
+pytest
+
+
+
 ## Configuration
 Navigate to the `derotation/config/` directory to access and edit the configuration files. You'll find two examples: `full_rotation.yml` for full rotations and `incremental_rotation.yml` for incremental rotations.
 

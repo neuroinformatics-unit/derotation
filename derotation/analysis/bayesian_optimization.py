@@ -1,3 +1,11 @@
+""" 
+Bayesian optimization to find the best center of rotation.
+It optimizes the center of rotation by running first the entire derotation
+process and then calculating the point to point distance of the most detected
+blob in the mean images, calculated at angle steps of 10 degrees.
+"""
+
+
 import logging
 from pathlib import Path
 from typing import Tuple

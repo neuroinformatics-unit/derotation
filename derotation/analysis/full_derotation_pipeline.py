@@ -1,3 +1,40 @@
+""" 
+FullPipeline is a class that derotates an image stack
+acquired with a rotating sample under a microscope.
+In the constructor, it loads the config file, starts the logging
+process, and loads the data.
+It is meant to be used for the full rotation protocol, in which
+the sample is rotated by 360 degrees at various speeds and
+directions.
+What is loaded:
+    * various parameters from config file
+    * image stack (tif file)
+    * direction and speed of rotation (from randperm file, uses  \
+    custom_data_loaders.read_randomized_stim_table)
+    * analog signals \
+    (from aux file, uses `custom_data_loaders.get_analog_signals`)
+Analog signals are four files, measured in "clock_time":
+    * frame clock: on during acquisition of a new frame, off otherwise
+    * line clock: on during acquisition of a new line, off otherwise
+    * full rotation: when the motor is rotating
+    * rotation ticks: peaks at every given increment of rotation
+The data is loaded using the custom_data_loaders module, which are
+specific to the setup used in the lab. Please edit them to load
+data from your setup.
+
+Steps of the pipeline:
+    * processing the analog signals
+    * finding the offset of the image stack
+    * setting the optimal center of rotation
+    * derotating the image stack
+    * masking the images
+    * calculating the mean images
+    * evaluating the quality of the derotation
+    * saving the derotated image stack and the csv file
+
+"""
+
+
 import copy
 import itertools
 import logging
@@ -27,7 +64,7 @@ from derotation.load_data.custom_data_loaders import (
 
 
 class FullPipeline:
-    """DerotationPipeline is a class that derotates an image stack
+    """FullPipeline is a class that derotates an image stack
     acquired with a rotating sample under a microscope.
     """
 
@@ -59,11 +96,14 @@ class FullPipeline:
         """Execute the steps necessary to derotate the image stack
         from start to finish.
         It involves:
-        - contrast enhancement
-        - processing the analog signals
-        - rotating the image stack line by line
-        - adding a circular mask to the rotated image stack
-        - saving the masked image stack
+            * processing the analog signals
+            * finding the offset of the image stack
+            * setting the optimal center of rotation
+            * derotating the image stack
+            * masking the images
+            * calculating the mean images
+            * evaluating the quality of the derotation
+            * saving the derotated image stack and the csv file
         """
         self.process_analog_signals()
 

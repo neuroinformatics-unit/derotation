@@ -1,3 +1,10 @@
+""" 
+This module contains the IncrementalPipeline class, which is a child of the
+FullPipeline class. It is used to derotate the image stack that was acquired
+using the incremental rotation method. The class inherits all the attributes
+and methods from the FullPipeline class and adds additional logic to register
+the images."""
+
 import logging
 from pathlib import Path
 from typing import Tuple

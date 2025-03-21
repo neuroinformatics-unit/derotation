@@ -1,3 +1,6 @@
+""" This module contains functions to calculate  mean images 
+in steps of 10 degrees"""
+
 import copy
 import logging
 

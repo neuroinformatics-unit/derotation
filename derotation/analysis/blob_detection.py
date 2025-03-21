@@ -1,3 +1,12 @@
+""" 
+This module contains the BlobDetection class, which is used to detect the largest
+blob in each image of an image stack. The class uses the blob_log function from
+the skimage.feature module to detect the blobs. The coordinates of the largest
+blob in each image are returned as a numpy array. The class also has a method to
+plot the first 4 blobs in each image, which is useful for debugging purposes.
+"""
+
+
 import logging
 from pathlib import Path
 

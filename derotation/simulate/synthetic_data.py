@@ -1,3 +1,9 @@
+""" 
+This module contains the SyntheticData class that generates synthetic data
+for testing and developing the derotation pipeline. 
+"""
+
+
 import copy
 from pathlib import Path
 from typing import Any, Tuple

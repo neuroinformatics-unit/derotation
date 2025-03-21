@@ -1,3 +1,10 @@
+""" 
+This module contains the Rotator class, which is used to simulate the acquisition of a 
+rotated image stack as if for each line acquired, the sample was rotated at a given angle 
+in a given center and plane of rotation.
+"""
+
+
 from typing import Optional, Tuple
 
 import numpy as np

@@ -5,13 +5,7 @@ This page explains how to configure Derotation for use with the full processing 
 
 ## When is configuration required?
 
-You need to provide a configuration file if you are using the **full pipeline**, which:
-- Parses analog signals (line/frame clocks, motor ticks)
-- Estimates rotation angles over time
-- Derotates images using either full or incremental strategies
-- (Optionally) runs Bayesian Optimization to find the center of rotation
-
-This configuration can be passed as a Python `dict`
+You need to provide a configuration file if you are using the **full pipeline** or the **incremental pipeline**. This configuration can be passed as a Python `dict`
 
 If you only want to use the **core derotation method** — `rotate_an_image_array_line_by_line` — then you must manually prepare the image stack and the angle array. In this case, configuration is not needed.
 
@@ -34,27 +28,27 @@ Output locations:
 - `saving_name`: base name for output TIFF
 
 ### `channel_names`
-List of signal names expected in the analog `.bin` file. These must match the order in which the channels were saved.
+List of signal names expected in the analog `.bin` file. These must match the order in which the channels were saved. ⚠️ This a custom field required for the specific setup where the data was acquired.
 
 ### `rotation_increment`
 Expected angle increment per tick from the motor (in degrees).
 
 ### `adjust_increment`
-If `True`, the pipeline may slightly adjust the rotation increment value to match observed data.
+If `True`, the pipeline may slightly adjust the rotation increment value to match observed data. This is necessary as the motor may not exactly provide the expected number of ticks for each rotation.
 
 ### `rot_deg`
 Total degrees corresponding to a full rotation (typically 360).
 
 ### `debugging_plots`
-Whether to save intermediate plots for inspection.
+Whether to save intermediate plots for inspection. Recommended for debugging.
 
 ### `frame_rate`
-Frame rate of acquisition (in Hz). Needed to disambiguate overlapping events.
+Frame rate of acquisition (in Hz).
 
 ### `analog_signals_processing`
 Parameters used to extract information from analog signals:
-- `find_rotation_ticks_peaks`: settings for detecting motor ticks
-- `squared_pulse_k`: controls sharpening of pulses
+- `find_rotation_ticks_peaks` (`height`, `distance`): parameters for detecting rotation ticks
+- `squared_pulse_k`: threshold for detecting line and frame clock signals
 - `inter_rotation_interval_min_len`: minimum number of samples between distinct rotations
 - `angle_interpolation_artifact_threshold`: threshold for discarding rotation segments with high noise
 
@@ -69,14 +63,3 @@ Only needed if using **Bayesian Optimization** to refine the center:
 - `delta_center`: max deviation in pixels from the biased center
 - `init_points`: number of random points for the optimizer to try first
 - `n_iter`: number of BO iterations
-
----
-
-## Tips
-- Use relative paths where possible if working across systems.
-- For quick testing, you can override only part of the config using a dict and fallback to defaults.
-- Bayesian optimization can take time; use it once per dataset and reuse the result if possible.
-
----
-
-For real-world examples of configuration files, see the [examples directory](../examples/index.md) or try the scripts in `examples/`.

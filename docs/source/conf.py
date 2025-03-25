@@ -25,7 +25,7 @@ copyright = "2025, University College London"
 author = "Laura Porta"
 try:
     release = setuptools_scm.get_version(root="../..", relative_to=__file__)
-    release = release.split("+")[0]
+    release = release.split(".dev")[0]
 except LookupError:
     # if git is not initialised, still allow local build
     # with a dummy version

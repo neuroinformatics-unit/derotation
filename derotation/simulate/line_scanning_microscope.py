@@ -1,9 +1,8 @@
-""" 
-This module contains the Rotator class, which is used to simulate the acquisition of a 
-rotated image stack as if for each line acquired, the sample was rotated at a given angle 
-in a given center and plane of rotation.
 """
-
+This module contains the ``Rotator`` class, which is used to simulate the
+acquisition of a rotated image stack as if for each line acquired, the sample
+was rotated at a given angle in a given center and plane of rotation.
+"""
 
 from typing import Optional, Tuple
 
@@ -13,6 +12,59 @@ from scipy.ndimage import affine_transform
 
 
 class Rotator:
+    """
+    The ``Rotator`` aims to imitate the scanning pattern of a multi-photon
+    microscope while the speciment is rotating. Currently, it approximates
+    the acquisition of a given line as if it was instantaneous, happening
+    while the sample was rotated at a given angle.
+
+    It is also possible to simulate the acquisition of a movie from a
+    rotation plane that differs from the scanning plane. To achieve this,
+    provide the rotation_plane_angle and if you want the orientation as
+    well.
+
+    The purpose of the ``Rotator`` object is to imitate the acquisition of
+    rotated samples in order to validate the derotation algorithms and in
+    the future, build a forward model of the transformation.
+
+    Parameters
+    ----------
+    angles : np.ndarray
+        An array of angles in degrees, representing the rotation of the
+        sample at the time of acquisition. The length of the array should
+        be equal to the number of lines per frame multiplied by the number
+        of frames.
+    image_stack : np.ndarray
+        The image stack represents the acquired images, as if there was no
+        rotation. The shape of the image stack should be (``num_frames``,
+        ``num_lines_per_frame``, ``num_pixels_per_line``). In case you want to
+        rotate a single frame, provide an (1, ``num_lines_per_frame``,
+        ``num_pixels_per_line``) image stack.
+    center : Tuple[int, int], optional
+        The center of rotation. If None, the center is going to be the
+        center of the image, by default None
+    rotation_plane_angle : float, optional
+        The z angle of the rotation plane in degrees in relation to the
+        scanning plane. If 0, the rotation plane is the same as
+        the  scanning plane, by default None.
+    rotation_plane_orientation : float, optional
+        The angle of the rotation plane in the x-y plane in degrees,
+        transposed into the rotation plane. If 0, the rotation
+        plane is the same as the scanning plane, by default None.
+    blank_pixel_val : Optional[float], optional
+        The value to fill the blank pixels with. If None, it is going to be
+        the minimum value of the image stack, by default None.
+
+    Raises
+    ------
+    AssertionError (1)
+        If the number of angles is not equal to the number of lines
+        per frame multiplied by the number of frames
+    AssertionError (2)
+        If rotation_plane_orientation is provided, but ``rotation_plane_angle``
+        is not provided.
+    """
+
     def __init__(
         self,
         angles: np.ndarray,
@@ -22,57 +74,7 @@ class Rotator:
         rotation_plane_orientation: float = 0,
         blank_pixel_val: Optional[float] = None,
     ) -> None:
-        """Initializes the Rotator object.
-        The Rotator aims to imitate the scanning pattern of a multi-photon
-        microscope while the speciment is rotating. Currently, it approximates
-        the acquisition of a given line as if it was instantaneous, happening
-        while the sample was rotated at a given angle.
-
-        It is also possible to simulate the acquisition of a movie from a
-        rotation plane that differs from the scanning plane. To achieve this,
-        provide the rotation_plane_angle and if you want the orientation as
-        well.
-
-        The purpose of the Rotator object is to imitate the acquisition of
-        rotated samples in order to validate the derotation algorithms and in
-        the future, build a forward model of the transformation.
-
-        Parameters
-        ----------
-        angles : np.ndarray
-            An array of angles in degrees, representing the rotation of the
-            sample at the time of acquisition. The length of the array should
-            be equal to the number of lines per frame multiplied by the number
-            of frames.
-        image_stack : np.ndarray
-            The image stack represents the acquired images, as if there was no
-            rotation. The shape of the image stack should be (num_frames,
-            num_lines_per_frame, num_pixels_per_line). In case you want to
-            rotate a single frame, provide an (1, num_lines_per_frame,
-            num_pixels_per_line) image stack.
-        center : Tuple[int, int], optional
-            The center of rotation. If None, the center is going to be the
-            center of the image, by default None
-        rotation_plane_angle : float, optional
-            The z angle of the rotation plane in degrees in relation to the
-            scanning plane. If 0, the rotation plane is the same as
-            the  scanning plane, by default None.
-        rotation_plane_orientation : float, optional
-            The angle of the rotation plane in the x-y plane in degrees,
-            transposed into the rotation plane. If 0, the rotation
-            plane is the same as the scanning plane, by default None.
-        blank_pixel_val : Optional[float], optional
-            The value to fill the blank pixels with. If None, it is going to be
-            the minimum value of the image stack, by default None.
-        Raises
-        ------
-        AssertionError (1)
-            If the number of angles is not equal to the number of lines
-            per frame multiplied by the number of frames
-        AssertionError (2)
-            If rotation_plane_orientation is provided, but rotation_plane_angle
-            is not provided.
-        """
+        """Initializes the ``Rotator`` object."""
         #  there should be one angle per line pe frame
         assert len(angles) == image_stack.shape[0] * image_stack.shape[1], (
             f"Number of angles ({len(angles)}) should be equal to the number "
@@ -134,9 +136,7 @@ class Rotator:
         plane to the rotation plane and vice-versa.
 
         The homography matrix is defined as:
-        H = [[1, 0, 0],
-             [0, cos(theta), 0],
-             [0, 0, 1]]
+        H = [[1, 0, 0], [0, cos(theta), 0], [0, 0, 1]]
         where theta is the rotation plane angle in degrees.
 
         Currently, we are using only the inverse homography matrix to transform
@@ -175,14 +175,16 @@ class Rotator:
         line acquired, the sample was rotated at a given angle in a given
         center and plane of rotation.
 
-        Each frame is rotated n_lines_per_frame times, where n_lines_per_frame
-        is the number of lines per frame in the image stack.
+        Each frame is rotated ``n_lines_per_frame`` times, where
+        ``n_lines_per_frame`` is the number of lines per frame in the image
+        stack.
 
         Returns
         -------
         np.ndarray
             The rotated image stack of the same shape as the input image stack,
-            i.e. (num_frames, num_lines_per_frame, num_pixels_per_line).
+            i.e. (``num_frames``, ``num_lines_per_frame``,
+            ``num_pixels_per_line``).
         """
         rotated_image_stack = np.empty(
             (self.image_stack.shape[0], self.image_size, self.image_size),

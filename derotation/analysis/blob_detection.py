@@ -1,11 +1,12 @@
-""" 
-This module contains the BlobDetection class, which is used to detect the largest
-blob in each image of an image stack. The class uses the blob_log function from
-the skimage.feature module to detect the blobs. The coordinates of the largest
-blob in each image are returned as a numpy array. The class also has a method to
-plot the first 4 blobs in each image, which is useful for debugging purposes.
 """
-
+This module contains the BlobDetection class, which is used to detect the
+largest blob in each image of an image stack.
+The class uses the ``blob_log`` function from the
+skimage.feature module to detect the blobs. The coordinates of the largest
+blob in each image are returned as a numpy array. The class also has a method
+to plot the first 4 blobs in each image, which is useful for debugging
+purposes.
+"""
 
 import logging
 from pathlib import Path
@@ -17,6 +18,22 @@ from tqdm import tqdm
 
 
 class BlobDetection:
+    """
+    The BlobDetection class is used to detect the largest blob in each image
+    of an image stack.
+
+    Parameters
+    ----------
+    debugging_plots : bool, optional
+        Whether to create debugging plots, by default False
+    debug_plots_folder : Path, optional
+        The folder to save the debugging plots, by default None
+    blob_log_params : dict, optional
+        The parameters for the blob detection, by default
+        {"max_sigma": 12, "min_sigma": 7, "threshold": 0.95, "overlap": 0}
+        which are the parameters that worked best for the 3-photon data.
+    """
+
     def __init__(
         self,
         debugging_plots: bool = False,
@@ -28,19 +45,7 @@ class BlobDetection:
             "overlap": 0,
         },
     ):
-        """Initializes the BlobDetection class.
-
-        Parameters
-        ----------
-        debugging_plots : bool, optional
-            Whether to create debugging plots, by default False
-        debug_plots_folder : Path, optional
-            The folder to save the debugging plots, by default None
-        blob_log_params : dict, optional
-            The parameters for the blob detection, by default
-            {"max_sigma": 12, "min_sigma": 7, "threshold": 0.95, "overlap": 0}
-            which are the parameters that worked best for the 3-photon data.
-        """
+        """Initializes the BlobDetection class."""
         self.debugging_plots = debugging_plots
         self.debug_plots_folder = debug_plots_folder
         self.blob_log_params = blob_log_params

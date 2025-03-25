@@ -1,3 +1,11 @@
+"""
+This module contains the function derotate, which is used to run the full
+derotation pipeline on a single dataset. It can be called externally from the
+command line or from a script to run multiple datasets in parallel.
+Configurations are generated based on the provided dataset folder and output
+folder.
+"""
+
 import logging
 import traceback
 from pathlib import Path
@@ -8,8 +16,36 @@ from derotation.analysis.full_derotation_pipeline import FullPipeline
 
 
 def update_config_paths(
-    config, tif_path, bin_path, dataset_path, output_folder, kind="full"
-):
+    config: dict,
+    tif_path: Path,
+    bin_path: Path,
+    dataset_path: Path,
+    output_folder: str,
+    kind: str = "full",
+) -> dict:
+    """
+    Update the paths in the config dictionary based on the provided arguments.
+
+    Parameters
+    ----------
+    config : dict
+        The configuration dictionary.
+    tif_path : Path
+        The path to the tif file to be derotated.
+    bin_path : Path
+        The path to the bin file containing analog signals.
+    dataset_path : Path
+        The path to the dataset folder.
+    output_folder : str
+        The path to the output folder in which to save the results.
+    kind : str, optional
+        Which derotation pipeline to run, by default "full".
+
+    Returns
+    -------
+    dict
+        The updated configuration dictionary.
+    """
     # Set config paths based on provided arguments
     config["paths_read"]["path_to_randperm"] = str(
         Path(dataset_path).parent / "stimlus_randperm.mat"
@@ -32,7 +68,27 @@ def update_config_paths(
     return config
 
 
-def derotate(dataset_folder: Path, output_folder):
+def derotate(dataset_folder: Path, output_folder: str) -> float:
+    """
+    Run the full derotation pipeline on a single dataset.
+
+    Parameters
+    ----------
+    dataset_folder : Path
+        The path to the dataset folder.
+    output_folder : str
+        The path to the output folder in which to save the results.
+
+    Returns
+    -------
+    float
+        The metric calculated by the pipeline.
+
+    Raises
+    ------
+    Exception
+        If the pipeline fails.
+    """
     this_module_path = Path(__file__).parent
 
     # FULL DEROTATION PIPELINE

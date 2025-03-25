@@ -1,8 +1,7 @@
-""" 
-This module contains the SyntheticData class that generates synthetic data
-for testing and developing the derotation pipeline. 
 """
-
+This module contains the ``SyntheticData`` class that generates synthetic data
+for testing and developing the derotation pipeline.
+"""
 
 import copy
 from pathlib import Path
@@ -20,6 +19,67 @@ from derotation.simulate.line_scanning_microscope import Rotator
 
 
 class SyntheticData:
+    """Class to generate synthetic data for testing and developing the
+    derotation pipeline.
+
+    The synthetic data consists of:
+        - a 2D image with two circles, one bright and one dim (optional),
+          by default in the top center and bottom right, respectively. Use
+          the ``center_of_bright_cell`` and ``center_of_dimmer_cell``
+          parameters to change the location of the circles. If padding and
+          background value are provided, the image will be padded and the
+          background value will be set to the background_value.
+          Padding helps increasing the field of view in order to
+          accommodate for larger rotations and have more data to derotate.
+          The background value is useful to distinguish pixels from the
+          original image from those that are never evaluated, which will
+          remain 0. NB: padding will alter the number of lines per frame.
+        - two angle arrays for incremental and sinusoidal rotation
+        - one 3D image stack with the 2D image repeated for a given number
+          of frames (this is going to be the input for the ``Rotator``)
+        - two rotated movies made with incremental and sinusoidal rotations
+        - two derotated movies:
+            - one made with a mock of the ``IncrementalPipeline``, used then
+              to estimate the center of rotation and the ellipse fits
+            - one made just with ``derotate_an_image_array_line_by_line`` with
+              the sinusoidal rotation angles
+
+    Why mocking the ``IncrementalPipeline``?
+    The ``IncrementalPipeline`` has the responsibility to find the center of
+    rotation but with mock data we cannot use it off the shelf because it
+    is too bound to signals coming from a real motor in the
+    ``calculate_mean_images`` method and in the constructor.
+
+    See the integration_pipeline method for the full pipeline.
+
+    Parameters
+    ----------
+    center_of_bright_cell : tuple, optional
+        The location of the brightest cell, by default (50, 10)
+    center_of_dimmer_cell : tuple, optional
+        The location of the dimmer cell, by default (60, 60)
+    pad : int, optional
+        Padding around the image, by default 0
+    background_value : int, optional
+        Background value, by default 80
+    lines_per_frame : int, optional
+        Number of lines per frame, by default 100
+    second_cell : bool, optional
+        Add an extra dimmer cell, by default True
+    radius : int, optional
+        Radius of the circles, by default 5
+    num_frames : int, optional
+        Number of frames in the 3D image stack, by default 100
+    center_of_rotation_offset : tuple, optional
+        The offset of the center of rotation, by default (0, 0)
+    rotation_plane_angle : int, optional
+        The angle of the rotation plane, by default 0
+    rotation_plane_orientation : int, optional
+        The orientation of the rotation plane, by default 0
+    plots : bool, optional
+        Whether to plot debugging plots, by default False
+    """
+
     def __init__(
         self,
         center_of_bright_cell: Tuple[int, int] = (50, 10),
@@ -35,71 +95,7 @@ class SyntheticData:
         rotation_plane_orientation: int = 0,
         plots: bool = False,
     ):
-        """Initialize the SyntheticData object. This class handles the creation
-        of a variety of synthetic data for testing and developing th derotation
-        pipeline.
-
-        The synthetic data consists of:
-        - a 2D image with two circles, one bright and one dim (optional),
-        by default in the top center and bottom right, respectively. Use the
-        center_of_bright_cell and center_of_dimmer_cell parameters to change
-        the location of the circles. If padding and background value are
-        provided, the image will be padded and the background value will be
-        set to the background_value.
-        Padding helps increasing the field of view in order to accommodate for
-        larger rotations and have more data to derotate.
-        The background value is useful to distinguish pixels from the original
-        image from those that are never evaluated, which will remain 0.
-        NB: padding will alter the number of lines per frame.
-
-        - two angle arrays for incremental and sinusoidal rotation
-
-        - one 3D image stack with the 2D image repeated for a given number
-        of frames (this is going to be the input for the Rotator)
-
-        - two rotated movies made with incremental and sinusoidal rotations
-
-        - two derotated movies:
-            - one made with a mock of the IncrementalPipeline, used then to
-            estimate the center of rotation and the ellipse fits
-            - one made just with derotate_an_image_array_line_by_line with the
-            sinusoidal rotation angles
-
-        Why mocking the IncrementalPipeline?
-        The IncrementalPipeline has the responsibility to find the center of
-        rotation but with mock data we cannot use it off the shelf because it
-        is too bound to signals coming from a real motor in the
-        `calculate_mean_images` method and in the constructor.
-
-        See the integration_pipeline method for the full pipeline.
-
-        Parameters
-        ----------
-        center_of_bright_cell : tuple, optional
-            The location of the brightest cell, by default (50, 10)
-        center_of_dimmer_cell : tuple, optional
-            The location of the dimmer cell, by default (60, 60)
-        pad : int, optional
-            Padding around the image, by default 0
-        background_value : int, optional
-            Background value, by default 80
-        lines_per_frame : int, optional
-            Number of lines per frame, by default 100
-        second_cell : bool, optional
-            Add an extra dimmer cell, by default True
-        radius : int, optional
-            Radius of the circles, by default 5
-        num_frames : int, optional
-            Number of frames in the 3D image stack, by default 100
-        center_of_rotation_offset : tuple, optional
-            The offset of the center of rotation, by default (0, 0)
-        rotation_plane_angle : int, optional
-            The angle of the rotation plane, by default 0
-        rotation_plane_orientation : int, optional
-            The orientation of the rotation plane, by default 0
-        plots : bool, optional
-            Whether to plot debugging plots, by default False
-        """
+        """Initialize the ``SyntheticData`` object."""
 
         self.center_of_bright_cell = center_of_bright_cell
         self.center_of_dimmer_cell = center_of_dimmer_cell
@@ -124,8 +120,8 @@ class SyntheticData:
         and then derotates the sinusoidal stack using the center of rotation
         estimated by the incremental pipeline.
 
-        The pipeline also plots debugging plots if the plots parameter is set
-        to True.
+        The pipeline also plots debugging plots if the ``plots`` parameter is
+        set to `True`.
         """
 
         # -----------------------------------------------------
@@ -214,7 +210,7 @@ class SyntheticData:
         respectively.
 
         Location of the circles can be changed by providing the
-        center_of_bright_cell and center_of_dimmer_cell parameters.
+        ``center_of_bright_cell`` and ``center_of_dimmer_cell`` parameters.
 
         If specified, the image will be padded and the background value
         will be set to the background_value.
@@ -348,15 +344,15 @@ class SyntheticData:
         rotated_stack_incremental: np.ndarray,
         incremental_angles: np.ndarray,
     ) -> Tuple[Tuple[int, int], Any]:
-        """Get the center of rotation by using the IncrementalPipeline.
+        """Get the center of rotation by using the ``IncrementalPipeline``.
 
         The Incremental pipeline has the responsibility to find the center of
         rotation but with mock data we cannot use it off the shelf because it
         is too bound to signals coming from a real motor in the
-        `calculate_mean_images` method and in the constructor.
-        We will create a mock class that inherits from the IncrementalPipeline
-        and overwrite the `calculate_mean_images` method to work with our mock
-        data.
+        ``calculate_mean_images`` method and in the constructor.
+        We will create a mock class that inherits from the
+        ``IncrementalPipeline`` and overwrite the ``calculate_mean_images``
+        method to work with our mock data.
 
         Parameters
         ----------

@@ -1,5 +1,7 @@
-""" This module contains functions to calculate  mean images 
-in steps of 10 degrees"""
+"""
+This module contains functions to calculate  mean images
+in steps of 10 degrees. It is used when finding the center of rotation.
+"""
 
 import copy
 import logging

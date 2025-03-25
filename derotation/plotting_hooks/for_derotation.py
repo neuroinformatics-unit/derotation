@@ -21,6 +21,19 @@ def line_addition(
 ):
     """
     Hook for plotting the derotated image and the current rotated line.
+
+    Parameters
+    ----------
+    derotated_filled_image : np.ndarray
+        The derotated image.
+    rotated_line : np.ndarray
+        The rotated line.
+    image_counter : int
+        The current frame number.
+    line_counter : int
+        The current line number.
+    angle : float
+        The rotation angle of the line
     """
     fig, ax = plt.subplots(1, 2, figsize=(10, 10))
 
@@ -46,8 +59,7 @@ def image_completed(
     frame_of_interest: int = 149,
 ):
     """Hook for plotting the maximum projection of the derotated image stack
-    after the first rotation (which ends ~149th frame) and the current
-    derotated image.
+    after the first rotation and the current derotated image.
 
     Parameters
     ----------

@@ -1,11 +1,11 @@
-""" This module contains functions to calculate metrics for the derotation
-analysis. The ptd_of_most_detected_blob function calculates the peak to peak
-distance of the centers of the most detected blob in the derotated stack across
-all frames. The function uses the blob_log function from the skimage.feature
-module to detect the blobs and the DBSCAN algorithm from the sklearn.cluster
-module to cluster the blobs based on proximity. The function returns the peak
-to peak distance of the centers of the most detected blob. """
-
+"""This module contains functions to calculate metrics for the derotation
+analysis. The ``ptd_of_most_detected_blob`` function calculates the peak to
+peak distance of the centers of the most detected blob in the derotated stack
+across all frames. The function uses the ``blob_log`` function from the
+``skimage.feature`` module to detect the blobs and the DBSCAN algorithm from
+the ``sklearn.cluster`` module to cluster the blobs based on proximity. The
+function returns the peak to peak distance of the centers of the most detected
+blob."""
 
 from collections import Counter
 from pathlib import Path
@@ -56,6 +56,7 @@ def ptd_of_most_detected_blob(
         in the neighborhood of the other, by default 10.0
     clipping_percentiles : List[float], optional
         The percentiles to clip the images to, by default [99.0, 99.99]
+
     Returns
     -------
     float

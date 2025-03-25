@@ -1,5 +1,5 @@
 """
-Derotate line-scanning image data
+Rotate and derotate a sample image
 ==================================
 
 This tutorial demonstrates how to simulate the effect of a line-by-line

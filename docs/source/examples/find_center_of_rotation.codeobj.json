@@ -1,0 +1,282 @@
+{
+ "Image": [
+  {
+   "is_class": true,
+   "is_explicit": false,
+   "module": "IPython.core.display",
+   "module_short": "IPython.core.display",
+   "name": "Image"
+  },
+  {
+   "is_class": true,
+   "is_explicit": false,
+   "module": "IPython.core",
+   "module_short": "IPython.core",
+   "name": "Image"
+  },
+  {
+   "is_class": true,
+   "is_explicit": false,
+   "module": "IPython",
+   "module_short": "IPython",
+   "name": "Image"
+  },
+  {
+   "is_class": true,
+   "is_explicit": false,
+   "module": "IPython.core.display",
+   "module_short": "IPython.core.display",
+   "name": "DisplayObject"
+  },
+  {
+   "is_class": true,
+   "is_explicit": false,
+   "module": "IPython.core",
+   "module_short": "IPython.core",
+   "name": "DisplayObject"
+  },
+  {
+   "is_class": true,
+   "is_explicit": false,
+   "module": "IPython",
+   "module_short": "IPython",
+   "name": "DisplayObject"
+  },
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "IPython.display",
+   "module_short": "IPython.display",
+   "name": "Image"
+  }
+ ],
+ "Path": [
+  {
+   "is_class": true,
+   "is_explicit": false,
+   "module": "pathlib",
+   "module_short": "pathlib",
+   "name": "Path"
+  },
+  {
+   "is_class": true,
+   "is_explicit": false,
+   "module": "pathlib",
+   "module_short": "pathlib",
+   "name": "PurePath"
+  },
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "pathlib",
+   "module_short": "pathlib",
+   "name": "Path"
+  }
+ ],
+ "SyntheticData": [
+  {
+   "is_class": true,
+   "is_explicit": false,
+   "module": "derotation.simulate.synthetic_data",
+   "module_short": "derotation.simulate.synthetic_data",
+   "name": "SyntheticData"
+  },
+  {
+   "is_class": true,
+   "is_explicit": false,
+   "module": "derotation.simulate",
+   "module_short": "derotation.simulate",
+   "name": "SyntheticData"
+  },
+  {
+   "is_class": true,
+   "is_explicit": false,
+   "module": "derotation",
+   "module_short": "derotation",
+   "name": "SyntheticData"
+  },
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "derotation.simulate.synthetic_data",
+   "module_short": "derotation.simulate.synthetic_data",
+   "name": "SyntheticData"
+  }
+ ],
+ "center_of_rotation_offset": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "builtins",
+   "module_short": "builtins",
+   "name": "tuple"
+  }
+ ],
+ "debug_folder": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "pathlib",
+   "module_short": "pathlib",
+   "name": "PosixPath"
+  }
+ ],
+ "debug_folder.glob": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "pathlib",
+   "module_short": "pathlib",
+   "name": "PosixPath.glob"
+  },
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "pathlib",
+   "module_short": "pathlib",
+   "name": "Path.glob"
+  },
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "pathlib",
+   "module_short": "pathlib",
+   "name": "PurePosixPath.glob"
+  },
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "pathlib",
+   "module_short": "pathlib",
+   "name": "PurePath.glob"
+  }
+ ],
+ "debug_images": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "builtins",
+   "module_short": "builtins",
+   "name": "list"
+  }
+ ],
+ "display": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "builtins",
+   "module_short": "builtins",
+   "name": "function"
+  },
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "IPython.display",
+   "module_short": "IPython.display",
+   "name": "display"
+  }
+ ],
+ "img_path": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "pathlib",
+   "module_short": "pathlib",
+   "name": "PosixPath"
+  }
+ ],
+ "img_path.name": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "pathlib",
+   "module_short": "pathlib",
+   "name": "PosixPath.name"
+  },
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "pathlib",
+   "module_short": "pathlib",
+   "name": "Path.name"
+  },
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "pathlib",
+   "module_short": "pathlib",
+   "name": "PurePosixPath.name"
+  },
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "pathlib",
+   "module_short": "pathlib",
+   "name": "PurePath.name"
+  }
+ ],
+ "rotation_plane_angle": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "builtins",
+   "module_short": "builtins",
+   "name": "int"
+  }
+ ],
+ "rotation_plane_orientation": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "builtins",
+   "module_short": "builtins",
+   "name": "int"
+  }
+ ],
+ "s_data": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "derotation.simulate.synthetic_data",
+   "module_short": "derotation.simulate.synthetic_data",
+   "name": "SyntheticData"
+  },
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "derotation.simulate",
+   "module_short": "derotation.simulate",
+   "name": "SyntheticData"
+  },
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "derotation",
+   "module_short": "derotation",
+   "name": "SyntheticData"
+  }
+ ],
+ "s_data.integration_pipeline": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "derotation.simulate.synthetic_data",
+   "module_short": "derotation.simulate.synthetic_data",
+   "name": "SyntheticData.integration_pipeline"
+  },
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "derotation.simulate",
+   "module_short": "derotation.simulate",
+   "name": "SyntheticData.integration_pipeline"
+  },
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "derotation",
+   "module_short": "derotation",
+   "name": "SyntheticData.integration_pipeline"
+  }
+ ]
+}

@@ -1,0 +1,425 @@
+{
+ "Rotator": [
+  {
+   "is_class": true,
+   "is_explicit": false,
+   "module": "derotation.simulate.line_scanning_microscope",
+   "module_short": "derotation.simulate.line_scanning_microscope",
+   "name": "Rotator"
+  },
+  {
+   "is_class": true,
+   "is_explicit": false,
+   "module": "derotation.simulate",
+   "module_short": "derotation.simulate",
+   "name": "Rotator"
+  },
+  {
+   "is_class": true,
+   "is_explicit": false,
+   "module": "derotation",
+   "module_short": "derotation",
+   "name": "Rotator"
+  },
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "derotation.simulate.line_scanning_microscope",
+   "module_short": "derotation.simulate.line_scanning_microscope",
+   "name": "Rotator"
+  }
+ ],
+ "angle_range": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "builtins",
+   "module_short": "builtins",
+   "name": "str"
+  }
+ ],
+ "angle_slice": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "numpy",
+   "module_short": "numpy",
+   "name": "ndarray"
+  }
+ ],
+ "angle_slice.max": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "builtins",
+   "module_short": "builtins",
+   "name": "builtin_function_or_method"
+  }
+ ],
+ "angle_slice.min": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "builtins",
+   "module_short": "builtins",
+   "name": "builtin_function_or_method"
+  }
+ ],
+ "angle_slice.size": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "builtins",
+   "module_short": "builtins",
+   "name": "int"
+  }
+ ],
+ "angles": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "numpy",
+   "module_short": "numpy",
+   "name": "ndarray"
+  }
+ ],
+ "angles.max": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "builtins",
+   "module_short": "builtins",
+   "name": "builtin_function_or_method"
+  }
+ ],
+ "angles.min": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "builtins",
+   "module_short": "builtins",
+   "name": "builtin_function_or_method"
+  }
+ ],
+ "ax": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "numpy",
+   "module_short": "numpy",
+   "name": "ndarray"
+  }
+ ],
+ "derotate_an_image_array_line_by_line": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "builtins",
+   "module_short": "builtins",
+   "name": "function"
+  },
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "derotation.derotate_by_line",
+   "module_short": "derotation.derotate_by_line",
+   "name": "derotate_an_image_array_line_by_line"
+  }
+ ],
+ "fig": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "matplotlib.figure",
+   "module_short": "matplotlib.figure",
+   "name": "Figure"
+  },
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "matplotlib",
+   "module_short": "matplotlib",
+   "name": "Figure"
+  }
+ ],
+ "gray_values": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "builtins",
+   "module_short": "builtins",
+   "name": "list"
+  }
+ ],
+ "i": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "builtins",
+   "module_short": "builtins",
+   "name": "int"
+  }
+ ],
+ "image": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "numpy",
+   "module_short": "numpy",
+   "name": "ndarray"
+  }
+ ],
+ "image_stack": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "numpy",
+   "module_short": "numpy",
+   "name": "ndarray"
+  }
+ ],
+ "image_stack.shape": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "builtins",
+   "module_short": "builtins",
+   "name": "tuple"
+  }
+ ],
+ "np.arange": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "builtins",
+   "module_short": "builtins",
+   "name": "builtin_function_or_method"
+  },
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "numpy",
+   "module_short": "numpy",
+   "name": "arange"
+  }
+ ],
+ "np.array": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "builtins",
+   "module_short": "builtins",
+   "name": "builtin_function_or_method"
+  },
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "numpy",
+   "module_short": "numpy",
+   "name": "array"
+  }
+ ],
+ "np.empty": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "builtins",
+   "module_short": "builtins",
+   "name": "builtin_function_or_method"
+  },
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "numpy",
+   "module_short": "numpy",
+   "name": "empty"
+  }
+ ],
+ "num_frames": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "builtins",
+   "module_short": "builtins",
+   "name": "int"
+  }
+ ],
+ "num_lines": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "builtins",
+   "module_short": "builtins",
+   "name": "int"
+  }
+ ],
+ "plt.axis": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "builtins",
+   "module_short": "builtins",
+   "name": "function"
+  },
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "matplotlib.pyplot",
+   "module_short": "matplotlib.pyplot",
+   "name": "axis"
+  }
+ ],
+ "plt.imshow": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "builtins",
+   "module_short": "builtins",
+   "name": "function"
+  },
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "matplotlib.pyplot",
+   "module_short": "matplotlib.pyplot",
+   "name": "imshow"
+  }
+ ],
+ "plt.show": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "builtins",
+   "module_short": "builtins",
+   "name": "function"
+  },
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "matplotlib.pyplot",
+   "module_short": "matplotlib.pyplot",
+   "name": "show"
+  }
+ ],
+ "plt.subplots": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "builtins",
+   "module_short": "builtins",
+   "name": "function"
+  },
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "matplotlib.pyplot",
+   "module_short": "matplotlib.pyplot",
+   "name": "subplots"
+  }
+ ],
+ "plt.tight_layout": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "builtins",
+   "module_short": "builtins",
+   "name": "function"
+  },
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "matplotlib.pyplot",
+   "module_short": "matplotlib.pyplot",
+   "name": "tight_layout"
+  }
+ ],
+ "plt.title": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "builtins",
+   "module_short": "builtins",
+   "name": "function"
+  },
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "matplotlib.pyplot",
+   "module_short": "matplotlib.pyplot",
+   "name": "title"
+  }
+ ],
+ "rotated_image_stack": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "numpy",
+   "module_short": "numpy",
+   "name": "ndarray"
+  }
+ ],
+ "rotated_image_stack_derotated": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "numpy",
+   "module_short": "numpy",
+   "name": "ndarray"
+  }
+ ],
+ "rotator": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "derotation.simulate.line_scanning_microscope",
+   "module_short": "derotation.simulate.line_scanning_microscope",
+   "name": "Rotator"
+  },
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "derotation.simulate",
+   "module_short": "derotation.simulate",
+   "name": "Rotator"
+  },
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "derotation",
+   "module_short": "derotation",
+   "name": "Rotator"
+  }
+ ],
+ "rotator.angles": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "numpy",
+   "module_short": "numpy",
+   "name": "ndarray"
+  }
+ ],
+ "rotator.rotate_by_line": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "derotation.simulate.line_scanning_microscope",
+   "module_short": "derotation.simulate.line_scanning_microscope",
+   "name": "Rotator.rotate_by_line"
+  },
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "derotation.simulate",
+   "module_short": "derotation.simulate",
+   "name": "Rotator.rotate_by_line"
+  },
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "derotation",
+   "module_short": "derotation",
+   "name": "Rotator.rotate_by_line"
+  }
+ ]
+}

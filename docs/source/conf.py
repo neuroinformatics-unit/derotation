@@ -48,6 +48,7 @@ extensions = [
     "sphinx_autodoc_typehints",
     "sphinx_design",
     "sphinxarg.ext",
+    'sphinx_gallery.gen_gallery',
 ]
 
 # Configure the myst parser to enable cool markdown features
@@ -146,3 +147,23 @@ html_static_path = ['_static']
 html_css_files = [
     'css/custom.css',
 ]
+
+# Configure Sphinx gallery
+sphinx_gallery_conf = {
+    "examples_dirs": ["../../examples"],
+    "filename_pattern": "/*.py",  # which files to execute before inclusion
+    "gallery_dirs": ["examples"],  # output directory
+    "run_stale_examples": True,  # re-run examples on each build
+    # Integration with Binder, see https://sphinx-gallery.github.io/stable/configuration.html#generate-binder-links-for-gallery-notebooks-experimental
+    "binder": {
+        "org": "neuroinformatics-unit",
+        "repo": "derotation",
+        "branch": "gh-pages",
+        "binderhub_url": "https://mybinder.org",
+        "dependencies": ["requirements.txt"],
+    },
+    "reference_url": {"derotation": None},
+    # "default_thumb_file": "source/_static/data_icon.png",  # default thumbnail image
+    "remove_config_comments": True,
+    # do not render config params set as # sphinx_gallery_config [= value]
+}

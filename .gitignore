@@ -82,5 +82,7 @@ venv/
 # written by setuptools_scm
 **/_version.py
 
+# Further ignore
 .conda/
 debug/*
+examples/debug/*

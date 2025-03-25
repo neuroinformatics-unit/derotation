@@ -7,5 +7,5 @@ setuptools-scm
 sphinx
 sphinx-argparse
 sphinx-autodoc-typehints
+sphinx-gallery
 sphinx_design
--e .

@@ -43,6 +43,29 @@ Both pipelines accept a configuration dictionary (see the [configuration guide](
 
 You can subclass `FullPipeline` to create custom pipelines by overwriting relevant methods.
 
+### Example usage of FullPipeline:
+
+```python
+from derotation.config.load_config import update_config_paths, load_config
+from derotation.analysis.full_derotation_pipeline import FullPipeline
+
+
+# Load the configuration file
+pipeline_type = "full"
+config = load_config(pipeline_type)
+config = update_config_paths(
+    config=config,
+    tif_path="/my/data/image_stack.tif",
+    bin_path="/my/data/signals.bin",
+    dataset_path="/my/data/",
+    kind=pipeline_type,
+)
+
+# Load data and run the pipeline
+pipeline = FullPipeline(config)
+pipeline()
+```
+
 ---
 
 ## Finding the center of rotation
@@ -73,6 +96,46 @@ The center of the ellipse is assumed to match the true center of rotation. This 
 
 Once the center is estimated, it can be fed to the FullPipeline to derotate the whole movie.
 
+#### Example usage of IncrementalPipeline:
+
+```python
+from derotation.config.load_config import update_config_paths, load_config
+from derotation.analysis.incremental_derotation_pipeline import IncrementalPipeline
+from derotation.analysis.full_derotation_pipeline import FullPipeline
+
+
+# Load the configuration file
+pipeline_type = "incremental"
+config_incremental = load_config(pipeline_type)
+config_incremental = update_config_paths(
+    config=config,
+    tif_path="/my/data/image_stack.tif",
+    bin_path="/my/data/signals.bin",
+    dataset_path="/my/data/",
+    kind=pipeline_type,
+)
+
+# Load data and run the pipeline
+incremental_pipeline = IncrementalPipeline(config_incremental)
+incremental_pipeline()
+
+# Load the configuration file
+pipeline_type = "full"
+config_full = load_config(pipeline_type)
+config_full = update_config_paths(
+    config=config,
+    tif_path="/my/data/image_stack.tif",
+    bin_path="/my/data/signals.bin",
+    dataset_path="/my/data/",
+    kind=pipeline_type,
+)
+
+# Load data and run the pipeline
+full_pipeline = FullPipeline(config_full)
+full_pipeline.center_of_rotation = incremental_pipeline.center_of_rotation
+full_pipeline()
+```
+
 ---
 
 ## Verifying derotation quality
@@ -82,7 +145,30 @@ Use debugging plots and logs to assess the quality of your reconstruction. These
 - Angle interpolation traces
 - Center estimation visualizations
 - Derotated frame samples
+Debugging plots are by default saved in the ``debug_plots`` folder.
 
+### Custom plotting hooks
+To monitor what is happening at every step of line-by-line derotation, you can use custom plotting hooks. These are functions that are called at specific points in the pipeline and can be used to visualize intermediate results.
+
+There are two steps in the ``derotate_an_image_array_line_by_line`` function where hooks can be injected:
+- After adding a new line to the derotated image (`plotting_hook_line_addition`)
+- After completing a frame (`plotting_hook_image_completed`)
+
+Here and example of two pre-made hooks that can be used to visualize the derotation process:
+```python
+from derotation.plotting_hooks.for_derotation import image_completed, line_addition
+
+hooks = {
+    "plotting_hook_line_addition": line_addition,
+    "plotting_hook_image_completed": image_completed,
+}
+
+pipeline = FullPipeline(config)
+pipeline.hooks = hooks
+pipeline()
+```
+
+> ⚠️ Note: Hooks may slow down processing significantly. Use them for inspection only.
 You can also inject **custom plotting hooks** at defined pipeline stages. See the examples page for a demonstration. *Note: hooks may significantly slow down processing.*
 
 ---

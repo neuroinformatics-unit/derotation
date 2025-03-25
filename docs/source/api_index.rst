@@ -16,6 +16,7 @@ This section contains automatically generated documentation for the `derotation`
    derotation.analysis.incremental_derotation_pipeline
    derotation.analysis.mean_images
    derotation.analysis.metrics
+   derotation.config.load_config
    derotation.derotate_batch
    derotation.derotate_by_line
    derotation.load_data.custom_data_loaders
@@ -36,6 +37,7 @@ This section contains automatically generated documentation for the `derotation`
    derotation.analysis.incremental_derotation_pipeline
    derotation.analysis.mean_images
    derotation.analysis.metrics
+   derotation.config.load_config
    derotation.derotate_batch
    derotation.derotate_by_line
    derotation.load_data.custom_data_loaders

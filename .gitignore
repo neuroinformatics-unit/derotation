@@ -86,3 +86,11 @@ venv/
 .conda/
 debug/*
 examples/debug/*
+
+
+# Sphinx documentation
+docs/build/
+docs/source/examples/
+docs/source/api/
+docs/source/api_index.rst
+sg_execution_times.rst

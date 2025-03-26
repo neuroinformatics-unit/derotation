@@ -14,6 +14,14 @@ help:
 
 .PHONY: help Makefile
 
+# Remove all generated files
+clean:
+	rm -rf ./build
+	rm -f ./source/api_index.rst
+	rm -rf ./source/api
+	rm -rf ./source/examples
+	rm -f ./source/sg_execution_times.rst
+
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 %: Makefile

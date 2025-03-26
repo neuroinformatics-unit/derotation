@@ -27,9 +27,9 @@ from derotation.simulate.synthetic_data import SyntheticData
 # Define parameters for the synthetic simulation
 # ----------------------------------------------
 
-rotation_plane_angle = 25  # degrees
-rotation_plane_orientation = 45  # degrees
-center_of_rotation_offset = (20, -10)  # pixels
+rotation_plane_angle = 10  # degrees
+rotation_plane_orientation = 30  # degrees
+center_of_rotation_offset = (7, -7)  # pixels
 
 # %%
 # Run full pipeline
@@ -39,7 +39,7 @@ center_of_rotation_offset = (20, -10)  # pixels
 # All intermediate plots are saved in the "debug" folder.
 
 s_data = SyntheticData(
-    radius=5,
+    radius=2,
     center_of_rotation_offset=center_of_rotation_offset,
     rotation_plane_angle=rotation_plane_angle,
     rotation_plane_orientation=rotation_plane_orientation,
@@ -52,9 +52,9 @@ s_data = SyntheticData(
 s_data.integration_pipeline()
 
 # %%
-# Display all debug plots
+# Display relevant plots
 # -----------------------
-# Let's display all `.png` files in the `debug/` folder, sorted by filename.
+# Let's display some of the plots generated during the pipeline.
 
 debug_folder = Path("debug")
 debug_images = sorted(debug_folder.glob("*.png"))
@@ -62,5 +62,17 @@ debug_images = sorted(debug_folder.glob("*.png"))
 print(f"Found {len(debug_images)} plots in debug/")
 
 for img_path in debug_images:
-    print(f"\n{img_path.name}")
-    display(Image(filename=str(img_path)))
+    # print(f"\n{img_path.name}")
+    # display(Image(filename=str(img_path)))
+    if "derotated_sinusoidal" in img_path.name:
+        print("Derotated frames across different angles")
+        display(Image(filename=str(img_path)))
+    elif "ellipse_fit" in img_path.name:
+        print("Ellipse fitting to find center of rotation")
+        display(Image(filename=str(img_path)))
+    elif "mean_projection" in img_path.name:
+        print("Mean projection of the rotated stack")
+        display(Image(filename=str(img_path)))
+    elif "rotation_angles" in img_path.name:
+        print("Rotation angles")
+        display(Image(filename=str(img_path)))

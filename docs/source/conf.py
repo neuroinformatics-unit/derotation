@@ -130,6 +130,8 @@ html_theme_options = {
     "logo": {
         "text": f"{project} v{release}",
     },
+    "footer_start": ["footer_start"],
+    "footer_end": ["footer_end"],
 }
 
 # Redirect the webpage to another URL

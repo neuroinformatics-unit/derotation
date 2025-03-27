@@ -49,4 +49,3 @@ This package was built taking into account previous efforts on derotation shown 
 Contributions to Derotation are encouraged, whether to fix a bug, develop a new feature, or improve documentation.
 
 - [Open an issue](https://github.com/neuroinformatics-unit/derotation/issues) to report a bug or request a new feature.
-- [Follow this Zulip topic](https://neuroinformatics.zulipchat.com/#narrow/channel/406001-Derotation/topic/Community.20Calls) to receive updates about upcoming Community Calls.

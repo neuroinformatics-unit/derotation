@@ -10,7 +10,9 @@ os.chdir(SCRIPT_DIR)
 
 
 def make_api_index():
-    """Generate a properly formatted `api_index.rst` file for Sphinx documentation."""
+    """
+    Generate a properly formatted `api_index.rst` file for
+    Sphinx documentation."""
 
     api_path = Path("../derotation")
     module_entries = []
@@ -30,7 +32,8 @@ def make_api_index():
 API Reference
 =============
 
-This section contains automatically generated documentation for the `derotation` package.
+This section contains automatically generated documentation for the
+`derotation` package.
 
 .. toctree::
    :maxdepth: 2
@@ -39,7 +42,9 @@ This section contains automatically generated documentation for the `derotation`
 """
 
     # Add module entries for the toctree
-    api_index_content += "\n".join(f"   {module}" for module in module_entries) + "\n\n"
+    api_index_content += (
+        "\n".join(f"   {module}" for module in module_entries) + "\n\n"
+    )
 
     # Add the autosummary directive
     api_index_content += """\
@@ -52,7 +57,9 @@ This section contains automatically generated documentation for the `derotation`
 """
 
     # Add module entries for autosummary
-    api_index_content += "\n".join(f"   {module}" for module in module_entries) + "\n"
+    api_index_content += (
+        "\n".join(f"   {module}" for module in module_entries) + "\n"
+    )
 
     # Write the generated content to `api_index.rst`
     output_path = Path("source") / "api_index.rst"

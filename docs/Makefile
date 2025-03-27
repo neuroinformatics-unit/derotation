@@ -14,6 +14,10 @@ help:
 
 .PHONY: help Makefile
 
+# Generate the API index file
+api_index.rst:
+	python make_api_index.py
+
 # Remove all generated files
 clean:
 	rm -rf ./build

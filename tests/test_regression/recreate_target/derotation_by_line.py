@@ -6,7 +6,7 @@ from tests.test_regression.recreate_target.shared import (
     save_image_in_test_folder,
 )
 
-dog = Image.open("images/dog.png").convert("L")
+dog = Image.open("tests/images/dog.png").convert("L")
 
 
 def get_len_stack():

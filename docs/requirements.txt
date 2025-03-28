@@ -10,3 +10,4 @@ sphinx-argparse
 sphinx-autodoc-typehints
 sphinx-gallery
 sphinx_design
+ipython

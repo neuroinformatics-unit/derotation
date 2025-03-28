@@ -1,3 +1,5 @@
+-e .
+ipython
 linkify-it-py
 myst-parser
 nbsphinx
@@ -7,4 +9,5 @@ setuptools-scm
 sphinx
 sphinx-argparse
 sphinx-autodoc-typehints
+sphinx-gallery
 sphinx_design

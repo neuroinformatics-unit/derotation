@@ -1,3 +1,14 @@
+"""
+This module contains the function ``derotate_an_image_array_line_by_line``,
+which derotates an image stack line by line using the provided rotation
+angles. This is the core function of the derotation pipeline.
+In addition to the main function, this module also contains the
+``apply_homography`` function, which applies a homography to the image stack
+to transform it to the plane of rotation. This is used in the derotation
+pipeline to correct for a mismatch between the plane of rotation and the
+imaging plane.
+"""
+
 import copy
 from typing import Optional, Tuple
 
@@ -21,24 +32,25 @@ def derotate_an_image_array_line_by_line(
     provided.
 
     Description of the algorithm:
-    - takes one line from the image stack
-    - creates a new image with only that line
-    - rotates the line by the given angle without interpolation
-    - substitutes the line in the new image
-    - adds the new image to the derotated image stack
+        - takes one line from the image stack
+        - creates a new image with only that line
+        - rotates the line by the given angle without interpolation
+        - substitutes the line in the new image
+        - adds the new image to the derotated image stack
 
     Edge cases and how they are handled:
-    - the rotation starts in the middle of the image -> the previous lines
-    are copied from the first frame
-    - the rotation ends in the middle of the image -> the remaining lines
-    are copied from the last frame
+        - the rotation starts in the middle of the image -> the previous lines
+          are copied from the first frame
+        - the rotation ends in the middle of the image -> the remaining lines
+          are copied from the last frame
 
     Center of rotation:
-    - if not provided, the center of the image is used
+        - if not provided, the center of the image is used
 
     Homography:
-    - if use_homography is True, the image stack is first transformed to the
-    plane of rotation, then derotated. See apply_homography for more details.
+        - if use_homography is True, the image stack is first transformed to
+          the plane of rotation, then derotated. See apply_homography for more
+          details.
 
     Parameters
     ----------
@@ -58,12 +70,13 @@ def derotate_an_image_array_line_by_line(
         A function that will be called after each image is completed.
     use_homography : bool, optional
         Whether to use homography to transform the image stack to the plane
-        of rotation. Defaults to False.
+        of rotation. Defaults to ``False``.
     rotation_plane_angle : int, optional
-        The angle of the plane of rotation. Required if use_homography is True.
+        The angle of the plane of rotation. Required if use_homography is
+        ``True``.
     rotation_plane_orientation : int, optional
-        The orientation of the plane of rotation. Required if use_homography
-        is True.
+        The orientation of the plane of rotation. Required if
+        ``use_homography`` is ``True``.
 
     Returns
     -------
@@ -232,8 +245,9 @@ def apply_homography(
     2. Shear the image stack to the plane of rotation.
     3. Rotate the image stack back to the original orientation.
     Rotation plane angle and orientation are calculated from an external
-    source, by fitting an ellipse. The ellipse can have a different orientation
-    than the plane of rotation, so these three steps are necessary.
+    source, by fitting an ellipse. The ellipse can have a different
+    orientation than the plane of rotation, so these three steps are
+    necessary.
 
     Parameters
     ----------

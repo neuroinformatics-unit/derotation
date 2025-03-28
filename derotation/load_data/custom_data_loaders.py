@@ -1,8 +1,10 @@
-# These functions are used to load data from the custom data format used in the
-# experiments. The data is saved by Matlab scripts that are not included in
-# this repository.
-# The idea is that these functions can be re-written if the preprocessing in
-# Matlab is changed or if the experimental setup is changed.
+"""
+These functions are used to load data from the custom data format used in the
+experiments. The data is saved by MATLAB scripts that are not included in
+this repository.
+The idea is that these functions can be re-written if the preprocessing in
+Matlab is changed or if the experimental setup is changed.
+"""
 
 import numpy as np
 from scipy.io import loadmat

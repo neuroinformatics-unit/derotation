@@ -7,7 +7,7 @@ This page explains how to configure Derotation for use with the full processing 
 
 You need to provide a configuration file if you are using the **full pipeline** or the **incremental pipeline**. This configuration can be passed as a Python `dict`
 
-If you only want to use the **core derotation method** — `rotate_an_image_array_line_by_line` — then you must manually prepare the image stack and the angle array. In this case, configuration is not needed.
+If you only want to use the **core derotation method** — {func}`derotation.derotate_by_line.derotate_an_image_array_line_by_line` — then you must manually prepare the image stack and the angle array. In this case, configuration is not needed.
 
 
 ## Config Structure

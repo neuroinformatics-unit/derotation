@@ -19,7 +19,7 @@ If the angle of rotation is recorded, `derotation` can reconstruct each frame by
 There are two main ways to use `derotation`:
 
 ### 1. **Low-level core function**
-Use `derotate_an_image_array_line_by_line` to derotate an image stack, given:
+Use {func}`derotation.derotate_by_line.derotate_an_image_array_line_by_line` to derotate an image stack, given:
 - The original multi-photon movie (expects only one imaging plane)
 - Rotation angle per line
 
@@ -28,13 +28,13 @@ This is ideal for testing and debugging with synthetic or preprocessed data.
 ### 2. **Full or incremental pipeline classes**
 Use the pre-made pipelines to run end-to-end processing:
 
-- `FullPipeline`: assumes randomised complete clockwise and counter-clockwise rotations. It includes:
+- {class}`derotation.analysis.full_derotation_pipeline.FullPipeline`: assumes randomised complete clockwise and counter-clockwise rotations. It includes:
   - Analog signal parsing
   - Angle interpolation
   - Bayesian optimization for center estimation
-  - Derotation by line (calling `derotate_an_image_array_line_by_line`)
+  - Derotation by line (calling {func}`derotation.derotate_by_line.derotate_an_image_array_line_by_line`)
 
-- `IncrementalPipeline`: assumes a continuous rotation performed in small increments. It inherits functionality from the `FullPipeline` but does not perform Bayesian optimization. It can be useful as an alternative way to estimate center of rotation.
+- {class}`derotation.analysis.incremental_derotation_pipeline.IncrementalPipeline`: assumes a continuous rotation performed in small increments. It inherits functionality from the {class}`derotation.analysis.full_derotation_pipeline.FullPipeline` but does not perform Bayesian optimization. It can be useful as an alternative way to estimate center of rotation.
 
 Both pipelines accept a configuration dictionary (see the [configuration guide](configuration)) and output:
 - Derotated TIFF
@@ -43,7 +43,7 @@ Both pipelines accept a configuration dictionary (see the [configuration guide](
 - A text file with optimal center of rotation
 - Logs
 
-You can subclass `FullPipeline` to create custom pipelines by overwriting relevant methods.
+You can subclass {class}`derotation.analysis.full_derotation_pipeline.FullPipeline` to create custom pipelines by overwriting relevant methods.
 
 ### Example usage of FullPipeline:
 
@@ -82,11 +82,11 @@ Derotation offers two approaches for estimating the center:
 
 **Bayesian optimization via FullPipeline**
 
-This method searches for the correct center of rotation by derotating the whole movie and minimizing a custom metric, computed through the function `ptd_of_most_detected_blob`. It requires the average image of the derotated movie at different rotations angles, and from them detects blobs, searches for the most frequent and calculates the Point-to-Point Distance (PTD) for it across blob centers at different rotation angles.
+This method searches for the correct center of rotation by derotating the whole movie and minimizing a custom metric, computed through the function {func}`derotation.analysis.metrics.ptd_of_most_detected_blob`. It requires the average image of the derotated movie at different rotations angles, and from them detects blobs, searches for the most frequent and calculates the Point-to-Point Distance (PTD) for it across blob centers at different rotation angles.
 
 It is robust but computationally expensive.
 
-**Ellipse fitting via IncrementalPipeline**
+**Ellipse fitting via {class}`derotation.analysis.incremental_derotation_pipeline.IncrementalPipeline`**
 
 This method exploits the fact that incremental datasets rotate very slowly and smoothly. It works by:
 
@@ -96,9 +96,9 @@ This method exploits the fact that incremental datasets rotate very slowly and s
 
 The center of the ellipse is assumed to match the true center of rotation. This method fails when the cell stops being visible in certain rotation angles.
 
-Once the center is estimated, it can be fed to the FullPipeline to derotate the whole movie.
+Once the center is estimated, it can be fed to the {class}`derotation.analysis.full_derotation_pipeline.FullPipeline` to derotate the whole movie.
 
-**Example usage of IncrementalPipeline:**
+**Example usage of {class}`derotation.analysis.incremental_derotation_pipeline.IncrementalPipeline`:**
 
 ```python
 from derotation.config.load_config import update_config_paths, load_config
@@ -152,9 +152,9 @@ Debugging plots are by default saved in the ``debug_plots`` folder.
 ### Custom plotting hooks
 To monitor what is happening at every step of line-by-line derotation, you can use custom plotting hooks. These are functions that are called at specific points in the pipeline and can be used to visualize intermediate results.
 
-There are two steps in the ``derotate_an_image_array_line_by_line`` function where hooks can be injected:
-- After adding a new line to the derotated image (`plotting_hook_line_addition`)
-- After completing a frame (`plotting_hook_image_completed`)
+There are two steps in the {func}`derotation.derotate_by_line.derotate_an_image_array_line_by_line` function where hooks can be injected:
+- After adding a new line to the derotated image ({func}`derotation.plotting_hooks.for_derotation.line_addition`)
+- After completing a frame ({func}`derotation.plotting_hooks.for_derotation.image_completed`)
 
 Here and example of two pre-made hooks that can be used to visualize the derotation process:
 ```python
@@ -177,21 +177,21 @@ You can also inject **custom plotting hooks** at defined pipeline stages. See th
 
 ## Simulated data
 
-Use the `Rotator` and `SyntheticData` classes to generate test data:
+Use the {class}`derotation.simulate.line_scanning_microscope.Rotator` and {class}`derotation.simulate.synthetic_data.SyntheticData` classes to generate test data:
 
-- `Rotator`: applies line-by-line rotation to an image stack, simulating a rotating microscope. It can be used to generate challenging synthetic data that include wrong centers of rotation and out of imaging plane rotations.
-- `SyntheticData`: creates fake cell images, assigns rotation angles, and generates synthetic stacks. This is especially useful for validating both the incremental and full pipelines under known conditions.
+- {class}`derotation.simulate.line_scanning_microscope.Rotator`: applies line-by-line rotation to an image stack, simulating a rotating microscope. It can be used to generate challenging synthetic data that include wrong centers of rotation and out of imaging plane rotations.
+- {class}`derotation.simulate.synthetic_data.SyntheticData`: creates fake cell images, assigns rotation angles, and generates synthetic stacks. This is especially useful for validating both the incremental and full pipelines under known conditions.
 
 ![Rotator](../_static/rotator.gif)
 
-This is an example of a synthetic dataset with two cells generated with the `Rotator` class.
+This is an example of a synthetic dataset with two cells generated with the {class}`derotation.simulate.line_scanning_microscope.Rotator` class.
 
 ---
 
 
 ## Limitations
 
-Derotation supports two experimental configurations: randomized full rotations (in the `FullRotation` pipeline) and small-step incremental rotations (`IncrementalPipeline`). Other rotation paradigms are not currently supported out of the box.
+Derotation supports two experimental configurations: randomized full rotations (in the {class}`derotation.analysis.full_derotation_pipeline.FullPipeline`) and small-step incremental rotations ({class}`derotation.analysis.incremental_derotation_pipeline.IncrementalPipeline`). Other rotation paradigms are not currently supported out of the box.
 
 The package assumes strict input formats — TIFF stacks for images and `.bin` files with analog signals following a specific channel order. Both pipelines require:
 - timing of rotation ticks, which are used to compute rotation angles;

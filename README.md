@@ -25,16 +25,16 @@ pip install derotation
 > Read the [documentation](https://derotation.neuroinformatics.dev) for more information, including [examples](https://derotation.neuroinformatics.dev/examples/index.html) and [API reference](https://derotation.neuroinformatics.dev/api_index.html).
 
 ## Overview
-To address certain neuroscience questions in rodents, it might be necessary to image the brain while the head or the body of the animal rotates. In such a case, and even more when the frame rate is low, the acquired movies are distorted by the rotation. These distortions have a peculiar pattern due to the line scanning nature of the microscope, which can be corrected by the derotation package.
+To address certain neuroscience questions, it might be necessary to image the brain while the head or the body of the animal rotates. In such a case, and even more when the frame rate is low, the acquired movies are distorted by the rotation. These distortions have a peculiar pattern due to the line scanning nature of the microscope, which can be corrected by the derotation package.
 
-![](docs/source/static/derotation_index.png)
+![](_static/dark_derotation.gif)
 
 With `derotation` you can:
-- Recover calcium imaging movies by **line-by-line derotation** that can be fed into standard analysis pipelines such as suite2p;
-- Estimate the **center of rotation** using Bayesian optimization;
-- Validate improvements to the derotation algorithm and pipelines using synthetic data;
-- Use debugging plots and logs to verify the quality of the derotation;
-- Batch-process multiple datasets with consistent configuration files.
+- Recover calcium imaging movies by **line-by-line derotation** that can be fed into standard analysis pipelines such as [suite2p](https://github.com/MouseLand/suite2p)
+- Estimate the **center of rotation** using Bayesian optimization
+- Validate improvements to the derotation algorithm and pipelines using synthetic data
+- Verify the quality of the derotation using debugging plotting tools
+- Batch-process multiple datasets with consistent configuration files
 
 > [!Warning]
 > 🏗️ The package is currently in early development and it requires rotation information coming from a step motor.
@@ -42,11 +42,11 @@ With `derotation` you can:
 This project was sponsored by the Margrie Lab in the Sainsbury Wellcome Centre for Neural Circuits and Behaviour at the University College London.
 
 ## References
-This package was built taking into account previous efforts on derotation shown in Voigts & Harnett, 2020, Neuron.
+This package was built taking into account [previous efforts on derotation](https://github.com/jvoigts/rotating-2p-image-correction) shown in [Voigts & Harnett, 2020, Neuron](https://www.sciencedirect.com/science/article/pii/S089662731930889X?via%3Dihub).
 
 
 ## Join the Development
 
-Contributions to Derotation are encouraged, whether to fix a bug, develop a new feature, or improve documentation.
+Contributions to `derotation` are encouraged, whether to fix a bug, develop a new feature, or improve documentation.
 
 - [Open an issue](https://github.com/neuroinformatics-unit/derotation/issues) to report a bug or request a new feature.

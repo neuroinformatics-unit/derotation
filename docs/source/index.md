@@ -22,18 +22,21 @@ A gallery of real and synthetic examples using `derotation`.
 ::::
 
 ## Overview
-To address certain neuroscience questions in rodents, it might be necessary to image the brain while the head or the body of the animal rotates. In such a case, and even more when the frame rate is low, the acquired movies are distorted by the rotation. These distortions have a peculiar pattern due to the line scanning nature of the microscope, which can be corrected by the derotation package.
+To address certain neuroscience questions, it might be necessary to image the brain while the head or the body of the animal rotates. In such a case, and even more when the frame rate is low, the acquired movies are distorted by the rotation. These distortions have a peculiar pattern due to the line scanning nature of the microscope, which can be corrected by the derotation package.
 
 ![](_static/dark_derotation.gif)
 
 With `derotation` you can:
-- Recover calcium imaging movies by **line-by-line derotation** that can be fed into standard analysis pipelines such as suite2p;
-- Estimate the **center of rotation** using Bayesian optimization;
-- Validate improvements to the derotation algorithm and pipelines using synthetic data;
-- Use debugging plots and logs to verify the quality of the derotation;
-- Batch-process multiple datasets with consistent configuration files.
+- Recover calcium imaging movies by **line-by-line derotation** that can be fed into standard analysis pipelines such as [suite2p](https://github.com/MouseLand/suite2p)
+- Estimate the **center of rotation** using Bayesian optimization
+- Validate improvements to the derotation algorithm and pipelines using synthetic data
+- Verify the quality of the derotation using debugging plotting tools
+- Batch-process multiple datasets with consistent configuration files
 
+:::{admonition} Important
+:class: warning
 The package is currently in early development and it requires rotation information coming from a step motor.
+:::
 
 This project was sponsored by the Margrie Lab in the Sainsbury Wellcome Centre for Neural Circuits and Behaviour at the University College London.
 

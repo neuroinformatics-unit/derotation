@@ -20,7 +20,7 @@ There are two main ways to use `derotation`:
 
 ### 1. **Low-level core function**
 Use `derotate_an_image_array_line_by_line` to derotate an image stack, given:
-- The original calcium imaging movie (expects only one imaging plane)
+- The original multi-photon movie (expects only one imaging plane)
 - Rotation angle per line
 
 This is ideal for testing and debugging with synthetic or preprocessed data.
@@ -80,13 +80,13 @@ In this picture, you can see in red the centers of one of the cells in the movie
 
 Derotation offers two approaches for estimating the center:
 
-### Bayesian optimization via FullPipeline
+**Bayesian optimization via FullPipeline**
 
 This method searches for the correct center of rotation by derotating the whole movie and minimizing a custom metric, computed through the function `ptd_of_most_detected_blob`. It requires the average image of the derotated movie at different rotations angles, and from them detects blobs, searches for the most frequent and calculates the Point-to-Point Distance (PTD) for it across blob centers at different rotation angles.
 
 It is robust but computationally expensive.
 
-### Ellipse fitting via IncrementalPipeline
+**Ellipse fitting via IncrementalPipeline**
 
 This method exploits the fact that incremental datasets rotate very slowly and smoothly. It works by:
 
@@ -98,7 +98,7 @@ The center of the ellipse is assumed to match the true center of rotation. This 
 
 Once the center is estimated, it can be fed to the FullPipeline to derotate the whole movie.
 
-#### Example usage of IncrementalPipeline:
+**Example usage of IncrementalPipeline:**
 
 ```python
 from derotation.config.load_config import update_config_paths, load_config

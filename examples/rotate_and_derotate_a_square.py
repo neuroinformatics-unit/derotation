@@ -7,11 +7,11 @@ rotation in a line-scanning microscope and how to correct for it using
 the `derotation` module.
 
 We will:
-- Create a synthetic image.
-- Simulate the effect of per-line rotation over a stack of frames.
-- Apply derotation to revert to the original image.
-- Visualise the original, rotated, and derotated images.
-- Explore the effect of varying rotation angles.
+    - Create a synthetic image.
+    - Simulate the effect of per-line rotation over a stack of frames.
+    - Apply derotation to revert to the original image.
+    - Visualise the original, rotated, and derotated images.
+    - Explore the effect of varying rotation angles.
 
 """
 

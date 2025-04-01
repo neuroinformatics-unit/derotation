@@ -6,11 +6,11 @@ In this tutorial, we simulate how image stacks appear when the scanning
 happens across a plane that is *not aligned* with the imaging plane.
 
 We will:
-- Generate synthetic 2D frames with circular cell structures.
-- Simulate line-by-line rotations with varying angles.
-- Visualise how the appearance of the image is distorted when the rotation
-  plane is tilted or oriented differently.
-- Display all frames and a max projection.
+    - Generate synthetic 2D frames with circular cell structures.
+    - Simulate line-by-line rotations with varying angles.
+    - Visualise how the appearance of the image is distorted when the rotation
+      plane is tilted or oriented differently.
+    - Display all frames and a max projection.
 
 """
 

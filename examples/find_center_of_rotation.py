@@ -23,8 +23,7 @@ how the algorithm works and how the center of rotation is found.
 
 This serves only as an illustrative example. To understand how to find the
 center of rotation with real data, please refer to the
-`User guide
-<../user_guide/key_concepts.html#finding-the-center-of-rotation>`_.
+`User guide <../user_guide/key_concepts.html>`_.
 """
 
 # %%

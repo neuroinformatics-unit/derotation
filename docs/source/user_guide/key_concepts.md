@@ -8,6 +8,8 @@ See the [API documentation](api_index) for full reference.
 
 Without derotation, movies acquired with a line scanning microscope are geometrically distorted — each line is captured at a slightly different angle, making it hard to register or interpret the resulting images.
 
+![](../_static/derotation_index.png)
+
 If the angle of rotation is recorded, `derotation` can reconstruct each frame by assigning a rotation angle to each acquired line and rotating it back to its original position. This is what is called derotation-by-line. This process incrementally reconstructs each frame and can optionally include shear deformation correction.
 
 ![Derotation process](../_static/derotation_by_line.gif)

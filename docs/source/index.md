@@ -24,7 +24,7 @@ A gallery of real and synthetic examples using `derotation`.
 ## Overview
 To address certain neuroscience questions in rodents, it might be necessary to image the brain while the head or the body of the animal rotates. In such a case, and even more when the frame rate is low, the acquired movies are distorted by the rotation. These distortions have a peculiar pattern due to the line scanning nature of the microscope, which can be corrected by the derotation package.
 
-![](_static/derotation_index.png)
+![](_static/dark_derotation.gif)
 
 With `derotation` you can:
 - Recover calcium imaging movies by **line-by-line derotation** that can be fed into standard analysis pipelines such as suite2p;

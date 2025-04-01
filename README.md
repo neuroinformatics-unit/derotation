@@ -8,9 +8,9 @@
 
 # Derotation
 
-The derotation package offers a robust solution for reconstructing images of rotating samples acquired with a line scanning microscope. It provides a set of tools to undo distortions caused by the rotation, including line-by-line derotation and center of rotation estimation.
+The derotation package offers a robust solution for reconstructing movies of rotating samples acquired with a line scanning microscope.
 
-![](docs/source/_static/derotation_overview.png)
+![](docs/source/_static/dark_derotation.gif)
 
 ## Quick Install
 

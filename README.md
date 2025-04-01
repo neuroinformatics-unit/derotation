@@ -39,6 +39,7 @@ With `derotation` you can:
 > [!Warning]
 > 🏗️ The package is currently in early development and it requires rotation information coming from a step motor.
 
+This project was sponsored by the Margrie Lab in the Sainsbury Wellcome Centre for Neural Circuits and Behaviour at the University College London.
 
 ## References
 This package was built taking into account previous efforts on derotation shown in Voigts & Harnett, 2020, Neuron.

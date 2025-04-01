@@ -195,6 +195,8 @@ def plot_ellipse_fit_and_centers(
     ax.set_title("Fitted Ellipse on largest blob centers")
     ax.axis("off")
 
+    plt.tight_layout()
+
     plt.savefig(debug_plots_folder / saving_name)
 
 

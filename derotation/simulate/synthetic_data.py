@@ -502,6 +502,7 @@ class SyntheticData:
             ax.set_title(f"Frame {i * 5 + 1}")
             ax.axis("off")
 
+        plt.tight_layout()
         plt.savefig(
             f"debug/derotated_sinusoidal{self.center_of_rotation_offset}_{self.rotation_plane_angle}_{self.rotation_plane_orientation}.png"
         )
@@ -551,6 +552,8 @@ class SyntheticData:
         mean_projection = np.mean(self.derotated_sinusoidal, axis=0)
         fig, ax = plt.subplots()
         ax.imshow(mean_projection, cmap="gray")
+        ax.axis("off")
+        plt.tight_layout()
         plt.savefig(
             f"debug/mean_projection_{self.center_of_rotation_offset}_{self.rotation_plane_angle}_{self.rotation_plane_orientation}.png"
         )

@@ -28,7 +28,7 @@ def load_config(pipeline: str = "full") -> Dict[str, Any]:
 def update_config_paths(
     config: dict,
     tif_path: Path,
-    bin_path: Path,
+    aux_path: Path,
     dataset_path: Path,
     output_folder: str,
     kind: str = "full",
@@ -42,7 +42,7 @@ def update_config_paths(
         The configuration dictionary.
     tif_path : Path
         The path to the tif file to be derotated.
-    bin_path : Path
+    aux_path : Path
         The path to the bin file containing analog signals.
     dataset_path : Path
         The path to the dataset folder.
@@ -60,7 +60,7 @@ def update_config_paths(
     config["paths_read"]["path_to_randperm"] = str(
         Path(dataset_path).parent / "stimlus_randperm.mat"
     )
-    config["paths_read"]["path_to_aux"] = str(bin_path)
+    config["paths_read"]["path_to_aux"] = str(aux_path)
     config["paths_read"]["path_to_tif"] = str(tif_path)
 
     # Set output paths to the specified output_folder

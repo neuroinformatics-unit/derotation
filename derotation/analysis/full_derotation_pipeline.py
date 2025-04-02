@@ -187,15 +187,23 @@ class FullPipeline:
 
         self.number_of_rotations = len(self.direction)
 
-        (
-            self.frame_clock,
-            self.line_clock,
-            self.full_rotation,
-            self.rotation_ticks,
-        ) = get_analog_signals(
-            self.config["paths_read"]["path_to_aux"],
-            self.config["channel_names"],
-        )
+        aux_filetype = self.config["paths_read"]["path_to_aux"].split(".")[-1]
+        if aux_filetype == "bin":
+            (
+                self.frame_clock,
+                self.line_clock,
+                self.full_rotation,
+                self.rotation_ticks,
+            ) = get_analog_signals(
+                self.config["paths_read"]["path_to_aux"],
+                self.config["channel_names"],
+            )
+        if aux_filetype == "npy":
+            aux_data = np.load(self.config["paths_read"]["path_to_aux"])
+            self.frame_clock = aux_data[0]
+            self.line_clock = aux_data[1]
+            self.full_rotation = aux_data[2]
+            self.rotation_ticks = aux_data[3]
 
         self.total_clock_time = len(self.frame_clock)
 
@@ -1073,9 +1081,9 @@ class FullPipeline:
                 self.center_of_rotation = tuple(
                     map(float, optimal_center.split(":")[1].split(","))
                 )
-                logging.info("Optimal center of rotation found.")
+                logging.info("Optimal center of rotation read from file.")
         except FileNotFoundError:
-            logging.info("Optimal center of rotation not found.")
+            logging.info("Optimal center of rotation not found, calculating.")
             self.find_optimal_parameters()
 
     def plot_max_projection_with_center(

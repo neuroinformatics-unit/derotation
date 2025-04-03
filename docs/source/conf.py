@@ -125,7 +125,17 @@ html_theme_options = {
             "use_edit_page_button": False,  # Ensure the edit button doesn't interfere
             "navigation_with_keys": False,  # Disable keyboard navigation between sections
             "collapse_navigation": False,  # Ensure full page loads rather than AJAX content swap
-        }
+        },
+        {
+            # Label for this link
+            "name": "Zulip (chat)",
+            # URL where the link will redirect
+            "url": "https://neuroinformatics.zulipchat.com/#narrow/channel/495735-Derotation",  # required
+            # Icon class (if "type": "fontawesome"), or path to local image (if "type": "local")
+            "icon": "fa-solid fa-comments",
+            # The type of image to be used (see below for details)
+            "type": "fontawesome",
+        },
     ],
     "logo": {
         "text": f"{project} v{release}",

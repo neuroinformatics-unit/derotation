@@ -18,6 +18,7 @@ def line_addition(
     image_counter: int,
     line_counter: int,
     angle: float,
+    original_image: np.ndarray,
 ):
     """
     Hook for plotting the derotated image and the current rotated line.
@@ -34,16 +35,37 @@ def line_addition(
         The current line number.
     angle : float
         The rotation angle of the line
+    original_image : np.ndarray
+        The original image from which the line was taken.
     """
-    fig, ax = plt.subplots(1, 2, figsize=(10, 10))
+    fig, ax = plt.subplots(1, 2, figsize=(10, 5))
+    #  background fig color: black
+    fig.patch.set_facecolor("black")
 
-    ax[0].imshow(derotated_filled_image, cmap="viridis")
-    ax[0].set_title(f"Frame {image_counter}")
+    ax[0].imshow(original_image, cmap="viridis")
+    #  highlight the line in the original image
+    ax[0].plot(
+        [0, original_image.shape[1] - 1],
+        [line_counter, line_counter],
+        color="red",
+        linewidth=2,
+    )
+    ax[0].set_title(
+        f"Take line {line_counter}\nfrom original image,\n then rotate it of "
+        f"{angle:.2f} degrees"
+    )
+    ax[0].title.set_color("white")
     ax[0].axis("off")
 
-    ax[1].imshow(rotated_line, cmap="viridis")
-    ax[1].set_title(f"Line {line_counter}, angle: {angle:.2f}")
+    ax[1].imshow(derotated_filled_image, cmap="viridis")
+    ax[1].set_title(
+        f"Place the line in a new image\nto build frame {image_counter}"
+    )
+    ax[1].title.set_color("white")
     ax[1].axis("off")
+
+    #  plot on top axis 1 the rotated_line with a red colormap
+    ax[1].imshow(rotated_line, cmap="Reds", alpha=0.5)
 
     Path("debug/lines/").mkdir(parents=True, exist_ok=True)
     plt.savefig(

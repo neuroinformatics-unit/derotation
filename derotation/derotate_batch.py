@@ -14,7 +14,13 @@ from derotation.analysis.full_derotation_pipeline import FullPipeline
 from derotation.config.load_config import load_config, update_config_paths
 
 
-def derotate(dataset_folder: Path, output_folder: str) -> float:
+def derotate(
+    dataset_folder: Path,
+    output_folder: str,
+    path_to_stimulus_randperm: str,
+    glob_naming_pattern_tif: str,
+    glob_naming_pattern_bin: str,
+) -> float:
     """
     Run the full derotation pipeline on a single dataset.
 
@@ -24,6 +30,12 @@ def derotate(dataset_folder: Path, output_folder: str) -> float:
         The path to the dataset folder.
     output_folder : str
         The path to the output folder in which to save the results.
+    path_to_stimulus_randperm : str
+        The path to the stimulus random permutation file.
+    glob_naming_pattern_tif : str
+        The glob naming pattern for the tif file.
+    glob_naming_pattern_bin : str
+        The glob naming pattern for the bin file.
 
     Returns
     -------
@@ -37,13 +49,18 @@ def derotate(dataset_folder: Path, output_folder: str) -> float:
     """
     # FULL DEROTATION PIPELINE
     # find tif and bin files
-    bin_path = list(dataset_folder.rglob("*rotation_*001.bin"))[0]
-    tif_path = list(dataset_folder.rglob("rotation_00001.tif"))[0]
+    bin_path = list(dataset_folder.rglob(glob_naming_pattern_bin))[0]
+    tif_path = list(dataset_folder.rglob(glob_naming_pattern_tif))[0]
 
     # Load the config template and update paths
-    config = load_config(pipeline="full")
+    config = load_config()
     config = update_config_paths(
-        config, tif_path, bin_path, dataset_folder, output_folder, kind="full"
+        config=config,
+        tif_path=str(tif_path),
+        aux_path=str(bin_path),
+        stim_randperm_path=str(path_to_stimulus_randperm),
+        output_folder=output_folder,
+        folder_suffix="full",
     )
 
     logging.info("Running full derotation pipeline")

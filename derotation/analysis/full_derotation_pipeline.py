@@ -172,9 +172,17 @@ class FullPipeline:
         self.num_total_lines = self.num_frames * self.num_lines_per_frame
         self.mask_diameter = copy.deepcopy(self.num_lines_per_frame)
 
-        self.direction, self.speed = read_randomized_stim_table(
-            self.config["paths_read"]["path_to_randperm"]
-        )
+        randperm_filetype = self.config["paths_read"][
+            "path_to_randperm"
+        ].split(".")[-1]
+        if randperm_filetype == "csv":
+            table = pd.read_csv(self.config["paths_read"]["path_to_randperm"])
+            self.speed = table["speed"].to_numpy()
+            self.direction = table["direction"].to_numpy()
+        elif randperm_filetype == "mat":
+            self.direction, self.speed = read_randomized_stim_table(
+                self.config["paths_read"]["path_to_randperm"]
+            )
         logging.info(f"Number of rotations: {len(self.direction)}")
 
         rotation_direction = pd.DataFrame(
@@ -889,14 +897,24 @@ class FullPipeline:
         """
         logging.info("Plotting rotation angles...")
 
-        fig, axs = plt.subplots(2, 2, figsize=(15, 10))
-
         speeds = set(self.speed)
-
+        logging.info(f"Speeds: {speeds}")
+        logging.info(f"len (speeds): {len(speeds)}")
         first_idx_for_each_speed = [
             np.where(self.speed == s)[0][0] for s in speeds
         ]
         first_idx_for_each_speed = sorted(first_idx_for_each_speed)
+
+        n = len(speeds)
+        if n <= 2:
+            n_rows, n_cols = 1, n
+        else:
+            n_rows, n_cols = 2, (n + 1) // 2
+        fig, axs = plt.subplots(
+            n_rows,
+            n_cols,
+            figsize=(15, 7),
+        )
 
         velocity = self.calculate_velocity()
 
@@ -904,7 +922,13 @@ class FullPipeline:
             col = i // 2
             row = i % 2
 
-            ax = axs[col, row]
+            if isinstance(axs, np.ndarray):
+                if axs.ndim == 2:
+                    ax = axs[col, row]
+                elif axs.ndim == 1:
+                    ax = axs[row]
+            else:
+                ax = axs
 
             rotation_starts = self.rot_blocks_idx["start"][id]
             rotation_ends = self.rot_blocks_idx["end"][id]
@@ -975,19 +999,20 @@ class FullPipeline:
         This plot will be saved in the ``debug_plots`` folder.
         Please inspect it to check that the velocity is correctly calculated.
         """
-        fig, ax = plt.subplots(2, 4, figsize=(15, 7))
 
         unique_speeds = sorted(set(self.speed))
         unique_directions = sorted(set(self.direction))
-
+        fig, axs = plt.subplots(
+            len(unique_speeds), len(unique_directions), figsize=(15, 7)
+        )
         velocity = self.calculate_velocity()
 
         #  row clockwise, column speed
         for i, (direction, speed) in enumerate(
             itertools.product(unique_directions, unique_speeds)
         ):
-            row = i // 4
-            col = i % 4
+            row = i // len(unique_speeds)
+            col = i % len(unique_speeds)
             idx_this_speed = np.where(
                 np.logical_and(
                     self.speed == speed, self.direction == direction
@@ -1005,7 +1030,16 @@ class FullPipeline:
                         self.rot_blocks_idx["end"][idx]
                     )
                 ]
-                ax[row, col].plot(
+                #  if axis is two dim
+                if isinstance(axs, np.ndarray):
+                    if axs.ndim == 2:
+                        ax = axs[col, row]
+                    elif axs.ndim == 1:
+                        ax = axs[row]
+                else:
+                    ax = axs
+
+                ax.plot(
                     np.linspace(
                         0,
                         len(this_velocity) * self.sampling_rate,
@@ -1015,13 +1049,17 @@ class FullPipeline:
                     label=f"repetition {idx}",
                     color=colors[j],
                 )
-            ax[row, col].set_title(f"Speed: {speed}, direction: {direction}")
-            ax[row, col].spines["top"].set_visible(False)
-            ax[row, col].spines["right"].set_visible(False)
+            ax.set_title(
+                f"Speed: {speed}, direction: {
+                    'CW' if direction == 1 else 'CCW'
+                }"
+            )
+            ax.spines["top"].set_visible(False)
+            ax.spines["right"].set_visible(False)
 
             #  set titles of axis
-            ax[row, col].set_xlabel("Time (s)")
-            ax[row, col].set_ylabel("Velocity (°/s)")
+            ax.set_xlabel("Time (s)")
+            ax.set_ylabel("Velocity (°/s)")
 
             #  leave more space between subplots
             plt.subplots_adjust(hspace=0.5, wspace=0.5)

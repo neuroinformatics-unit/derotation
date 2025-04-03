@@ -1,3 +1,5 @@
+pipeline_type: "full"
+
 paths_read:
   path_to_randperm: "your_path_to/stimlus_randperm.mat"
   path_to_aux: "your_path_to/rotation.bin"

@@ -1,5 +1,5 @@
 """
-Full pipeline integration: simulate and find center of rotation
+Find center of rotation with simulated data
 ================================================================
 
 This tutorial use the synthetic data class to show how it can be possible

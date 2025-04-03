@@ -1173,7 +1173,7 @@ class FullPipeline:
         #  By default rotation_plane_angle and rotation_plane_orientation are 0
         #  they have to be overwritten before calling the function.
         #  To calculate them please use the ellipse fit.
-        rotated_image_stack = derotate_an_image_array_line_by_line(
+        derotated_image_stack = derotate_an_image_array_line_by_line(
             self.image_stack,
             self.rot_deg_line,
             blank_pixels_value=self.offset,
@@ -1191,13 +1191,13 @@ class FullPipeline:
 
         if self.debugging_plots:
             self.plot_max_projection_with_center(
-                rotated_image_stack,
+                derotated_image_stack,
                 name="derotated_max_projection_with_center",
             )
-            self.mean_image_for_each_rotation(rotated_image_stack)
+            self.mean_image_for_each_rotation(derotated_image_stack)
 
-        logging.info("✨ Image stack rotated ✨")
-        return rotated_image_stack
+        logging.info("✨ Image stack derotated ✨")
+        return derotated_image_stack
 
     @staticmethod
     def find_image_offset(img):
@@ -1230,7 +1230,7 @@ class FullPipeline:
         offset = np.min(gm.means_)
         return offset
 
-    def mean_image_for_each_rotation(self, rotated_image_stack):
+    def mean_image_for_each_rotation(self, derotated_image_stack):
         """Calculates the mean image for each rotation and saves it in the
         ``debug_plots`` folder.
         This plot will be saved in the ``debug_plots`` folder.
@@ -1245,7 +1245,7 @@ class FullPipeline:
             frame_start = self.clock_to_latest_frame_start(start)
             frame_end = self.clock_to_latest_frame_start(end)
             mean_image = np.mean(
-                rotated_image_stack[frame_start:frame_end], axis=0
+                derotated_image_stack[frame_start:frame_end], axis=0
             )
             fig, ax = plt.subplots(1, 1, figsize=(10, 10))
             ax.imshow(mean_image, cmap="viridis")
@@ -1398,3 +1398,5 @@ class FullPipeline:
             str(self.file_saving_path_with_name) + ".csv",
             index=False,
         )
+
+        self.derotation_output_table = df

@@ -85,7 +85,8 @@ venv/
 # Further ignore
 .conda/
 debug/*
-examples/debug/*
+examples/debug/
+examples/derotation/
 
 
 # Sphinx documentation

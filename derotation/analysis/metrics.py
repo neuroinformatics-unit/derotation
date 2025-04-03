@@ -94,6 +94,8 @@ def ptd_of_most_detected_blob(
             c = plt.Circle((x, y), r, color="red", linewidth=2, fill=False)
             plt.gca().add_artist(c)
 
+        ax.axis("off")
+
         # save
         plt.savefig(debug_plots_folder / image_names[0])
         plt.close()
@@ -134,6 +136,8 @@ def ptd_of_most_detected_blob(
             y, x, *_ = blob
             # plot an x on the center
             plt.scatter(x, y, color="red", marker="x")
+
+        ax.axis("off")
 
         # save
         plt.savefig(debug_plots_folder / image_names[1])

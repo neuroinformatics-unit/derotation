@@ -144,11 +144,7 @@ def derotate_an_image_array_line_by_line(
 
             rotation_completed = False
 
-            img_with_new_lines = image_stack[image_counter]
-            line = img_with_new_lines[line_counter]
-
-            image_with_only_line = np.zeros_like(img_with_new_lines)
-            image_with_only_line[line_counter] = line
+            line = image_stack[image_counter][line_counter]
 
             # Rotate the line as a whole vector without interpolation
             angle_rad = np.deg2rad(angle)
@@ -163,7 +159,7 @@ def derotate_an_image_array_line_by_line(
             )
 
             # Line coordinates
-            line_length = img_with_new_lines.shape[1]
+            line_length = num_lines_per_frame
             x_coords = np.arange(line_length)
             y_coords = np.full_like(x_coords, line_counter)
 
@@ -182,9 +178,9 @@ def derotate_an_image_array_line_by_line(
             # Valid coordinates that fall within image bounds
             valid_mask = (
                 (final_coords[0] >= 0)
-                & (final_coords[0] < image_with_only_line.shape[0])
+                & (final_coords[0] < num_lines_per_frame)
                 & (final_coords[1] >= 0)
-                & (final_coords[1] < image_with_only_line.shape[1])
+                & (final_coords[1] < num_lines_per_frame)
             )
 
             # Place the rotated line in the output image without interpolation

@@ -91,7 +91,7 @@ def make_plot(
 
 
 # %%
-# Create output folder (optional)
+# Create output folder
 Path("debug").mkdir(exist_ok=True)
 
 # %%

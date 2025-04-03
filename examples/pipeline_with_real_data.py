@@ -80,6 +80,7 @@ print(f"Estimated number of full rotations: {pipeline.number_of_rotations}")
 # %%
 # Run the full pipeline
 # ---------------------
+
 pipeline()
 
 # %%
@@ -109,6 +110,7 @@ def show_image(path):
 
 # %%
 # Rotation detection based on analog signals
+
 show_image(get_image_path("rotation_ticks_and_rotation_on"))
 
 print(f"Expected number of ticks: {pipeline.number_of_rotations * 360 / 0.2}")
@@ -120,27 +122,33 @@ print(
 # %%
 # Interpolated rotation angles per line
 # Green = frame-level angles, Yellow = interpolated per-line angles
+
 show_image(get_image_path("rotation_angles"))
 
 # %%
 # Calculated baseline (offset) of the image in arbitrary units
+
 print(f"Estimated image offset: {pipeline.offset}")
 
 
 # %%
 # Original max projection with estimated center
+
 show_image(get_image_path("max_projection_with_center"))
 
 # %%
 # Position of the most detected cell after finding the optimal center of
 # rotation. As you can see it is pretty stable.
+
 show_image(get_image_path("most_detected_blob_centers"))
 
 # %%
 # Derotated max projection with center overlaid
 # Now the cells are aligned, although registration might still be needed
+
 show_image(get_image_path("derotated_max_projection_with_center"))
 
 # %%
 # Rotation angles and derotation metadata are accessible as a pandas DataFrame
+
 print(pipeline.derotation_output_table.iloc[125:153])

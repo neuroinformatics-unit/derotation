@@ -36,12 +36,14 @@ for i in range(100):
     image[i] = gray_values[i]
 
 # Add a black border for easier visual inspection
+
 image[:20] = 0
 image[-20:] = 0
 image[:, :20] = 0
 image[:, -20:] = 0
 
 # Show the synthetic image
+
 plt.imshow(image, cmap="gray")
 plt.title("Original synthetic image")
 plt.axis("off")
@@ -58,10 +60,12 @@ num_lines = image_stack.shape[0] * image_stack.shape[1]
 angles = np.arange(num_lines)  # 0 to num_lines-1 degrees
 
 # Print info about the angles
+
 print(f"Total number of angles: {len(angles)}")
 print(f"Angle range: {angles.min()}° to {angles.max()}°")
 
 # Simulate rotation
+
 rotator = Rotator(angles, image_stack)
 rotated_image_stack = rotator.rotate_by_line()
 
@@ -69,6 +73,7 @@ rotated_image_stack = rotator.rotate_by_line()
 # Apply derotation
 # ----------------
 # Use our derotation method to revert the rotated images.
+
 rotated_image_stack_derotated = derotate_an_image_array_line_by_line(
     rotated_image_stack, angles
 )
@@ -76,10 +81,12 @@ rotated_image_stack_derotated = derotate_an_image_array_line_by_line(
 # %%
 # Plot original, rotated, and derotated images
 # --------------------------------------------
+
 num_frames = len(rotated_image_stack)
 fig, ax = plt.subplots(2, num_frames, figsize=(5 * num_frames, 8))
 
 # Plot rotated images with angle labels
+
 for i in range(num_frames):
     ax[0, i].imshow(rotated_image_stack[i], cmap="gray")
     ax[0, i].set_title(f"Rotated image {i + 1}")
@@ -102,6 +109,7 @@ for i in range(num_frames):
         )
 
 # Plot derotated images
+
 for i in range(num_frames):
     ax[1, i].imshow(rotated_image_stack_derotated[i], cmap="gray")
     ax[1, i].set_title(f"Derotated image {i + 1}")

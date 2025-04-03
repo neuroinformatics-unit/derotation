@@ -16,8 +16,8 @@ Here’s a breakdown of the main configuration sections and what they control:
 
 ### `paths_read`
 Paths to the input files:
-- `path_to_randperm`: stimulus randomization `.mat` file
-- `path_to_aux`: `.bin` file with analog signals
+- `path_to_randperm`: stimulus randomization `.mat` or `.csv` file
+- `path_to_aux`: `.npy` or `.bin` file with analog signals
 - `path_to_tif`: raw image data
 
 ### `paths_write`
@@ -28,7 +28,7 @@ Output locations:
 - `saving_name`: base name for output TIFF
 
 ### `channel_names`
-List of signal names expected in the analog `.bin` file. These must match the order in which the channels were saved. ⚠️ This a custom field required for the specific setup where the data was acquired.
+List of signal names expected in the analog file. Matters only if using `.bin` format for analog signals.
 
 ### `rotation_increment`
 Expected angle increment per tick from the motor (in degrees).

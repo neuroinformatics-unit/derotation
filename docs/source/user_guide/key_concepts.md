@@ -25,25 +25,55 @@ Use {func}`derotation.derotate_by_line.derotate_an_image_array_line_by_line` to 
 
 This is ideal for testing and debugging with synthetic or preprocessed data.
 
-### 2. **Full or incremental pipeline classes**
-Use the pre-made pipelines to run end-to-end processing:
+### 2. **Full and Incremental Pipeline Classes**
 
-- {class}`derotation.analysis.full_derotation_pipeline.FullPipeline`: assumes randomised complete clockwise and counter-clockwise rotations. It includes:
+Derotation provides two pre-built pipelines for end-to-end processing:
+
+- **{class}`derotation.analysis.full_derotation_pipeline.FullPipeline`**
+  Assumes randomized, alternating clockwise and counter-clockwise rotations. It performs:
   - Analog signal parsing
   - Angle interpolation
   - Bayesian optimization for center estimation
-  - Derotation by line (calling {func}`derotation.derotate_by_line.derotate_an_image_array_line_by_line`)
+  - Line-by-line derotation using {func}`derotation.derotate_by_line.derotate_an_image_array_line_by_line`
 
-- {class}`derotation.analysis.incremental_derotation_pipeline.IncrementalPipeline`: assumes a continuous rotation performed in small increments. It inherits functionality from the {class}`derotation.analysis.full_derotation_pipeline.FullPipeline` but does not perform Bayesian optimization. It can be useful as an alternative way to estimate center of rotation.
+- **{class}`derotation.analysis.incremental_derotation_pipeline.IncrementalPipeline`**
+  Assumes a continuous rotation performed in small increments. Inherits from `FullPipeline` but skips Bayesian optimization.
+  Useful when the center of rotation is known or estimated differently.
 
-Both pipelines accept a configuration dictionary (see the [configuration guide](configuration)) and output:
-- Derotated TIFF
-- CSV with rotation angles and metadata
+Both pipelines accept a **configuration dictionary** (see the [configuration guide](./configuration.md)) and produce:
+- A derotated TIFF stack
+- A CSV file with rotation angles and metadata
 - Debugging plots
-- A text file with optimal center of rotation
-- Logs
+- A text file containing the estimated optimal center of rotation
+- Log files
 
-You can subclass {class}`derotation.analysis.full_derotation_pipeline.FullPipeline` to create custom pipelines by overwriting relevant methods.
+You can create custom pipelines by subclassing `FullPipeline` and overriding the relevant methods.
+
+See the [usage example](../examples/pipeline_with_real_data.zip) for how to instantiate `FullPipeline`, run it, and inspect its attributes and outputs.
+
+---
+
+### Data Format and Requirements
+
+These pipelines are designed for a specific experimental setup. They expect analog input signals in a fixed order and may not work out-of-the-box with custom data.
+
+The following inputs are required:
+
+- A **numpy array** of analog signals, with four channels in this order:
+  1. **Line clock** – signals the start of a new line (from ScanImage)
+  2. **Frame clock** – signals the start of a new frame (from ScanImage)
+  3. **Rotation ON signal** – indicates when the motor is rotating
+  4. **Rotation ticks** – used to compute rotation angles (from the step motor)
+
+- A **CSV file** describing speeds and directions of rotation in the following format:
+
+  ```csv
+  speed,direction
+  200,-1
+  200,1
+  ```
+
+Refer to the [configuration guide](./configuration.md) for more details on specifying file paths and parameters.
 
 ---
 
@@ -86,6 +116,8 @@ Use debugging plots and logs to assess the quality of your reconstruction. These
 - Derotated frame samples
 Debugging plots are by default saved in the ``debug_plots`` folder.
 
+You can see some of the debugging plots in the [example using real data](../examples/pipeline_with_real_data.rst) and the [example to find the center of rotation with synthetic data](../examples/find_center_of_rotation.rst).
+
 ### Custom plotting hooks
 To monitor what is happening at every step of line-by-line derotation, you can use custom plotting hooks. These are functions that are called at specific points in the pipeline and can be used to visualize intermediate results.
 
@@ -96,7 +128,7 @@ There are two steps in the {func}`derotation.derotate_by_line.derotate_an_image_
 > ⚠️ Note: Hooks may slow down processing significantly. Use them for inspection only.
 You can also inject **custom plotting hooks** at defined pipeline stages. See the examples page for a demonstration. *Note: hooks may significantly slow down processing.*
 
-See the [examples page](../examples/index.rst) for a demonstration of how to use a custom plotting hook.
+See the [plotting hooks example](../examples/use_plotting_hooks.rst) for a demonstration of how to use a custom plotting hook.
 
 ---
 
@@ -111,19 +143,9 @@ Use the {class}`derotation.simulate.line_scanning_microscope.Rotator` and {class
 
 This is an example of a synthetic dataset with two cells generated with the {class}`derotation.simulate.line_scanning_microscope.Rotator` class.
 
+You can find different examples on how to use the Rotator and SyntheticData classes in the [examples page](../examples/index.rst):
+- [Use the Rotator to create elliptically rotated data](../examples/elliptical_rotations.rst)
+- [Find center of rotation with synthetic data](../examples/find_center_of_rotation.rst)
+- [Simple rotation and derotation of an image stack](../examples/rotate_and_derotate_a_square.rst)
+
 ---
-
-
-## Limitations
-
-Derotation supports two experimental configurations: randomized full rotations (in the {class}`derotation.analysis.full_derotation_pipeline.FullPipeline`) and small-step incremental rotations ({class}`derotation.analysis.incremental_derotation_pipeline.IncrementalPipeline`). Other rotation paradigms are not currently supported out of the box.
-
-The package assumes strict input formats — TIFF stacks for images and `.bin` files with analog signals following a specific channel order. Both pipelines require:
-- timing of rotation ticks, which are used to compute rotation angles;
-- line clock signals, which indicate the start of a new line;s
-- frame clock signals, which indicate the start of a new frame;
-- a rotation on signal, which indicates when the rotation is happening.
-
-If your data is stored in different formats or structured differently, you can write a **custom data loader** that loads rotation angles and line/frame timing, then passes them directly to the core derotation function or integrates into a custom pipeline subclass.
-
-If you don't have a step motor but a continuous array of rotation angles, you have to clean the signal and interpolate it to match the line clock signal. You would have to write a custom data loader to handle this and a pipeline subclass to process the data.

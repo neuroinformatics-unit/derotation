@@ -32,6 +32,7 @@ To learn more about the derotation algorithm, refer to the
 # %%
 # Imports
 # -------
+
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -44,6 +45,7 @@ from derotation.config.load_config import load_config, update_config_paths
 # Load and configure paths
 # ------------------------
 # We'll use a small example dataset and write output to the current folder.
+
 current_module_path = Path.cwd()
 data_folder = current_module_path / "data"
 output_folder = current_module_path
@@ -110,6 +112,7 @@ def inspect_frame_135_and_line_180(
 # %%
 # Register the hook
 # -----------------
+
 hooks = {
     "plotting_hook_line_addition": inspect_frame_135_and_line_180,
 }
@@ -118,6 +121,7 @@ hooks = {
 # Run the derotation pipeline with the custom hook
 # ------------------------------------------------
 # Our hook will be called during processing of each line.
+
 pipeline = FullPipeline(config)
 pipeline.hooks = hooks
 pipeline()

@@ -52,5 +52,6 @@ This project was sponsored by the Margrie Lab in the Sainsbury Wellcome Centre f
 
 user_guide/index
 examples/index
+contributing
 api_index
 ```

@@ -5,9 +5,13 @@ import yaml
 
 
 def load_config() -> Dict[str, Any]:
-    """ "
+    """
     Load a pre-filled configuration file for the derotation pipeline.
 
+    Returns
+    -------
+    dict
+        The configuration dictionary.
     """
     this_module_path = Path(__file__).parent
     with open(this_module_path / "config_template.yml", "r") as f:

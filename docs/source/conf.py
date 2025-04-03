@@ -183,4 +183,5 @@ sphinx_gallery_conf = {
 
 linkcheck_ignore = [
     "https://neuroinformatics.zulipchat.com/#narrow/channel/495735-Derotation",
+    "https://www.sciencedirect.com/science/article/pii/S089662731930889X",
 ]

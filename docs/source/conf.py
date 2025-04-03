@@ -170,3 +170,8 @@ sphinx_gallery_conf = {
     "remove_config_comments": True,
     # do not render config params set as # sphinx_gallery_config [= value]
 }
+
+linkcheck_ignore = [
+    "https://neuroinformatics.zulipchat.com/#narrow/channel/495735-Derotation",
+    "https://www.sciencedirect.com/science/article/pii/S089662731930889X?via%3Dihub",
+]

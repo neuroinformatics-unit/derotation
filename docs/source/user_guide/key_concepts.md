@@ -8,11 +8,20 @@ See the [API documentation](../api_index.rst) for a detailed overview of the pac
 
 Without derotation, movies acquired with a line scanning microscope are geometrically distorted — each line is captured at a slightly different angle, making it hard to register or interpret the resulting images.
 
-![](../_static/derotation_index.png)
+```{figure} ../_static/derotation_index.png
+
+In this figure you can see on the left a schematic of a line-scanning microscope acquiring an image of a grid. The scanning pattern plus the sample rotation lead fan-like aftefacts. On the right you see a grid that has been imaged while still (top), while rotating (middle) and the derotated image (bottom). The grid is now perfectly aligned.
+```
+
 
 If the angle of rotation is recorded, `derotation` can reconstruct each frame by assigning a rotation angle to each acquired line and rotating it back to its original position. This is what is called derotation-by-line. This process incrementally reconstructs each frame and can optionally include shear deformation correction.
 
-![Derotation process](../_static/derotation_by_line.gif)
+
+```{figure} ../_static/derotation_by_line.gif
+
+In this animation you can see the reconstruction of a frame with derotation. The original frame with deformation is on the left. With subsequent iterations, derotation picks a line, rotates it according to the calculated angle, and adds it to the new derotated frame. The final result is on the right.
+```
+
 
 ## How to use derotation
 
@@ -24,6 +33,8 @@ Use {func}`derotation.derotate_by_line.derotate_an_image_array_line_by_line` to 
 - Rotation angle per line
 
 This is ideal for testing and debugging with synthetic or preprocessed data.
+
+Please refer to the [example on how to use the core function](../examples/core_fucntion.rst) for a demonstration of how to use {func}`derotation.derotate_by_line.derotate_an_image_array_line_by_line`.
 
 ### 2. **Full and Incremental Pipeline Classes**
 
@@ -81,9 +92,10 @@ Refer to the [configuration guide](./configuration.md) for more details on speci
 
 An accurate center of rotation is crucial for high-quality derotation. Even small errors can produce residual motion in the derotated movie — often visible as circles traced by stationary objects as cells.
 
-![Residual motion](../_static/wrong_center.png)
+```{figure} ../_static/wrong_center.png
 
-In this picture, you can see in red the centers of one of the cells in the movie across different angles. Since the center is not correctly estimated, the cell appears to move in a circle.
+In this picture, you can see as red crosses the centers of one of the cells in the movie across different angles. Since the center is not correctly estimated, the cell appears to move in a circle.
+```
 
 Derotation offers two approaches for estimating the center:
 
@@ -139,7 +151,10 @@ Use the {class}`derotation.simulate.line_scanning_microscope.Rotator` and {class
 - {class}`derotation.simulate.line_scanning_microscope.Rotator`: applies line-by-line rotation to an image stack, simulating a rotating microscope. It can be used to generate challenging synthetic data that include wrong centers of rotation and out of imaging plane rotations.
 - {class}`derotation.simulate.synthetic_data.SyntheticData`: creates fake cell images, assigns rotation angles, and generates synthetic stacks. This is especially useful for validating both the incremental and full pipelines under known conditions.
 
-![Rotator](../_static/rotator.gif)
+```{figure} ../_static/rotator.gif
+
+This animation shows the synthetic data generated with the Rotator class. As you can see these are two "cells" that rotate around a given center of rotation.
+```
 
 This is an example of a synthetic dataset with two cells generated with the {class}`derotation.simulate.line_scanning_microscope.Rotator` class.
 

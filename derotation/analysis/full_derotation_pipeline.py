@@ -1050,9 +1050,8 @@ class FullPipeline:
                     color=colors[j],
                 )
             ax.set_title(
-                f"Speed: {speed}, direction: {
-                    'CW' if direction == 1 else 'CCW'
-                }"
+                f"Speed: {speed}, direction:"
+                f"{'CW' if direction == 1 else 'CCW'}"
             )
             ax.spines["top"].set_visible(False)
             ax.spines["right"].set_visible(False)

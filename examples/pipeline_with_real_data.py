@@ -25,8 +25,6 @@ Steps performed:
 At the end, we visualize key plots generated during processing and explore the
 results saved in the output folder.
 
-For more details, see the
-`User guide <../user_guide/key_concepts.html>`_.
 """
 
 # %%

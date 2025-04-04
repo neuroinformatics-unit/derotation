@@ -24,9 +24,6 @@ This can be particularly helpful when:
     - You want to verify that the rotation mapping is working as expected
     - You want to debug center of rotation or interpolation artifacts
     - You are developing your own hooks or modifying the pipeline internals
-
-To learn more about the derotation algorithm, refer to the
-`User guide <../user_guide/key_concepts.html>`_.
 """
 
 # %%

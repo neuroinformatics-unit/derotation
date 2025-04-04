@@ -17,7 +17,6 @@ Inputs:
 
 The script computes the derotated movie and displays a maximum intensity
 projection for quick visual inspection.
-
 """
 
 # %%

@@ -62,10 +62,7 @@ def rotate_image_stack(
 
 
 def make_plot(
-    image_stack,
     rotated_image_stack,
-    rotator,
-    num_frames,
     title="",
 ):
     """
@@ -109,10 +106,7 @@ print("Rotation plane angle: 25°")
 print("Rotation orientation: 0°")
 
 make_plot(
-    image_stack,
     rotated_image_stack,
-    rotator,
-    num_frames,
     title="Out-of-plane rotation (25° tilt)",
 )
 
@@ -130,10 +124,7 @@ print("Rotation plane angle: 25°")
 print("Rotation orientation: 45°")
 
 make_plot(
-    image_stack,
     rotated_image_stack,
-    rotator,
-    num_frames,
     title="Tilted + Oriented Rotation Plane (25°, 45°)",
 )
 

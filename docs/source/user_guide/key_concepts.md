@@ -109,9 +109,9 @@ It is robust but computationally expensive.
 
 This method exploits the fact that incremental datasets rotate very slowly and smoothly. It works by:
 
-- Detecting largest blob in the first frame
-- Tracking its position across rotations
-- Fitting an ellipse to the trajectory
+- Calculate the mean image of the movie at 10 degree rotation intervals
+- Find the center of the largest blob in each mean image (see {class}`derotation.analysis.blob_detection.BlobDetection`)
+- Fitting an ellipse to those centers (this would give you the center of the ellipse, but also the major and minor axes, and the angle of rotation; see the section on [out-of-plane rotations](#out-of-plane-rotations) for more details on how this information can be used)
 
 The center of the ellipse is assumed to match the true center of rotation. This method fails when the cell stops being visible in certain rotation angles.
 
@@ -136,7 +136,7 @@ To monitor what is happening at every step of line-by-line derotation, you can u
 There are two steps in the {func}`derotation.derotate_by_line.derotate_an_image_array_line_by_line` function where hooks can be injected:
 - After adding a new line to the derotated image ({func}`derotation.plotting_hooks.for_derotation.line_addition`)
 - After completing a frame ({func}`derotation.plotting_hooks.for_derotation.image_completed`)
--
+
 > ⚠️ Note: Hooks may slow down processing significantly. Use them for inspection only.
 You can also inject **custom plotting hooks** at defined pipeline stages. See the examples page for a demonstration. *Note: hooks may significantly slow down processing.*
 
@@ -157,6 +157,15 @@ This animation shows the synthetic data generated with the Rotator class. As you
 ```
 
 This is an example of a synthetic dataset with two cells generated with the {class}`derotation.simulate.line_scanning_microscope.Rotator` class.
+
+### Out-of-plane rotations
+
+A particularly interesting case is when the simulated rotation occurs *out of plane*, meaning the plane of rotation is not aligned with the imaging plane. In this scenario, the projection of the true 3D rotation onto the 2D imaging plane results in an **elliptical trajectory** for each cell, rather than a perfect circular path. This trajectory can be captured with the SyntheticData class, or on real data with the IncrementalPipeline class, as the centers of a given cell across different rotation frames. Fitting an ellipse to these points will provide a quantitative estimate of the underlying rotation geometry, including the **center of rotation**, **orientation**, and **tilt angle** of the rotation plane. Orientation refers to the angle of the ellipse in the image plane, which can be calculated from the fitted major and minor axis using the function {func}`derotation.analysis.fit_ellipse.derive_angles_from_ellipse_fits`. These parameters can then be used as inputs to the derotation algorithm—specifically by enabling the `use_homography` option—to perform a more accurate transformation back to the scanning plane. This approach improves derotation performance in cases where the specimen is rotating in 3D space relative to the imaging setup.
+
+```{figure} ../_static/out_of_plane.png
+
+In this schematic you can see on the left a representation of out of imaging plane rotation paired with the position of a cell at 0deg, 90 deg and 180 deg. The right and center schematics offer a side and top view of the planes and their relationship with the ellipse that can be fitted to the cell positions.
+```
 
 You can find different examples on how to use the Rotator and SyntheticData classes in the [examples page](../examples/index.rst):
 - [Use the Rotator to create elliptically rotated data](../examples/elliptical_rotations.rst)

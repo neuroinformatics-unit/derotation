@@ -19,7 +19,7 @@ If the angle of rotation is recorded, `derotation` can reconstruct each frame by
 
 ```{figure} ../_static/derotation_by_line.gif
 
-In this animation you can see the reconstruction of a frame with derotation. The original frame with deformation is on the left. With subsequent iterations, derotation picks a line, rotates it according to the calculated angle, and adds it to the new derotated frame. The final result is on the right.
+Reconstruction of a frame with derotation. The original frame with deformation is on the left. With subsequent iterations, derotation picks a line, rotates it according to the calculated angle, and adds it to the new derotated frame. The final result is on the right.
 ```
 
 

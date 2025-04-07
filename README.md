@@ -44,7 +44,7 @@ All microscopy data presented here as an example has been acquired with a 3-phot
 This project was sponsored by the [Margrie Lab](https://www.sainsburywellcome.org/web/groups/margrie-lab) in the [Sainsbury Wellcome Centre for Neural Circuits and Behaviour](https://www.sainsburywellcome.org/web/) at University College London.
 
 ## References
-This package was built taking into account [previous efforts on derotation](https://github.com/jvoigts/rotating-2p-image-correction) shown in [Voigts & Harnett, 2020, Neuron]( https://www.sciencedirect.com/science/article/pii/S089662731930889X).
+This package was inspired by [previous work on derotation](https://github.com/jvoigts/rotating-2p-image-correction) shown in [Voigts & Harnett, 2020, Neuron](https://doi.org/10.1016/j.neuron.2019.10.016).
 
 
 ## Join the Development

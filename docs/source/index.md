@@ -41,6 +41,8 @@ With `derotation` you can:
 The package is currently in early development and it requires rotation information coming from a step motor.
 :::
 
+All microscopy data presented here as an example has been acquired with a 3-photon microscope by Simon Weiler in the Margrie Lab.
+
 This project was sponsored by the Margrie Lab in the Sainsbury Wellcome Centre for Neural Circuits and Behaviour at the University College London.
 
 

@@ -164,7 +164,7 @@ A particularly interesting case is when the simulated rotation occurs *out of pl
 
 ```{figure} ../_static/out_of_plane.png
 
-In this schematic you can see on the left a representation of out of imaging plane rotation paired with the position of a cell at 0deg, 90 deg and 180 deg. The right and center schematics offer a side and top view of the planes and their relationship with the ellipse that can be fitted to the cell positions.
+**Left:** a representation of out of imaging plane rotation paired with the position of a cell at 0deg, 90 deg and 180 deg. **Centre:** Side view and **Right:** top view top view of the planes and their relationship with the ellipse that can be fitted to the cell positions.
 ```
 
 You can find different examples on how to use the Rotator and SyntheticData classes in the [examples page](../examples/index.rst):

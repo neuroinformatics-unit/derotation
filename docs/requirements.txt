@@ -1,5 +1,6 @@
 ipython
 linkify-it-py
+matplotlib
 myst-parser
 nbsphinx
 numpydoc

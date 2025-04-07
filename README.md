@@ -51,4 +51,4 @@ This package was inspired by [previous work on derotation](https://github.com/jv
 
 Contributions to `derotation` are encouraged, whether to fix a bug, develop a new feature, or improve documentation. Get in touch through our [Zulip chat](https://neuroinformatics.zulipchat.com/#narrow/channel/495735-Derotation).
 
-- [Open an issue](https://github.com/neuroinformatics-unit/derotation/issues) to report a bug or request a new feature.
+[Open an issue](https://github.com/neuroinformatics-unit/derotation/issues) to report a bug or request a new feature.

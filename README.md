@@ -41,7 +41,7 @@ With `derotation` you can:
 
 All microscopy data presented here as an example has been acquired with a 3-photon microscope by [Simon Weiler](https://github.com/simonweiler) in the [Margrie Lab](https://www.sainsburywellcome.org/web/groups/margrie-lab).
 
-This project was sponsored by the Margrie Lab in the Sainsbury Wellcome Centre for Neural Circuits and Behaviour at the University College London.
+This project was sponsored by the [Margrie Lab](https://www.sainsburywellcome.org/web/groups/margrie-lab) in the [Sainsbury Wellcome Centre for Neural Circuits and Behaviour](https://www.sainsburywellcome.org/web/) at University College London.
 
 ## References
 This package was built taking into account [previous efforts on derotation](https://github.com/jvoigts/rotating-2p-image-correction) shown in [Voigts & Harnett, 2020, Neuron]( https://www.sciencedirect.com/science/article/pii/S089662731930889X).

@@ -10,7 +10,7 @@ Without derotation, movies acquired with a line scanning microscope are geometri
 
 ```{figure} ../_static/derotation_index.png
 
-In this figure you can see on the left a schematic of a line-scanning microscope acquiring an image of a grid. The scanning pattern plus the sample rotation lead fan-like aftefacts. On the right you see a grid that has been imaged while still (top), while rotating (middle) and the derotated image (bottom). The grid is now perfectly aligned.
+**Left:** schematic of a line-scanning microscope acquiring an image of a grid. The scanning pattern plus the sample rotation lead fan-like aftefacts. **Right:** grid that has been imaged while still (top), while rotating (middle) and the derotated image (bottom). The grid is now perfectly aligned.
 ```
 
 

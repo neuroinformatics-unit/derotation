@@ -60,7 +60,7 @@ Both pipelines accept a **configuration dictionary** (see the [configuration gui
 
 You can create custom pipelines by subclassing `FullPipeline` and overriding the relevant methods.
 
-See the [usage example](../examples/pipeline_with_real_data.zip) for how to instantiate `FullPipeline`, run it, and inspect its attributes and outputs.
+See the [usage example](../examples/pipeline_with_real_data.py) for how to instantiate `FullPipeline`, run it, and inspect its attributes and outputs.
 
 ---
 

@@ -244,7 +244,7 @@ Perform line-by-line derotation
 
  .. code-block:: none
 
-      0%|          | 0/69120 [00:00<?, ?it/s]     45%|████▍     | 30811/69120 [00:00<00:00, 308091.20it/s]     89%|████████▉ | 61621/69120 [00:00<00:00, 121149.01it/s]    100%|██████████| 69120/69120 [00:00<00:00, 119437.21it/s]
+      0%|          | 0/69120 [00:00<?, ?it/s]     46%|████▋     | 32112/69120 [00:00<00:00, 321103.46it/s]     93%|█████████▎| 64223/69120 [00:00<00:00, 105881.40it/s]    100%|██████████| 69120/69120 [00:00<00:00, 123229.11it/s]
 
 
 
@@ -288,7 +288,7 @@ Visualize the result using a maximum intensity projection
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 0.985 seconds)
+   **Total running time of the script:** (0 minutes 0.956 seconds)
 
 
 .. _sphx_glr_download_examples_core_function.py:

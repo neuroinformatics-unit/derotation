@@ -133,7 +133,7 @@ increasing angles for each line.
 
     Total number of angles: 300
     Angle range: 0° to 299°
-      0%|          | 0/3 [00:00<?, ?it/s]    100%|██████████| 3/3 [00:00<00:00, 35.82it/s]
+      0%|          | 0/3 [00:00<?, ?it/s]    100%|██████████| 3/3 [00:00<00:00, 36.13it/s]
 
 
 
@@ -161,7 +161,7 @@ Use our derotation method to revert the rotated images.
 
  .. code-block:: none
 
-      0%|          | 0/300 [00:00<?, ?it/s]    100%|██████████| 300/300 [00:00<00:00, 27132.96it/s]
+      0%|          | 0/300 [00:00<?, ?it/s]    100%|██████████| 300/300 [00:00<00:00, 27415.54it/s]
 
 
 
@@ -236,7 +236,7 @@ rotation. Notice how the derotated images recover the original structure.
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 0.359 seconds)
+   **Total running time of the script:** (0 minutes 0.351 seconds)
 
 
 .. _sphx_glr_download_examples_rotate_and_derotate_a_square.py:

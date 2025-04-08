@@ -12,7 +12,7 @@ motion correction works.
 
 In this example, we define a custom hook called after each line is processed
 during derotation. The hook visualizes the following:
-   
+
      - The original image, with the current line highlighted
     - The partially built derotated image
     - The currently rotated line, overlaid on the right-hand image (if

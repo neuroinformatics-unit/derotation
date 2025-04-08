@@ -1,0 +1,1241 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>derotation.analysis.full_derotation_pipeline &#8212; Derotation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=d2d258e8" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=8d03875c" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../_static/documentation_options.js?v=a58bc63e"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'api/derotation.analysis.full_derotation_pipeline';</script>
+    <link rel="canonical" href="https://derotation.neuroinformatics-unit.dev/api/derotation.analysis.full_derotation_pipeline.html" />
+    <link rel="icon" href="../_static/light-logo-niu.png"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="derotation.analysis.incremental_derotation_pipeline" href="derotation.analysis.incremental_derotation_pipeline.html" />
+    <link rel="prev" title="derotation.analysis.fit_ellipse" href="derotation.analysis.fit_ellipse.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">derotation v0.1.1</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../user_guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../examples/index.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../contributing.html">
+    Contributing Guide
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../api_index.html">
+    API Reference
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/neuroinformatics-unit/derotation" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://neuroinformatics.zulipchat.com/#narrow/channel/495735-Derotation" title="Zulip (chat)" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-solid fa-comments fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Zulip (chat)</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../user_guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../examples/index.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../contributing.html">
+    Contributing Guide
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../api_index.html">
+    API Reference
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/neuroinformatics-unit/derotation" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://neuroinformatics.zulipchat.com/#narrow/channel/495735-Derotation" title="Zulip (chat)" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-solid fa-comments fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Zulip (chat)</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="derotation.analysis.bayesian_optimization.html">derotation.analysis.bayesian_optimization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="derotation.analysis.blob_detection.html">derotation.analysis.blob_detection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="derotation.analysis.fit_ellipse.html">derotation.analysis.fit_ellipse</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">derotation.analysis.full_derotation_pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="derotation.analysis.incremental_derotation_pipeline.html">derotation.analysis.incremental_derotation_pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="derotation.analysis.mean_images.html">derotation.analysis.mean_images</a></li>
+<li class="toctree-l1"><a class="reference internal" href="derotation.analysis.metrics.html">derotation.analysis.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="derotation.config.load_config.html">derotation.config.load_config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="derotation.derotate_batch.html">derotation.derotate_batch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="derotation.derotate_by_line.html">derotation.derotate_by_line</a></li>
+<li class="toctree-l1"><a class="reference internal" href="derotation.load_data.custom_data_loaders.html">derotation.load_data.custom_data_loaders</a></li>
+<li class="toctree-l1"><a class="reference internal" href="derotation.plotting_hooks.for_derotation.html">derotation.plotting_hooks.for_derotation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="derotation.simulate.line_scanning_microscope.html">derotation.simulate.line_scanning_microscope</a></li>
+<li class="toctree-l1"><a class="reference internal" href="derotation.simulate.synthetic_data.html">derotation.simulate.synthetic_data</a></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../api_index.html" class="nav-link">API Reference</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">derotation.analysis.full_derotation_pipeline</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="module-derotation.analysis.full_derotation_pipeline">
+<span id="derotation-analysis-full-derotation-pipeline"></span><h1>derotation.analysis.full_derotation_pipeline<a class="headerlink" href="#module-derotation.analysis.full_derotation_pipeline" title="Link to this heading">#</a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">FullPipeline</span></code> is the main pipeline meant to be used for the full rotation
+protocol, which involves rotating the sample by 360 degrees at various speeds
+and directions.</p>
+<p class="rubric">Classes</p>
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#derotation.analysis.full_derotation_pipeline.FullPipeline" title="derotation.analysis.full_derotation_pipeline.FullPipeline"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FullPipeline</span></code></a>(_config)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">FullPipeline</span></code> is a class that derotates an image stack acquired with a rotating sample under a microscope.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<dl class="py class">
+<dt class="sig sig-object py" id="derotation.analysis.full_derotation_pipeline.FullPipeline">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">derotation.analysis.full_derotation_pipeline.</span></span><span class="sig-name descname"><span class="pre">FullPipeline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">_config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/derotation/analysis/full_derotation_pipeline.html#FullPipeline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#derotation.analysis.full_derotation_pipeline.FullPipeline" title="Link to this definition">#</a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">FullPipeline</span></code> is a class that derotates an image stack
+acquired with a rotating sample under a microscope.</p>
+<p>It is meant to be used for the full rotation protocol, in which
+the sample is rotated by 360 degrees at various speeds and
+directions.</p>
+<dl class="simple">
+<dt>It involves:</dt><dd><ul class="simple">
+<li><p>processing the analog signals</p></li>
+<li><p>finding the offset of the image stack</p></li>
+<li><p>setting the optimal center of rotation</p></li>
+<li><p>derotating the image stack</p></li>
+<li><p>masking the images</p></li>
+<li><p>calculating the mean images</p></li>
+<li><p>evaluating the quality of the derotation</p></li>
+<li><p>saving the derotated image stack and the csv file</p></li>
+</ul>
+</dd>
+</dl>
+<p>In the constructor, it loads the config file, starts the logging
+process, and loads the data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>_config</strong> (<em>Union</em><em>[</em><em>dict</em><em>, </em><em>str</em><em>]</em>) – Name of the config file without extension that will be retrieved
+in the derotation/config folder, or the config dictionary.</p>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">__call__</span></code>()</p></td>
+<td><p>Execute the steps necessary to derotate the image stack from start to finish.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.add_circle_mask" title="derotation.analysis.full_derotation_pipeline.FullPipeline.add_circle_mask"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_circle_mask</span></code></a>(image_stack[, diameter])</p></td>
+<td><p>Adds a circular mask to the rotated image stack.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.adjust_rotation_increment" title="derotation.analysis.full_derotation_pipeline.FullPipeline.adjust_rotation_increment"><code class="xref py py-obj docutils literal notranslate"><span class="pre">adjust_rotation_increment</span></code></a>()</p></td>
+<td><p>It calculates the new rotation increment for each rotation, given the number of ticks in each rotation.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.calculate_angles_by_line_and_frame" title="derotation.analysis.full_derotation_pipeline.FullPipeline.calculate_angles_by_line_and_frame"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calculate_angles_by_line_and_frame</span></code></a>()</p></td>
+<td><p>From the interpolated angles, it calculates the rotation angles by line and frame.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.calculate_velocity" title="derotation.analysis.full_derotation_pipeline.FullPipeline.calculate_velocity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calculate_velocity</span></code></a>()</p></td>
+<td><p>Calculates the velocity of the rotation by line.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.check_number_of_rotations" title="derotation.analysis.full_derotation_pipeline.FullPipeline.check_number_of_rotations"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_number_of_rotations</span></code></a>()</p></td>
+<td><p>Checks that the number of rotations is as expected.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.check_rotation_number_after_interpolation" title="derotation.analysis.full_derotation_pipeline.FullPipeline.check_rotation_number_after_interpolation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_rotation_number_after_interpolation</span></code></a>(...)</p></td>
+<td><p>Checks that the number of rotations is as expected.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.clock_to_latest_frame_start" title="derotation.analysis.full_derotation_pipeline.FullPipeline.clock_to_latest_frame_start"><code class="xref py py-obj docutils literal notranslate"><span class="pre">clock_to_latest_frame_start</span></code></a>(clock_time)</p></td>
+<td><p>Get the index of the frame that is being acquired at the given clock time.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.clock_to_latest_line_start" title="derotation.analysis.full_derotation_pipeline.FullPipeline.clock_to_latest_line_start"><code class="xref py py-obj docutils literal notranslate"><span class="pre">clock_to_latest_line_start</span></code></a>(clock_time)</p></td>
+<td><p>Get the index of the line that is being scanned at the given clock time.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.clock_to_latest_rotation_start" title="derotation.analysis.full_derotation_pipeline.FullPipeline.clock_to_latest_rotation_start"><code class="xref py py-obj docutils literal notranslate"><span class="pre">clock_to_latest_rotation_start</span></code></a>(clock_time)</p></td>
+<td><p>Get the index of the latest rotation that happened.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.correct_start_and_end_rotation_signal" title="derotation.analysis.full_derotation_pipeline.FullPipeline.correct_start_and_end_rotation_signal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">correct_start_and_end_rotation_signal</span></code></a>(start, end)</p></td>
+<td><p>Removes artifacts from the start and end times of the on periods of the rotation signal.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.create_signed_rotation_array" title="derotation.analysis.full_derotation_pipeline.FullPipeline.create_signed_rotation_array"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_signed_rotation_array</span></code></a>()</p></td>
+<td><p>Reconstructs an array that has the same length as the full rotation signal.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.derotate_frames_line_by_line" title="derotation.analysis.full_derotation_pipeline.FullPipeline.derotate_frames_line_by_line"><code class="xref py py-obj docutils literal notranslate"><span class="pre">derotate_frames_line_by_line</span></code></a>()</p></td>
+<td><p>Wrapper for the function <code class="docutils literal notranslate"><span class="pre">derotate_an_image_array_line_by_line</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.drop_ticks_outside_of_rotation" title="derotation.analysis.full_derotation_pipeline.FullPipeline.drop_ticks_outside_of_rotation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">drop_ticks_outside_of_rotation</span></code></a>()</p></td>
+<td><p>Drops the rotation ticks that are outside of the rotation periods.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.find_image_offset" title="derotation.analysis.full_derotation_pipeline.FullPipeline.find_image_offset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">find_image_offset</span></code></a>(img)</p></td>
+<td><p>Find the &quot;F0&quot;, also called &quot;image offset&quot; for a given image.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.find_missing_rotation_on_periods" title="derotation.analysis.full_derotation_pipeline.FullPipeline.find_missing_rotation_on_periods"><code class="xref py py-obj docutils literal notranslate"><span class="pre">find_missing_rotation_on_periods</span></code></a>()</p></td>
+<td><p>Find the missing rotation on periods by looking at the rotation ticks and the rotation on signal.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.find_optimal_parameters" title="derotation.analysis.full_derotation_pipeline.FullPipeline.find_optimal_parameters"><code class="xref py py-obj docutils literal notranslate"><span class="pre">find_optimal_parameters</span></code></a>()</p></td>
+<td><p>Finds the optimal parameters for the derotation.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.find_rotation_peaks" title="derotation.analysis.full_derotation_pipeline.FullPipeline.find_rotation_peaks"><code class="xref py py-obj docutils literal notranslate"><span class="pre">find_rotation_peaks</span></code></a>()</p></td>
+<td><p>Finds the peaks of the rotation ticks signal using scipy.signal.find_peaks.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.get_config" title="derotation.analysis.full_derotation_pipeline.FullPipeline.get_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_config</span></code></a>(config_name)</p></td>
+<td><p>Loads config file from derotation/config folder.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.get_interpolated_angles" title="derotation.analysis.full_derotation_pipeline.FullPipeline.get_interpolated_angles"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_interpolated_angles</span></code></a>()</p></td>
+<td><p>Starting from the rotation ticks and knowing the rotation increment, it calculates the rotation angles for each clock time.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.get_peaks_in_rotation" title="derotation.analysis.full_derotation_pipeline.FullPipeline.get_peaks_in_rotation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_peaks_in_rotation</span></code></a>(start, end)</p></td>
+<td><p>Counts the number of ticks in a rotation given the start and end times of the rotation.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.get_start_end_times_with_threshold" title="derotation.analysis.full_derotation_pipeline.FullPipeline.get_start_end_times_with_threshold"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_start_end_times_with_threshold</span></code></a>(signal, ...)</p></td>
+<td><p>Finds the start and end times of the on periods of the signal.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.is_number_of_ticks_correct" title="derotation.analysis.full_derotation_pipeline.FullPipeline.is_number_of_ticks_correct"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_number_of_ticks_correct</span></code></a>()</p></td>
+<td><p>Compares the total number of ticks with the expected number of ticks,  which is calculated from the number of rotations and the rotation increment.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.load_data" title="derotation.analysis.full_derotation_pipeline.FullPipeline.load_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_data</span></code></a>()</p></td>
+<td><p>Loads data from the paths specified in the config file.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.mean_image_for_each_rotation" title="derotation.analysis.full_derotation_pipeline.FullPipeline.mean_image_for_each_rotation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mean_image_for_each_rotation</span></code></a>(...)</p></td>
+<td><p>Calculates the mean image for each rotation and saves it in the <code class="docutils literal notranslate"><span class="pre">debug_plots</span></code> folder.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.plot_max_projection_with_center" title="derotation.analysis.full_derotation_pipeline.FullPipeline.plot_max_projection_with_center"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_max_projection_with_center</span></code></a>(stack[, name])</p></td>
+<td><p>Plots the maximum projection of the image stack with the center of rotation.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.plot_rotation_angles_and_velocity" title="derotation.analysis.full_derotation_pipeline.FullPipeline.plot_rotation_angles_and_velocity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_rotation_angles_and_velocity</span></code></a>()</p></td>
+<td><p>Plots example rotation angles by line and frame for each speed.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.plot_rotation_on_and_ticks" title="derotation.analysis.full_derotation_pipeline.FullPipeline.plot_rotation_on_and_ticks"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_rotation_on_and_ticks</span></code></a>()</p></td>
+<td><p>Plots the rotation ticks and the rotation on signal.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.plot_rotation_speeds" title="derotation.analysis.full_derotation_pipeline.FullPipeline.plot_rotation_speeds"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_rotation_speeds</span></code></a>()</p></td>
+<td><p>Plots the velocity of the rotation for each speed.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.process_analog_signals" title="derotation.analysis.full_derotation_pipeline.FullPipeline.process_analog_signals"><code class="xref py py-obj docutils literal notranslate"><span class="pre">process_analog_signals</span></code></a>()</p></td>
+<td><p>From the analog signals (frame clock, line clock, full rotation, rotation ticks) calculates the rotation angles by line and frame.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.remove_artifacts_from_interpolated_angles" title="derotation.analysis.full_derotation_pipeline.FullPipeline.remove_artifacts_from_interpolated_angles"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_artifacts_from_interpolated_angles</span></code></a>()</p></td>
+<td><p>Removes artifacts from the interpolated angles, coming from an inconsistency between the number of ticks and cumulative sum.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.save" title="derotation.analysis.full_derotation_pipeline.FullPipeline.save"><code class="xref py py-obj docutils literal notranslate"><span class="pre">save</span></code></a>(masked)</p></td>
+<td><p>Saves the masked image stack in the saving folder specified in the config file.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.save_csv_with_derotation_data" title="derotation.analysis.full_derotation_pipeline.FullPipeline.save_csv_with_derotation_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">save_csv_with_derotation_data</span></code></a>()</p></td>
+<td><p>Saves a csv file with the rotation angles by line and frame, and the rotation on signal.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.set_optimal_center" title="derotation.analysis.full_derotation_pipeline.FullPipeline.set_optimal_center"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_optimal_center</span></code></a>()</p></td>
+<td><p>Checks if the optimal center of rotation is calculated.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.start_logging" title="derotation.analysis.full_derotation_pipeline.FullPipeline.start_logging"><code class="xref py py-obj docutils literal notranslate"><span class="pre">start_logging</span></code></a>()</p></td>
+<td><p>Starts logging process using fancylog package.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="derotation.analysis.full_derotation_pipeline.FullPipeline.get_config">
+<span class="sig-name descname"><span class="pre">get_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/derotation/analysis/full_derotation_pipeline.html#FullPipeline.get_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.get_config" title="Link to this definition">#</a></dt>
+<dd><p>Loads config file from derotation/config folder.
+Please edit it to change the parameters of the analysis.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>config_name</strong> (<em>str</em>) – Name of the config file without extension.
+Either “full_rotation” or “incremental_rotation”.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Config dictionary.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="derotation.analysis.full_derotation_pipeline.FullPipeline.start_logging">
+<span class="sig-name descname"><span class="pre">start_logging</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/derotation/analysis/full_derotation_pipeline.html#FullPipeline.start_logging"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.start_logging" title="Link to this definition">#</a></dt>
+<dd><p>Starts logging process using fancylog package.
+Logs saved where specified in the config file.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="derotation.analysis.full_derotation_pipeline.FullPipeline.load_data">
+<span class="sig-name descname"><span class="pre">load_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/derotation/analysis/full_derotation_pipeline.html#FullPipeline.load_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.load_data" title="Link to this definition">#</a></dt>
+<dd><p>Loads data from the paths specified in the config file.
+Data is stored in the class attributes.</p>
+<dl class="simple">
+<dt>What is loaded:</dt><dd><ul class="simple">
+<li><p>various parameters from config file</p></li>
+<li><p>image stack (tif file)</p></li>
+<li><p>direction and speed of rotation (from randperm file, uses
+<code class="docutils literal notranslate"><span class="pre">custom_data_loaders.read_randomized_stim_table</span></code>)</p></li>
+<li><p>analog signals (from aux file, uses
+<code class="docutils literal notranslate"><span class="pre">custom_data_loaders.get_analog_signals</span></code>)</p></li>
+</ul>
+</dd>
+<dt>Analog signals are four files, measured in “clock_time”:</dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">frame_clock</span></code>: on during acquisition of a new frame, off
+otherwise</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">line_clock</span></code>: on during acquisition of a new line, off
+otherwise</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">full_rotation</span></code>: when the motor is rotating</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">rotation_ticks</span></code>: peaks at every given increment of rotation</p></li>
+</ul>
+</dd>
+</dl>
+<p>The data is loaded using the custom_data_loaders module, which are
+specific to the setup used in the lab. Please edit them to load
+data from your setup.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="derotation.analysis.full_derotation_pipeline.FullPipeline.process_analog_signals">
+<span class="sig-name descname"><span class="pre">process_analog_signals</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/derotation/analysis/full_derotation_pipeline.html#FullPipeline.process_analog_signals"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.process_analog_signals" title="Link to this definition">#</a></dt>
+<dd><p>From the analog signals (frame clock, line clock, full rotation,
+rotation ticks) calculates the rotation angles by line and frame.</p>
+<dl class="simple">
+<dt>It involves:</dt><dd><ul class="simple">
+<li><p>finding rotation ticks peaks</p></li>
+<li><p>identifying the rotation ticks that correspond to
+clockwise and counter clockwise rotations</p></li>
+<li><p>removing various kinds of artifacts that derive from wrong ticks</p></li>
+<li><p>interpolating the angles between the ticks</p></li>
+<li><p>calculating the angles by line and frame</p></li>
+</ul>
+</dd>
+<dt>If debugging_plots is <code class="docutils literal notranslate"><span class="pre">True</span></code>, it also plots:</dt><dd><ul class="simple">
+<li><p>rotation ticks and the rotation on signal</p></li>
+<li><p>rotation angles by line and frame</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="derotation.analysis.full_derotation_pipeline.FullPipeline.find_rotation_peaks">
+<span class="sig-name descname"><span class="pre">find_rotation_peaks</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/derotation/analysis/full_derotation_pipeline.html#FullPipeline.find_rotation_peaks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.find_rotation_peaks" title="Link to this definition">#</a></dt>
+<dd><p>Finds the peaks of the rotation ticks signal using
+scipy.signal.find_peaks. It filters the peaks using
+the height and distance parameters specified in the config file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>the clock times of the rotation ticks peaks</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="derotation.analysis.full_derotation_pipeline.FullPipeline.get_start_end_times_with_threshold">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_start_end_times_with_threshold</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">std_coef</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/derotation/analysis/full_derotation_pipeline.html#FullPipeline.get_start_end_times_with_threshold"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.get_start_end_times_with_threshold" title="Link to this definition">#</a></dt>
+<dd><p>Finds the start and end times of the on periods of the signal.
+Works for analog signals that have a squared pulse shape.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>signal</strong> (<em>np.ndarray</em>) – An analog signal.</p></li>
+<li><p><strong>std_coef</strong> (<em>float</em>) – The factor used to quantify the threshold.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The start and end times of the on periods of the signal.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple(np.ndarray, np.ndarray)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="derotation.analysis.full_derotation_pipeline.FullPipeline.correct_start_and_end_rotation_signal">
+<span class="sig-name descname"><span class="pre">correct_start_and_end_rotation_signal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/derotation/analysis/full_derotation_pipeline.html#FullPipeline.correct_start_and_end_rotation_signal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.correct_start_and_end_rotation_signal" title="Link to this definition">#</a></dt>
+<dd><p>Removes artifacts from the start and end times of the on periods
+of the rotation signal. These artifacts appear as very brief off
+periods that are not plausible given the experimental setup.
+The two surrounding on periods are merged.</p>
+<p>Used the <code class="docutils literal notranslate"><span class="pre">inter_rotation_interval_min_len</span></code> parameter from the config
+file: the minimum length of the time in between two rotations.
+It is important to remove artifacts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>start</strong> (<em>np.ndarray</em>) – The start times of the on periods of rotation signal.</p></li>
+<li><p><strong>end</strong> (<em>np.ndarray</em>) – The end times of the on periods of rotation signal.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Corrected start and end times of the on periods of rotation signal.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="derotation.analysis.full_derotation_pipeline.FullPipeline.create_signed_rotation_array">
+<span class="sig-name descname"><span class="pre">create_signed_rotation_array</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/derotation/analysis/full_derotation_pipeline.html#FullPipeline.create_signed_rotation_array"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.create_signed_rotation_array" title="Link to this definition">#</a></dt>
+<dd><p>Reconstructs an array that has the same length as the full rotation
+signal. It is 0 when the motor is off, and it is 1 or -1 when the motor
+is on, depending on the direction of rotation. 1 is clockwise, -1 is
+counter clockwise.
+Uses the start and end times of the on periods of rotation signal, and
+the direction of rotation to reconstruct the array.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The rotation on signal.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="derotation.analysis.full_derotation_pipeline.FullPipeline.drop_ticks_outside_of_rotation">
+<span class="sig-name descname"><span class="pre">drop_ticks_outside_of_rotation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/derotation/analysis/full_derotation_pipeline.html#FullPipeline.drop_ticks_outside_of_rotation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.drop_ticks_outside_of_rotation" title="Link to this definition">#</a></dt>
+<dd><p>Drops the rotation ticks that are outside of the rotation periods.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The clock times of the rotation ticks peaks, without the ticks
+outside of the rotation periods.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="derotation.analysis.full_derotation_pipeline.FullPipeline.check_number_of_rotations">
+<span class="sig-name descname"><span class="pre">check_number_of_rotations</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/derotation/analysis/full_derotation_pipeline.html#FullPipeline.check_number_of_rotations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.check_number_of_rotations" title="Link to this definition">#</a></dt>
+<dd><p>Checks that the number of rotations is as expected.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ValueError</strong> – if the number of start and end of rotations is different</p></li>
+<li><p><strong>ValueError</strong> – if the number of rotations is not as expected</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="derotation.analysis.full_derotation_pipeline.FullPipeline.find_missing_rotation_on_periods">
+<span class="sig-name descname"><span class="pre">find_missing_rotation_on_periods</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/derotation/analysis/full_derotation_pipeline.html#FullPipeline.find_missing_rotation_on_periods"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.find_missing_rotation_on_periods" title="Link to this definition">#</a></dt>
+<dd><p>Find the missing rotation on periods by looking at the rotation ticks
+and the rotation on signal. This is useful when the number of rotations
+is not as expected.
+Uses k-means to cluster the ticks and pick the first and last for each
+cluster. These are the starting and ending times.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="derotation.analysis.full_derotation_pipeline.FullPipeline.is_number_of_ticks_correct">
+<span class="sig-name descname"><span class="pre">is_number_of_ticks_correct</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/derotation/analysis/full_derotation_pipeline.html#FullPipeline.is_number_of_ticks_correct"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.is_number_of_ticks_correct" title="Link to this definition">#</a></dt>
+<dd><p>Compares the total number of ticks with the expected number of
+ticks,  which is calculated from the number of rotations and the
+rotation increment.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>whether the number of ticks is as expected</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="derotation.analysis.full_derotation_pipeline.FullPipeline.get_peaks_in_rotation">
+<span class="sig-name descname"><span class="pre">get_peaks_in_rotation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/derotation/analysis/full_derotation_pipeline.html#FullPipeline.get_peaks_in_rotation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.get_peaks_in_rotation" title="Link to this definition">#</a></dt>
+<dd><p>Counts the number of ticks in a rotation given the start and end
+times of the rotation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>start</strong> (<em>int</em>) – Start clock time of the rotation.</p></li>
+<li><p><strong>end</strong> (<em>int</em>) – End clock time of the rotation.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The number of ticks in the rotation.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="derotation.analysis.full_derotation_pipeline.FullPipeline.adjust_rotation_increment">
+<span class="sig-name descname"><span class="pre">adjust_rotation_increment</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/derotation/analysis/full_derotation_pipeline.html#FullPipeline.adjust_rotation_increment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.adjust_rotation_increment" title="Link to this definition">#</a></dt>
+<dd><p>It calculates the new rotation increment for each rotation, given
+the number of ticks in each rotation. It also outputs the number of
+ticks in each rotation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The new rotation increment for each rotation, and the number of
+ticks in each rotation.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple[np.ndarray, np.ndarray]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="derotation.analysis.full_derotation_pipeline.FullPipeline.get_interpolated_angles">
+<span class="sig-name descname"><span class="pre">get_interpolated_angles</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/derotation/analysis/full_derotation_pipeline.html#FullPipeline.get_interpolated_angles"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.get_interpolated_angles" title="Link to this definition">#</a></dt>
+<dd><p>Starting from the rotation ticks and knowing the rotation increment,
+it calculates the rotation angles for each clock time.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The rotation angles for each clock time.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="derotation.analysis.full_derotation_pipeline.FullPipeline.remove_artifacts_from_interpolated_angles">
+<span class="sig-name descname"><span class="pre">remove_artifacts_from_interpolated_angles</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/derotation/analysis/full_derotation_pipeline.html#FullPipeline.remove_artifacts_from_interpolated_angles"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.remove_artifacts_from_interpolated_angles" title="Link to this definition">#</a></dt>
+<dd><p>Removes artifacts from the interpolated angles, coming from
+an inconsistency between the number of ticks and cumulative sum.
+These artifacts appear as very brief rotation periods that are not
+plausible given the experimental setup.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="derotation.analysis.full_derotation_pipeline.FullPipeline.check_rotation_number_after_interpolation">
+<span class="sig-name descname"><span class="pre">check_rotation_number_after_interpolation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/derotation/analysis/full_derotation_pipeline.html#FullPipeline.check_rotation_number_after_interpolation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.check_rotation_number_after_interpolation" title="Link to this definition">#</a></dt>
+<dd><p>Checks that the number of rotations is as expected.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ValueError</strong> – if the number of start and end of rotations is different</p></li>
+<li><p><strong>ValueError</strong> – if the number of rotations is not as expected</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="derotation.analysis.full_derotation_pipeline.FullPipeline.calculate_angles_by_line_and_frame">
+<span class="sig-name descname"><span class="pre">calculate_angles_by_line_and_frame</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/derotation/analysis/full_derotation_pipeline.html#FullPipeline.calculate_angles_by_line_and_frame"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.calculate_angles_by_line_and_frame" title="Link to this definition">#</a></dt>
+<dd><p>From the interpolated angles, it calculates the rotation angles
+by line and frame. It can use the start or the end of the line/frame to
+infer the angle.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The rotation angles by line and frame.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple[np.ndarray, np.ndarray]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="derotation.analysis.full_derotation_pipeline.FullPipeline.clock_to_latest_line_start">
+<span class="sig-name descname"><span class="pre">clock_to_latest_line_start</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">clock_time</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/derotation/analysis/full_derotation_pipeline.html#FullPipeline.clock_to_latest_line_start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.clock_to_latest_line_start" title="Link to this definition">#</a></dt>
+<dd><p>Get the index of the line that is being scanned at the given clock
+time.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>clock_time</strong> (<em>int</em>) – The clock time.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The index of the line</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="derotation.analysis.full_derotation_pipeline.FullPipeline.clock_to_latest_frame_start">
+<span class="sig-name descname"><span class="pre">clock_to_latest_frame_start</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">clock_time</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/derotation/analysis/full_derotation_pipeline.html#FullPipeline.clock_to_latest_frame_start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.clock_to_latest_frame_start" title="Link to this definition">#</a></dt>
+<dd><p>Get the index of the frame that is being acquired at the given clock
+time.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>clock_time</strong> (<em>int</em>) – The clock time.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The index of the frame</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="derotation.analysis.full_derotation_pipeline.FullPipeline.clock_to_latest_rotation_start">
+<span class="sig-name descname"><span class="pre">clock_to_latest_rotation_start</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">clock_time</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/derotation/analysis/full_derotation_pipeline.html#FullPipeline.clock_to_latest_rotation_start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.clock_to_latest_rotation_start" title="Link to this definition">#</a></dt>
+<dd><p>Get the index of the latest rotation that happened.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>clock_time</strong> (<em>int</em>) – The clock time.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The index of the latest rotation</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="derotation.analysis.full_derotation_pipeline.FullPipeline.calculate_velocity">
+<span class="sig-name descname"><span class="pre">calculate_velocity</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/derotation/analysis/full_derotation_pipeline.html#FullPipeline.calculate_velocity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.calculate_velocity" title="Link to this definition">#</a></dt>
+<dd><p>Calculates the velocity of the rotation by line.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="derotation.analysis.full_derotation_pipeline.FullPipeline.plot_rotation_on_and_ticks">
+<span class="sig-name descname"><span class="pre">plot_rotation_on_and_ticks</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/derotation/analysis/full_derotation_pipeline.html#FullPipeline.plot_rotation_on_and_ticks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.plot_rotation_on_and_ticks" title="Link to this definition">#</a></dt>
+<dd><p>Plots the rotation ticks and the rotation on signal.
+This plot will be saved in the <code class="docutils literal notranslate"><span class="pre">debug_plots</span></code> folder.
+Please inspect it to check that the rotation ticks are correctly
+placed during the times in which the motor is rotating.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="derotation.analysis.full_derotation_pipeline.FullPipeline.plot_rotation_angles_and_velocity">
+<span class="sig-name descname"><span class="pre">plot_rotation_angles_and_velocity</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/derotation/analysis/full_derotation_pipeline.html#FullPipeline.plot_rotation_angles_and_velocity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.plot_rotation_angles_and_velocity" title="Link to this definition">#</a></dt>
+<dd><p>Plots example rotation angles by line and frame for each speed.
+The velocity is also plotted on top of the rotation angles.</p>
+<p>This plot will be saved in the <code class="docutils literal notranslate"><span class="pre">debug_plots</span></code> folder. Please inspect
+it to check that the rotation angles are correctly calculated.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="derotation.analysis.full_derotation_pipeline.FullPipeline.plot_rotation_speeds">
+<span class="sig-name descname"><span class="pre">plot_rotation_speeds</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/derotation/analysis/full_derotation_pipeline.html#FullPipeline.plot_rotation_speeds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.plot_rotation_speeds" title="Link to this definition">#</a></dt>
+<dd><p>Plots the velocity of the rotation for each speed.
+This plot will be saved in the <code class="docutils literal notranslate"><span class="pre">debug_plots</span></code> folder.
+Please inspect it to check that the velocity is correctly calculated.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="derotation.analysis.full_derotation_pipeline.FullPipeline.find_optimal_parameters">
+<span class="sig-name descname"><span class="pre">find_optimal_parameters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/derotation/analysis/full_derotation_pipeline.html#FullPipeline.find_optimal_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.find_optimal_parameters" title="Link to this definition">#</a></dt>
+<dd><p>Finds the optimal parameters for the derotation.
+It calls the Bayesian Optimization algorithm implemented in
+<code class="docutils literal notranslate"><span class="pre">BO_for_derotation</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="derotation.analysis.full_derotation_pipeline.FullPipeline.set_optimal_center">
+<span class="sig-name descname"><span class="pre">set_optimal_center</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/derotation/analysis/full_derotation_pipeline.html#FullPipeline.set_optimal_center"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.set_optimal_center" title="Link to this definition">#</a></dt>
+<dd><p>Checks if the optimal center of rotation is calculated.
+If it is not calculated, it will calculate it.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="derotation.analysis.full_derotation_pipeline.FullPipeline.plot_max_projection_with_center">
+<span class="sig-name descname"><span class="pre">plot_max_projection_with_center</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stack</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'max_projection_with_center'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/derotation/analysis/full_derotation_pipeline.html#FullPipeline.plot_max_projection_with_center"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.plot_max_projection_with_center" title="Link to this definition">#</a></dt>
+<dd><p>Plots the maximum projection of the image stack with the center
+of rotation.
+This plot will be saved in the <code class="docutils literal notranslate"><span class="pre">debug_plots</span></code> folder.
+Please inspect it to check that the center of rotation is correctly
+placed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="derotation.analysis.full_derotation_pipeline.FullPipeline.derotate_frames_line_by_line">
+<span class="sig-name descname"><span class="pre">derotate_frames_line_by_line</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/derotation/analysis/full_derotation_pipeline.html#FullPipeline.derotate_frames_line_by_line"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.derotate_frames_line_by_line" title="Link to this definition">#</a></dt>
+<dd><p>Wrapper for the function <code class="docutils literal notranslate"><span class="pre">derotate_an_image_array_line_by_line</span></code>.
+Before calling the function, it finds the F0 image offset with
+<code class="docutils literal notranslate"><span class="pre">find_image_offset</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The rotated image stack.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="derotation.analysis.full_derotation_pipeline.FullPipeline.find_image_offset">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">find_image_offset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/derotation/analysis/full_derotation_pipeline.html#FullPipeline.find_image_offset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.find_image_offset" title="Link to this definition">#</a></dt>
+<dd><p>Find the “F0”, also called “image offset” for a given image.</p>
+<p>Explanations: What is the image offset?
+The PMT (photo-multiplier tube) adds an arbitrary offset to the
+image that corresponds to 0 photons received. We can use a Gaussian
+Mixture Model to find this offset by assuming that it will be the
+smallest mean of the Gaussian components.</p>
+<p>Why do we need to find it?
+When we rotate the image, the pixels of the image that are not
+sampled will be filled with the offset is order to correctly express
+“0 photons received”.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>img</strong> (<em>np.ndarray</em>) – The image for which you want to find the offset.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The offset.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="derotation.analysis.full_derotation_pipeline.FullPipeline.mean_image_for_each_rotation">
+<span class="sig-name descname"><span class="pre">mean_image_for_each_rotation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">derotated_image_stack</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/derotation/analysis/full_derotation_pipeline.html#FullPipeline.mean_image_for_each_rotation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.mean_image_for_each_rotation" title="Link to this definition">#</a></dt>
+<dd><p>Calculates the mean image for each rotation and saves it in the
+<code class="docutils literal notranslate"><span class="pre">debug_plots</span></code> folder.
+This plot will be saved in the <code class="docutils literal notranslate"><span class="pre">debug_plots</span></code> folder.
+Please inspect it to check that the mean images are correctly
+calculated.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="derotation.analysis.full_derotation_pipeline.FullPipeline.add_circle_mask">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">add_circle_mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_stack</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diameter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">256</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/derotation/analysis/full_derotation_pipeline.html#FullPipeline.add_circle_mask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.add_circle_mask" title="Link to this definition">#</a></dt>
+<dd><p>Adds a circular mask to the rotated image stack. It is useful
+to hide the portions of the image that are not sampled equally
+during the rotation.
+If a diameter is specified, the image stack is cropped to match
+the diameter. The mask is then added to the cropped image stack,
+and the cropped image stack is padded to match the original size.
+This is important when the images are registered to correct from
+motion artifacts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image_stack</strong> (<em>np.ndarray</em>) – The image stack that you want to mask.</p></li>
+<li><p><strong>diameter</strong> (<em>int</em><em>, </em><em>optional</em>) – The diameter of the circular mask, by default 256</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The masked image stack.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="derotation.analysis.full_derotation_pipeline.FullPipeline.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">masked</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/derotation/analysis/full_derotation_pipeline.html#FullPipeline.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.save" title="Link to this definition">#</a></dt>
+<dd><p>Saves the masked image stack in the saving folder specified in the
+config file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>masked</strong> (<em>np.ndarray</em>) – The masked derotated image stack.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="derotation.analysis.full_derotation_pipeline.FullPipeline.save_csv_with_derotation_data">
+<span class="sig-name descname"><span class="pre">save_csv_with_derotation_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/derotation/analysis/full_derotation_pipeline.html#FullPipeline.save_csv_with_derotation_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.save_csv_with_derotation_data" title="Link to this definition">#</a></dt>
+<dd><p>Saves a csv file with the rotation angles by line and frame,
+and the rotation on signal.
+It is saved in the saving folder specified in the config file.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="derotation.analysis.fit_ellipse.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">derotation.analysis.fit_ellipse</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="derotation.analysis.incremental_derotation_pipeline.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">derotation.analysis.incremental_derotation_pipeline</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#derotation.analysis.full_derotation_pipeline.FullPipeline"><code class="docutils literal notranslate"><span class="pre">FullPipeline</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.get_config"><code class="docutils literal notranslate"><span class="pre">FullPipeline.get_config()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.start_logging"><code class="docutils literal notranslate"><span class="pre">FullPipeline.start_logging()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.load_data"><code class="docutils literal notranslate"><span class="pre">FullPipeline.load_data()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.process_analog_signals"><code class="docutils literal notranslate"><span class="pre">FullPipeline.process_analog_signals()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.find_rotation_peaks"><code class="docutils literal notranslate"><span class="pre">FullPipeline.find_rotation_peaks()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.get_start_end_times_with_threshold"><code class="docutils literal notranslate"><span class="pre">FullPipeline.get_start_end_times_with_threshold()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.correct_start_and_end_rotation_signal"><code class="docutils literal notranslate"><span class="pre">FullPipeline.correct_start_and_end_rotation_signal()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.create_signed_rotation_array"><code class="docutils literal notranslate"><span class="pre">FullPipeline.create_signed_rotation_array()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.drop_ticks_outside_of_rotation"><code class="docutils literal notranslate"><span class="pre">FullPipeline.drop_ticks_outside_of_rotation()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.check_number_of_rotations"><code class="docutils literal notranslate"><span class="pre">FullPipeline.check_number_of_rotations()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.find_missing_rotation_on_periods"><code class="docutils literal notranslate"><span class="pre">FullPipeline.find_missing_rotation_on_periods()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.is_number_of_ticks_correct"><code class="docutils literal notranslate"><span class="pre">FullPipeline.is_number_of_ticks_correct()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.get_peaks_in_rotation"><code class="docutils literal notranslate"><span class="pre">FullPipeline.get_peaks_in_rotation()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.adjust_rotation_increment"><code class="docutils literal notranslate"><span class="pre">FullPipeline.adjust_rotation_increment()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.get_interpolated_angles"><code class="docutils literal notranslate"><span class="pre">FullPipeline.get_interpolated_angles()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.remove_artifacts_from_interpolated_angles"><code class="docutils literal notranslate"><span class="pre">FullPipeline.remove_artifacts_from_interpolated_angles()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.check_rotation_number_after_interpolation"><code class="docutils literal notranslate"><span class="pre">FullPipeline.check_rotation_number_after_interpolation()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.calculate_angles_by_line_and_frame"><code class="docutils literal notranslate"><span class="pre">FullPipeline.calculate_angles_by_line_and_frame()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.clock_to_latest_line_start"><code class="docutils literal notranslate"><span class="pre">FullPipeline.clock_to_latest_line_start()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.clock_to_latest_frame_start"><code class="docutils literal notranslate"><span class="pre">FullPipeline.clock_to_latest_frame_start()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.clock_to_latest_rotation_start"><code class="docutils literal notranslate"><span class="pre">FullPipeline.clock_to_latest_rotation_start()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.calculate_velocity"><code class="docutils literal notranslate"><span class="pre">FullPipeline.calculate_velocity()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.plot_rotation_on_and_ticks"><code class="docutils literal notranslate"><span class="pre">FullPipeline.plot_rotation_on_and_ticks()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.plot_rotation_angles_and_velocity"><code class="docutils literal notranslate"><span class="pre">FullPipeline.plot_rotation_angles_and_velocity()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.plot_rotation_speeds"><code class="docutils literal notranslate"><span class="pre">FullPipeline.plot_rotation_speeds()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.find_optimal_parameters"><code class="docutils literal notranslate"><span class="pre">FullPipeline.find_optimal_parameters()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.set_optimal_center"><code class="docutils literal notranslate"><span class="pre">FullPipeline.set_optimal_center()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.plot_max_projection_with_center"><code class="docutils literal notranslate"><span class="pre">FullPipeline.plot_max_projection_with_center()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.derotate_frames_line_by_line"><code class="docutils literal notranslate"><span class="pre">FullPipeline.derotate_frames_line_by_line()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.find_image_offset"><code class="docutils literal notranslate"><span class="pre">FullPipeline.find_image_offset()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.mean_image_for_each_rotation"><code class="docutils literal notranslate"><span class="pre">FullPipeline.mean_image_for_each_rotation()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.add_circle_mask"><code class="docutils literal notranslate"><span class="pre">FullPipeline.add_circle_mask()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.save"><code class="docutils literal notranslate"><span class="pre">FullPipeline.save()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derotation.analysis.full_derotation_pipeline.FullPipeline.save_csv_with_derotation_data"><code class="docutils literal notranslate"><span class="pre">FullPipeline.save_csv_with_derotation_data()</span></code></a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item"><p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+    </p>
+    <p class="theme-version">
+    Built with the
+    <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a>
+    0.16.1.
+    </p></div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><div class="things-in-a-row">
+    <a href="https://neuroinformatics.dev/">
+        <img src="../_static/light-logo-niu.png" alt="NIU" class="only-light img-sponsor"/>
+        <img src="../_static/dark-logo-niu.png" alt="NIU" class="only-dark img-sponsor"/>
+    </a>
+    <a href="https://www.sainsburywellcome.org/web/">
+        <img src="../_static/light-logo-swc.png" alt="SWC" class="only-light img-sponsor"/>
+        <img src="../_static/dark-logo-swc.png" alt="SWC" class="only-dark img-sponsor"/>
+    </a>
+    <a href="https://www.ucl.ac.uk/">
+        <img src="../_static/light-logo-ucl.png" alt="UCL" class="only-light img-sponsor"/>
+        <img src="../_static/dark-logo-ucl.png" alt="UCL" class="only-dark img-sponsor"/>
+    </a>
+</div></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

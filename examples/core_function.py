@@ -11,7 +11,8 @@ allowing correction for sample motion or intentional rotation during
 acquisition.
 
 Inputs:
-- angles_per_line.npy: A 1D NumPy array of angles in degrees, with one value per image line
+- angles_per_line.npy: A 1D NumPy array of angles in degrees, with one value
+  per image line
 - rotation_sample.tif: A TIFF stack to be derotated.
 
 The script computes the derotated movie and displays a maximum intensity

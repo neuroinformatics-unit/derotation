@@ -1,0 +1,1343 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Full pipeline on real data: derotation and center of rotation estimation &#8212; Derotation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=d2d258e8" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=8d03875c" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../_static/documentation_options.js?v=01f34227"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'examples/pipeline_with_real_data';</script>
+    <link rel="canonical" href="https://neuroinformatics-unit.github.io/derotation/examples/pipeline_with_real_data.html" />
+    <link rel="icon" href="../_static/light-logo-niu.png"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Rotate and derotate a sample image" href="rotate_and_derotate_a_square.html" />
+    <link rel="prev" title="Visualizing derotation line-by-line with custom hooks" href="use_plotting_hooks.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">derotation v0.1.0</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../user_guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../contributing.html">
+    Contributing Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../api_index.html">
+    API Reference
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/neuroinformatics-unit/derotation" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://neuroinformatics.zulipchat.com/#narrow/channel/495735-Derotation" title="Zulip (chat)" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-solid fa-comments fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Zulip (chat)</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../user_guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../contributing.html">
+    Contributing Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../api_index.html">
+    API Reference
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/neuroinformatics-unit/derotation" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://neuroinformatics.zulipchat.com/#narrow/channel/495735-Derotation" title="Zulip (chat)" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-solid fa-comments fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Zulip (chat)</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="find_center_of_rotation.html">Find center of rotation with simulated data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="core_function.html">Derotate a TIFF movie line-by-line using precomputed rotation angles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="use_plotting_hooks.html">Visualizing derotation line-by-line with custom hooks</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Full pipeline on real data: derotation and center of rotation estimation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rotate_and_derotate_a_square.html">Rotate and derotate a sample image</a></li>
+<li class="toctree-l1"><a class="reference internal" href="elliptical_rotations.html">Simulate out-of-plane rotation during line-scanning acquisition</a></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Examples</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Full pipeline on real data: derotation and center of rotation estimation</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <div class="sphx-glr-download-link-note admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference internal" href="#sphx-glr-download-examples-pipeline-with-real-data-py"><span class="std std-ref">Go to the end</span></a>
+to download the full example code. or to run this example in your browser via Binder</p>
+</div>
+<section class="sphx-glr-example-title" id="full-pipeline-on-real-data-derotation-and-center-of-rotation-estimation">
+<span id="sphx-glr-examples-pipeline-with-real-data-py"></span><h1>Full pipeline on real data: derotation and center of rotation estimation<a class="headerlink" href="#full-pipeline-on-real-data-derotation-and-center-of-rotation-estimation" title="Link to this heading">#</a></h1>
+<p>This example shows how to run the full derotation pipeline on real data,
+including: a TIFF movie, analog signals (.npy), and a CSV file with stimulus
+randomization. The pipeline performs automatic estimation of the center of
+rotation, derotation, and saves intermediate results and visualizations in an
+output folder.</p>
+<dl class="simple">
+<dt>Steps performed:</dt><dd><ul class="simple">
+<li><p>Load configuration from a YAML file and update file paths</p></li>
+<li><dl class="simple">
+<dt>Initialize the <cite>FullPipeline</cite> class with:</dt><dd><ul>
+<li><p>A TIFF movie to derotate</p></li>
+<li><p>A <cite>.npy</cite> file with analog signals from ScanImage and a step motor
+(ordered as: frame clock, line clock, rotation on, rotation ticks)</p></li>
+<li><p>A CSV file with stimulus randomization</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Run the full pipeline, which:</dt><dd><ul>
+<li><p>Interpolates rotation angles per acquired line from analog signals</p></li>
+<li><p>Estimates the center of rotation using a Bayesian optimization
+approach</p></li>
+<li><p>Derotates the movie based on estimated parameters</p></li>
+<li><p>Saves the derotated movie and rotation angles</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+<p>At the end, we visualize key plots generated during processing and explore the
+results saved in the output folder.</p>
+<section id="imports">
+<h2>Imports<a class="headerlink" href="#imports" title="Link to this heading">#</a></h2>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">derotation.analysis.full_derotation_pipeline</span><span class="w"> </span><span class="kn">import</span> <a href="../api/derotation.analysis.full_derotation_pipeline.html#derotation.analysis.full_derotation_pipeline.FullPipeline" title="derotation.analysis.full_derotation_pipeline.FullPipeline" class="sphx-glr-backref-module-derotation-analysis-full_derotation_pipeline sphx-glr-backref-type-py-class"><span class="n">FullPipeline</span></a>
+<span class="kn">from</span><span class="w"> </span><span class="nn">derotation.config.load_config</span><span class="w"> </span><span class="kn">import</span> <a href="../api/derotation.config.load_config.html#derotation.config.load_config.load_config" title="derotation.config.load_config.load_config" class="sphx-glr-backref-module-derotation-config-load_config sphx-glr-backref-type-py-function"><span class="n">load_config</span></a><span class="p">,</span> <a href="../api/derotation.config.load_config.html#derotation.config.load_config.update_config_paths" title="derotation.config.load_config.update_config_paths" class="sphx-glr-backref-module-derotation-config-load_config sphx-glr-backref-type-py-function"><span class="n">update_config_paths</span></a>
+</pre></div>
+</div>
+</section>
+<section id="load-and-update-configuration">
+<h2>Load and update configuration<a class="headerlink" href="#load-and-update-configuration" title="Link to this heading">#</a></h2>
+<p>We define paths relative to the current working directory</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">current_module_path</span> <span class="o">=</span> <span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span>
+<span class="n">data_folder</span> <span class="o">=</span> <span class="n">current_module_path</span> <span class="o">/</span> <span class="s2">&quot;data&quot;</span>
+
+<span class="n">config</span> <span class="o">=</span> <a href="../api/derotation.config.load_config.html#derotation.config.load_config.load_config" title="derotation.config.load_config.load_config" class="sphx-glr-backref-module-derotation-config-load_config sphx-glr-backref-type-py-function"><span class="n">load_config</span></a><span class="p">()</span>
+<span class="n">config</span> <span class="o">=</span> <a href="../api/derotation.config.load_config.html#derotation.config.load_config.update_config_paths" title="derotation.config.load_config.update_config_paths" class="sphx-glr-backref-module-derotation-config-load_config sphx-glr-backref-type-py-function"><span class="n">update_config_paths</span></a><span class="p">(</span>
+    <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+    <span class="n">tif_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">data_folder</span> <span class="o">/</span> <span class="s2">&quot;rotation_sample.tif&quot;</span><span class="p">),</span>
+    <span class="n">aux_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">data_folder</span> <span class="o">/</span> <span class="s2">&quot;analog_signals.npy&quot;</span><span class="p">),</span>
+    <span class="n">stim_randperm_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">data_folder</span> <span class="o">/</span> <span class="s2">&quot;stimulus_randperm.csv&quot;</span><span class="p">),</span>
+    <span class="n">output_folder</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">current_module_path</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="initialize-pipeline">
+<h2>Initialize pipeline<a class="headerlink" href="#initialize-pipeline" title="Link to this heading">#</a></h2>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><a href="../api/derotation.analysis.full_derotation_pipeline.html#derotation.analysis.full_derotation_pipeline.FullPipeline" title="derotation.analysis.full_derotation_pipeline.FullPipeline" class="sphx-glr-backref-module-derotation-analysis-full_derotation_pipeline sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">pipeline</span></a> <span class="o">=</span> <a href="../api/derotation.analysis.full_derotation_pipeline.html#derotation.analysis.full_derotation_pipeline.FullPipeline" title="derotation.analysis.full_derotation_pipeline.FullPipeline" class="sphx-glr-backref-module-derotation-analysis-full_derotation_pipeline sphx-glr-backref-type-py-class"><span class="n">FullPipeline</span></a><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>2025-04-08 13:23:44 PM INFO     2025-04-08 13:23:44 PM - INFO -  fancylog.py:326
+                                MainProcess fancylog.py:326 -
+                                Starting logging
+2025-04-08 13:23:44 PM INFO     2025-04-08 13:23:44 PM - INFO -  fancylog.py:326
+                                MainProcess fancylog.py:326 -
+                                Starting logging
+                       INFO     2025-04-08 13:23:44 PM - INFO -  fancylog.py:327
+                                MainProcess fancylog.py:327 -
+                                Not logging multiple processes
+                       INFO     2025-04-08 13:23:44 PM - INFO -  fancylog.py:327
+                                MainProcess fancylog.py:327 -
+                                Not logging multiple processes
+                       INFO     2025-04-08       full_derotation_pipeline.py:164
+                                13:23:44 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:164
+                                - Loading
+                                data...
+                       INFO     2025-04-08       full_derotation_pipeline.py:164
+                                13:23:44 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:164
+                                - Loading
+                                data...
+                       INFO     2025-04-08       full_derotation_pipeline.py:165
+                                13:23:44 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:165
+                                - Loading
+                                /home/runner/wor
+                                k/derotation/der
+                                otation/examples
+                                /data/rotation_s
+                                ample.tif
+                       INFO     2025-04-08       full_derotation_pipeline.py:165
+                                13:23:44 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:165
+                                - Loading
+                                /home/runner/wor
+                                k/derotation/der
+                                otation/examples
+                                /data/rotation_s
+                                ample.tif
+                       INFO     2025-04-08       full_derotation_pipeline.py:186
+                                13:23:44 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:186
+                                - Number of
+                                rotations: 2
+                       INFO     2025-04-08       full_derotation_pipeline.py:186
+                                13:23:44 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:186
+                                - Number of
+                                rotations: 2
+                       INFO     2025-04-08       full_derotation_pipeline.py:194
+                                13:23:44 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:194
+                                - Rotation
+                                direction:
+                                speed      200
+                                direction
+                                -1           1
+                                 1           1
+                       INFO     2025-04-08       full_derotation_pipeline.py:194
+                                13:23:44 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:194
+                                - Rotation
+                                direction:
+                                speed      200
+                                direction
+                                -1           1
+                                 1           1
+                       INFO     2025-04-08       full_derotation_pipeline.py:253
+                                13:23:44 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:253
+                                - Deleting
+                                previous debug
+                                plots...
+                       INFO     2025-04-08       full_derotation_pipeline.py:253
+                                13:23:44 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:253
+                                - Deleting
+                                previous debug
+                                plots...
+                       INFO     2025-04-08       full_derotation_pipeline.py:263
+                                13:23:44 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:263
+                                - Dataset
+                                rotation_sample
+                                loaded
+                       INFO     2025-04-08       full_derotation_pipeline.py:263
+                                13:23:44 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:263
+                                - Dataset
+                                rotation_sample
+                                loaded
+                       INFO     2025-04-08       full_derotation_pipeline.py:264
+                                13:23:44 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:264
+                                - Filename:
+                                derotated
+                       INFO     2025-04-08       full_derotation_pipeline.py:264
+                                13:23:44 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:264
+                                - Filename:
+                                derotated
+</pre></div>
+</div>
+</section>
+<section id="peek-into-the-loaded-data">
+<h2>Peek into the loaded data<a class="headerlink" href="#peek-into-the-loaded-data" title="Link to this heading">#</a></h2>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loaded movie shape: </span><span class="si">{</span><a href="../api/derotation.analysis.full_derotation_pipeline.html#derotation.analysis.full_derotation_pipeline.FullPipeline" title="derotation.analysis.full_derotation_pipeline.FullPipeline" class="sphx-glr-backref-module-derotation-analysis-full_derotation_pipeline sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">pipeline</span></a><span class="o">.</span><span class="n">image_stack</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><a href="../api/derotation.analysis.full_derotation_pipeline.html#derotation.analysis.full_derotation_pipeline.FullPipeline" title="derotation.analysis.full_derotation_pipeline.FullPipeline" class="sphx-glr-backref-module-derotation-analysis-full_derotation_pipeline sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">pipeline</span></a><span class="o">.</span><span class="n">image_stack</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;viridis&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;First frame of the movie&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<img src="../_images/sphx_glr_pipeline_with_real_data_001.png" srcset="../_images/sphx_glr_pipeline_with_real_data_001.png" alt="First frame of the movie" class = "sphx-glr-single-img"/><div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Loaded movie shape: (270, 256, 256)
+</pre></div>
+</div>
+<p>Useful attributes before running the pipeline</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of frames: </span><span class="si">{</span><a href="../api/derotation.analysis.full_derotation_pipeline.html#derotation.analysis.full_derotation_pipeline.FullPipeline" title="derotation.analysis.full_derotation_pipeline.FullPipeline" class="sphx-glr-backref-module-derotation-analysis-full_derotation_pipeline sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">pipeline</span></a><span class="o">.</span><span class="n">num_frames</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Lines per frame: </span><span class="si">{</span><a href="../api/derotation.analysis.full_derotation_pipeline.html#derotation.analysis.full_derotation_pipeline.FullPipeline" title="derotation.analysis.full_derotation_pipeline.FullPipeline" class="sphx-glr-backref-module-derotation-analysis-full_derotation_pipeline sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">pipeline</span></a><span class="o">.</span><span class="n">num_lines_per_frame</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Rotation speeds: </span><span class="si">{</span><a href="../api/derotation.analysis.full_derotation_pipeline.html#derotation.analysis.full_derotation_pipeline.FullPipeline" title="derotation.analysis.full_derotation_pipeline.FullPipeline" class="sphx-glr-backref-module-derotation-analysis-full_derotation_pipeline sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">pipeline</span></a><span class="o">.</span><span class="n">speed</span><span class="si">}</span><span class="s2"> deg/s&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Rotation direction: </span><span class="si">{</span><a href="../api/derotation.analysis.full_derotation_pipeline.html#derotation.analysis.full_derotation_pipeline.FullPipeline" title="derotation.analysis.full_derotation_pipeline.FullPipeline" class="sphx-glr-backref-module-derotation-analysis-full_derotation_pipeline sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">pipeline</span></a><span class="o">.</span><span class="n">direction</span><span class="si">}</span><span class="s2"> (−1 = CCW, 1 = CW)&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Estimated number of full rotations: </span><span class="si">{</span><a href="../api/derotation.analysis.full_derotation_pipeline.html#derotation.analysis.full_derotation_pipeline.FullPipeline" title="derotation.analysis.full_derotation_pipeline.FullPipeline" class="sphx-glr-backref-module-derotation-analysis-full_derotation_pipeline sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">pipeline</span></a><span class="o">.</span><span class="n">number_of_rotations</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Number of frames: 270
+Lines per frame: 256
+Rotation speeds: [200 200] deg/s
+Rotation direction: [-1  1] (−1 = CCW, 1 = CW)
+Estimated number of full rotations: 2
+</pre></div>
+</div>
+</section>
+<section id="run-the-full-pipeline">
+<h2>Run the full pipeline<a class="headerlink" href="#run-the-full-pipeline" title="Link to this heading">#</a></h2>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><a href="../api/derotation.analysis.full_derotation_pipeline.html#derotation.analysis.full_derotation_pipeline.FullPipeline" title="derotation.analysis.full_derotation_pipeline.FullPipeline" class="sphx-glr-backref-module-derotation-analysis-full_derotation_pipeline sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">pipeline</span></a><span class="p">()</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>                       INFO     2025-04-08       full_derotation_pipeline.py:361
+                                13:23:44 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:361
+                                - Finding
+                                rotation ticks
+                                peaks...
+                       INFO     2025-04-08       full_derotation_pipeline.py:361
+                                13:23:44 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:361
+                                - Finding
+                                rotation ticks
+                                peaks...
+                       INFO     2025-04-08       full_derotation_pipeline.py:436
+                                13:23:44 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:436
+                                - Cleaning start
+                                and end rotation
+                                signal...
+                       INFO     2025-04-08       full_derotation_pipeline.py:436
+                                13:23:44 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:436
+                                - Cleaning start
+                                and end rotation
+                                signal...
+                       INFO     2025-04-08       full_derotation_pipeline.py:461
+                                13:23:44 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:461
+                                - Creating
+                                signed rotation
+                                array...
+                       INFO     2025-04-08       full_derotation_pipeline.py:461
+                                13:23:44 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:461
+                                - Creating
+                                signed rotation
+                                array...
+                       INFO     2025-04-08       full_derotation_pipeline.py:483
+                                13:23:44 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:483
+                                - Dropping ticks
+                                outside of the
+                                rotation
+                                period...
+                       INFO     2025-04-08       full_derotation_pipeline.py:483
+                                13:23:44 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:483
+                                - Dropping ticks
+                                outside of the
+                                rotation
+                                period...
+                       INFO     2025-04-08       full_derotation_pipeline.py:519
+                                13:23:44 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:519
+                                - Ticks dropped:
+                                1.
+                                Ticks remaining:
+                                3451
+                       INFO     2025-04-08       full_derotation_pipeline.py:519
+                                13:23:44 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:519
+                                - Ticks dropped:
+                                1.
+                                Ticks remaining:
+                                3451
+                       INFO     2025-04-08       full_derotation_pipeline.py:550
+                                13:23:44 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:550
+                                - Number of
+                                rotations is as
+                                expected
+                       INFO     2025-04-08       full_derotation_pipeline.py:550
+                                13:23:44 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:550
+                                - Number of
+                                rotations is as
+                                expected
+                       WARNING  2025-04-08       full_derotation_pipeline.py:597
+                                13:23:44 PM -
+                                WARNING -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:597
+                                - Number of
+                                ticks is not as
+                                expected: 3451.
+                                Expected ticks:
+                                3600.0
+                                Delta: -149.0
+                       WARNING  2025-04-08       full_derotation_pipeline.py:597
+                                13:23:44 PM -
+                                WARNING -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:597
+                                - Number of
+                                ticks is not as
+                                expected: 3451.
+                                Expected ticks:
+                                3600.0
+                                Delta: -149.0
+                       INFO     2025-04-08       full_derotation_pipeline.py:649
+                                13:23:44 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:649
+                                - New increment
+                                example: 0.209
+                       INFO     2025-04-08       full_derotation_pipeline.py:649
+                                13:23:44 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:649
+                                - New increment
+                                example: 0.209
+                       INFO     2025-04-08       full_derotation_pipeline.py:662
+                                13:23:44 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:662
+                                - Interpolating
+                                angles...
+                       INFO     2025-04-08       full_derotation_pipeline.py:662
+                                13:23:44 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:662
+                                - Interpolating
+                                angles...
+                       INFO     2025-04-08       full_derotation_pipeline.py:702
+                                13:23:44 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:702
+                                - Cleaning
+                                interpolated
+                                angles...
+                       INFO     2025-04-08       full_derotation_pipeline.py:702
+                                13:23:44 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:702
+                                - Cleaning
+                                interpolated
+                                angles...
+                       INFO     2025-04-08       full_derotation_pipeline.py:761
+                                13:23:44 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:761
+                                - Calculating
+                                angles by line
+                                and frame...
+                       INFO     2025-04-08       full_derotation_pipeline.py:761
+                                13:23:44 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:761
+                                - Calculating
+                                angles by line
+                                and frame...
+                       INFO     2025-04-08       full_derotation_pipeline.py:856
+                                13:23:44 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:856
+                                - Plotting
+                                rotation ticks
+                                and rotation on
+                                signal...
+                       INFO     2025-04-08       full_derotation_pipeline.py:856
+                                13:23:44 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:856
+                                - Plotting
+                                rotation ticks
+                                and rotation on
+                                signal...
+2025-04-08 13:23:45 PM INFO     2025-04-08       full_derotation_pipeline.py:898
+                                13:23:45 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:898
+                                - Plotting
+                                rotation
+                                angles...
+2025-04-08 13:23:45 PM INFO     2025-04-08       full_derotation_pipeline.py:898
+                                13:23:45 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:898
+                                - Plotting
+                                rotation
+                                angles...
+                       INFO     2025-04-08       full_derotation_pipeline.py:901
+                                13:23:45 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:901
+                                - Speeds:
+                                {np.int64(200)}
+                       INFO     2025-04-08       full_derotation_pipeline.py:901
+                                13:23:45 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:901
+                                - Speeds:
+                                {np.int64(200)}
+                       INFO     2025-04-08       full_derotation_pipeline.py:902
+                                13:23:45 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:902
+                                - len (speeds):
+                                1
+                       INFO     2025-04-08       full_derotation_pipeline.py:902
+                                13:23:45 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:902
+                                - len (speeds):
+                                1
+                       INFO     2025-04-08       full_derotation_pipeline.py:348
+                                13:23:45 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:348
+                                - ✨ Analog
+                                signals
+                                processed ✨
+                       INFO     2025-04-08       full_derotation_pipeline.py:348
+                                13:23:45 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation_
+                                pipeline.py:348
+                                - ✨ Analog
+                                signals
+                                processed ✨
+                       INFO     2025-04-08      full_derotation_pipeline.py:1121
+                                13:23:45 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation
+                                _pipeline.py:11
+                                21 - Optimal
+                                center of
+                                rotation read
+                                from file.
+                       INFO     2025-04-08      full_derotation_pipeline.py:1121
+                                13:23:45 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation
+                                _pipeline.py:11
+                                21 - Optimal
+                                center of
+                                rotation read
+                                from file.
+                       INFO     2025-04-08      full_derotation_pipeline.py:1167
+                                13:23:45 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation
+                                _pipeline.py:11
+                                67 - Starting
+                                derotation by
+                                line...
+                       INFO     2025-04-08      full_derotation_pipeline.py:1167
+                                13:23:45 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation
+                                _pipeline.py:11
+                                67 - Starting
+                                derotation by
+                                line...
+                       INFO     2025-04-08      full_derotation_pipeline.py:1135
+                                13:23:45 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation
+                                _pipeline.py:11
+                                35 - Plotting
+                                max projection
+                                with center...
+                       INFO     2025-04-08      full_derotation_pipeline.py:1135
+                                13:23:45 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation
+                                _pipeline.py:11
+                                35 - Plotting
+                                max projection
+                                with center...
+
+  0%|          | 0/69120 [00:00&lt;?, ?it/s]
+ 46%|████▌     | 31746/69120 [00:00&lt;00:00, 317452.73it/s]
+ 92%|█████████▏| 63492/69120 [00:00&lt;00:00, 110494.29it/s]
+100%|██████████| 69120/69120 [00:00&lt;00:00, 123359.15it/s]
+2025-04-08 13:23:46 PM INFO     2025-04-08      full_derotation_pipeline.py:1135
+                                13:23:46 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation
+                                _pipeline.py:11
+                                35 - Plotting
+                                max projection
+                                with center...
+2025-04-08 13:23:46 PM INFO     2025-04-08      full_derotation_pipeline.py:1135
+                                13:23:46 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation
+                                _pipeline.py:11
+                                35 - Plotting
+                                max projection
+                                with center...
+                       INFO     2025-04-08      full_derotation_pipeline.py:1198
+                                13:23:46 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation
+                                _pipeline.py:11
+                                98 - ✨ Image
+                                stack derotated
+                                ✨
+                       INFO     2025-04-08      full_derotation_pipeline.py:1198
+                                13:23:46 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation
+                                _pipeline.py:11
+                                98 - ✨ Image
+                                stack derotated
+                                ✨
+/opt/hostedtoolcache/Python/3.12.9/x64/lib/python3.12/site-packages/numpy/_core/fromnumeric.py:3860: RuntimeWarning: Mean of empty slice.
+  return _methods._mean(a, axis=axis, dtype=dtype,
+/opt/hostedtoolcache/Python/3.12.9/x64/lib/python3.12/site-packages/numpy/_core/_methods.py:137: RuntimeWarning: invalid value encountered in divide
+  ret = um.true_divide(
+2025-04-08 13:23:49 PM INFO     2025-04-08      full_derotation_pipeline.py:1338
+                                13:23:49 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation
+                                _pipeline.py:13
+                                38 - Saving
+                                /home/runner/wo
+                                rk/derotation/d
+                                erotation/examp
+                                les/derotation/
+                                derotated.tif
+2025-04-08 13:23:49 PM INFO     2025-04-08      full_derotation_pipeline.py:1338
+                                13:23:49 PM -
+                                INFO -
+                                MainProcess
+                                full_derotation
+                                _pipeline.py:13
+                                38 - Saving
+                                /home/runner/wo
+                                rk/derotation/d
+                                erotation/examp
+                                les/derotation/
+                                derotated.tif
+                       WARNING  2025-04-08      full_derotation_pipeline.py:1357
+                                13:23:49 PM -
+                                WARNING -
+                                MainProcess
+                                full_derotation
+                                _pipeline.py:13
+                                57 - Number of
+                                rotation angles
+                                by frame is
+                                higher than the
+                                number of
+                                frames
+                       WARNING  2025-04-08      full_derotation_pipeline.py:1357
+                                13:23:49 PM -
+                                WARNING -
+                                MainProcess
+                                full_derotation
+                                _pipeline.py:13
+                                57 - Number of
+                                rotation angles
+                                by frame is
+                                higher than the
+                                number of
+                                frames
+</pre></div>
+</div>
+</section>
+<section id="inspecting-the-output">
+<h2>Inspecting the output<a class="headerlink" href="#inspecting-the-output" title="Link to this heading">#</a></h2>
+<p>Convenience handles for later use</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">debug_folder</span> <span class="o">=</span> <a href="../api/derotation.analysis.full_derotation_pipeline.html#derotation.analysis.full_derotation_pipeline.FullPipeline" title="derotation.analysis.full_derotation_pipeline.FullPipeline" class="sphx-glr-backref-module-derotation-analysis-full_derotation_pipeline sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">pipeline</span></a><span class="o">.</span><span class="n">debug_plots_folder</span>
+<span class="n">debug_images</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">debug_folder</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;*.png&quot;</span><span class="p">))</span>
+<span class="n">mean_images_folder</span> <span class="o">=</span> <span class="n">debug_folder</span> <span class="o">/</span> <span class="s2">&quot;mean_images&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">get_image_path</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">img_path</span> <span class="ow">in</span> <span class="n">debug_images</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="n">img_path</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="n">img_path</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">show_image</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+    <span class="n">img</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Rotation detection based on analog signals</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">show_image</span><span class="p">(</span><span class="n">get_image_path</span><span class="p">(</span><span class="s2">&quot;rotation_ticks_and_rotation_on&quot;</span><span class="p">))</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expected number of ticks: </span><span class="si">{</span><a href="../api/derotation.analysis.full_derotation_pipeline.html#derotation.analysis.full_derotation_pipeline.FullPipeline" title="derotation.analysis.full_derotation_pipeline.FullPipeline" class="sphx-glr-backref-module-derotation-analysis-full_derotation_pipeline sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">pipeline</span></a><span class="o">.</span><span class="n">number_of_rotations</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">360</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">0.2</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Detected ticks: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><a href="../api/derotation.analysis.full_derotation_pipeline.html#derotation.analysis.full_derotation_pipeline.FullPipeline" title="derotation.analysis.full_derotation_pipeline.FullPipeline" class="sphx-glr-backref-module-derotation-analysis-full_derotation_pipeline sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">pipeline</span></a><span class="o">.</span><span class="n">rotation_ticks_peaks</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span>
+    <span class="sa">f</span><span class="s2">&quot;Adjusted rotation increment: </span><span class="si">{</span><a href="../api/derotation.analysis.full_derotation_pipeline.html#derotation.analysis.full_derotation_pipeline.FullPipeline" title="derotation.analysis.full_derotation_pipeline.FullPipeline" class="sphx-glr-backref-module-derotation-analysis-full_derotation_pipeline sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">pipeline</span></a><span class="o">.</span><span class="n">rotation_increment</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> degrees&quot;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<img src="../_images/sphx_glr_pipeline_with_real_data_002.png" srcset="../_images/sphx_glr_pipeline_with_real_data_002.png" alt="pipeline with real data" class = "sphx-glr-single-img"/><div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Expected number of ticks: 3600.0
+Detected ticks: 3451
+Adjusted rotation increment: 0.200 degrees
+</pre></div>
+</div>
+<p>Interpolated rotation angles per line
+Green = frame-level angles, Yellow = interpolated per-line angles</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">show_image</span><span class="p">(</span><span class="n">get_image_path</span><span class="p">(</span><span class="s2">&quot;rotation_angles&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+<img src="../_images/sphx_glr_pipeline_with_real_data_003.png" srcset="../_images/sphx_glr_pipeline_with_real_data_003.png" alt="pipeline with real data" class = "sphx-glr-single-img"/><p>Calculated baseline (offset) of the image in arbitrary units</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Estimated image offset: </span><span class="si">{</span><a href="../api/derotation.analysis.full_derotation_pipeline.html#derotation.analysis.full_derotation_pipeline.FullPipeline" title="derotation.analysis.full_derotation_pipeline.FullPipeline" class="sphx-glr-backref-module-derotation-analysis-full_derotation_pipeline sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">pipeline</span></a><span class="o">.</span><span class="n">offset</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Estimated image offset: -3623.787105605227
+</pre></div>
+</div>
+<p>Original max projection with estimated center</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">show_image</span><span class="p">(</span><span class="n">get_image_path</span><span class="p">(</span><span class="s2">&quot;max_projection_with_center&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+<img src="../_images/sphx_glr_pipeline_with_real_data_004.png" srcset="../_images/sphx_glr_pipeline_with_real_data_004.png" alt="pipeline with real data" class = "sphx-glr-single-img"/><p>Position of the most detected cell after finding the optimal center of
+rotation. As you can see it is pretty stable.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">show_image</span><span class="p">(</span><span class="n">get_image_path</span><span class="p">(</span><span class="s2">&quot;most_detected_blob_centers&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+<img src="../_images/sphx_glr_pipeline_with_real_data_005.png" srcset="../_images/sphx_glr_pipeline_with_real_data_005.png" alt="pipeline with real data" class = "sphx-glr-single-img"/><p>Derotated max projection with center overlaid
+Now the cells are aligned, although registration might still be needed</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">show_image</span><span class="p">(</span><span class="n">get_image_path</span><span class="p">(</span><span class="s2">&quot;derotated_max_projection_with_center&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+<img src="../_images/sphx_glr_pipeline_with_real_data_006.png" srcset="../_images/sphx_glr_pipeline_with_real_data_006.png" alt="pipeline with real data" class = "sphx-glr-single-img"/><p>Rotation angles and derotation metadata are accessible as a pandas DataFrame</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><a href="../api/derotation.analysis.full_derotation_pipeline.html#derotation.analysis.full_derotation_pipeline.FullPipeline" title="derotation.analysis.full_derotation_pipeline.FullPipeline" class="sphx-glr-backref-module-derotation-analysis-full_derotation_pipeline sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">pipeline</span></a><span class="o">.</span><span class="n">derotation_output_table</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">125</span><span class="p">:</span><span class="mi">153</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>     frame  rotation_angle    clock  direction  speed  rotation_count
+125    125       -0.000000  1211775        NaN    NaN             NaN
+126    126       -0.000000  1219197        NaN    NaN             NaN
+127    127       -0.000000  1226620        NaN    NaN             NaN
+128    128       -0.000000  1234043        NaN    NaN             NaN
+129    129       -0.000000  1241466        NaN    NaN             NaN
+130    130        3.457208  1248889       -1.0  200.0             0.0
+131    131       10.372414  1256312       -1.0  200.0             0.0
+132    132       20.128228  1263735       -1.0  200.0             0.0
+133    133       33.321739  1271157       -1.0  200.0             0.0
+134    134       49.754037  1278580       -1.0  200.0             0.0
+135    135       69.574618  1286003       -1.0  200.0             0.0
+136    136       92.609551  1293426       -1.0  200.0             0.0
+137    137      118.937888  1300849       -1.0  200.0             0.0
+138    138      148.173913  1308272       -1.0  200.0             0.0
+139    139      178.005351  1315695       -1.0  200.0             0.0
+140    140      207.573421  1323118       -1.0  200.0             0.0
+141    141      237.029156  1330540       -1.0  200.0             0.0
+142    142      263.770777  1337963       -1.0  200.0             0.0
+143    143      287.242733  1345386       -1.0  200.0             0.0
+144    144      307.447826  1352809       -1.0  200.0             0.0
+145    145      324.397365  1360232       -1.0  200.0             0.0
+146    146      338.060243  1367655       -1.0  200.0             0.0
+147    147      348.422481  1375078       -1.0  200.0             0.0
+148    148      355.495714  1382500       -1.0  200.0             0.0
+149    149      359.403773  1389923       -1.0  200.0             0.0
+150    150       -0.000000  1397346        NaN    NaN             NaN
+151    151       -0.000000  1404769        NaN    NaN             NaN
+152    152       -0.000000  1412192        NaN    NaN             NaN
+</pre></div>
+</div>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 6.009 seconds)</p>
+<div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-examples-pipeline-with-real-data-py">
+<div class="binder-badge docutils container">
+<a class="reference external image-reference" href="https://mybinder.org/v2/gh/neuroinformatics-unit/derotation/gh-pages?filepath=notebooks/examples/pipeline_with_real_data.ipynb"><img alt="Launch binder" src="../_images/binder_badge_logo.svg" style="width: 150px;" />
+</a>
+</div>
+<div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/87a8dd755d1db76f27000cd71cfc8955/pipeline_with_real_data.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">pipeline_with_real_data.ipynb</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-python docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/a8bd351a64dcac7eb52111e348ed3482/pipeline_with_real_data.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">pipeline_with_real_data.py</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-zip docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/4936eaf4fd3ec305414dcbc67f06f67f/pipeline_with_real_data.zip"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">zipped:</span> <span class="pre">pipeline_with_real_data.zip</span></code></a></p>
+</div>
+</div>
+<p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="use_plotting_hooks.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Visualizing derotation line-by-line with custom hooks</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="rotate_and_derotate_a_square.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Rotate and derotate a sample image</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#imports">Imports</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#load-and-update-configuration">Load and update configuration</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#initialize-pipeline">Initialize pipeline</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#peek-into-the-loaded-data">Peek into the loaded data</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#run-the-full-pipeline">Run the full pipeline</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#inspecting-the-output">Inspecting the output</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item"><p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+    </p>
+    <p class="theme-version">
+    Built with the
+    <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a>
+    0.16.1.
+    </p></div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><div class="things-in-a-row">
+    <a href="https://neuroinformatics.dev/">
+        <img src="../_static/light-logo-niu.png" alt="NIU" class="only-light img-sponsor"/>
+        <img src="../_static/dark-logo-niu.png" alt="NIU" class="only-dark img-sponsor"/>
+    </a>
+    <a href="https://www.sainsburywellcome.org/web/">
+        <img src="../_static/light-logo-swc.png" alt="SWC" class="only-light img-sponsor"/>
+        <img src="../_static/dark-logo-swc.png" alt="SWC" class="only-dark img-sponsor"/>
+    </a>
+    <a href="https://www.ucl.ac.uk/">
+        <img src="../_static/light-logo-ucl.png" alt="UCL" class="only-light img-sponsor"/>
+        <img src="../_static/dark-logo-ucl.png" alt="UCL" class="only-dark img-sponsor"/>
+    </a>
+</div></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

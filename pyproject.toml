@@ -21,7 +21,7 @@ classifiers = [
 
 dependencies = [
     "numpy",
-    "tiffile",
+    "tifffile",
     "matplotlib",
     "scipy",
     "PyYAML",

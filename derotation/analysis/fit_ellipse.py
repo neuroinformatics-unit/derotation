@@ -1,3 +1,12 @@
+"""
+This module contains functions to fit an ellipse to the largest blob centers
+in each image of an image stack. The ``fit_ellipse_to_points`` function uses
+the least squares optimization to fit an ellipse to the points. The
+``plot_ellipse_fit_and_centers`` function plots the fitted ellipse on the
+largest blob centers. The ``derive_angles_from_ellipse_fits`` function
+derives the rotation plane angle and orientation from the ellipse fits.
+"""
+
 import logging
 from pathlib import Path
 from typing import Tuple
@@ -185,6 +194,8 @@ def plot_ellipse_fit_and_centers(
     ax.grid(True)
     ax.set_title("Fitted Ellipse on largest blob centers")
     ax.axis("off")
+
+    plt.tight_layout()
 
     plt.savefig(debug_plots_folder / saving_name)
 

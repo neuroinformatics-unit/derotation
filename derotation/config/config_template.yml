@@ -1,0 +1,46 @@
+pipeline_type: "full"
+
+paths_read:
+  path_to_randperm: "your_path_to/stimlus_randperm.mat"
+  path_to_aux: "your_path_to/rotation.bin"
+  path_to_tif: "your_path_to/rotation.tif"
+paths_write:
+  debug_plots_folder: "your_path_to/debug_plots/"
+  logs_folder: "your_path_to/logs/"
+  derotated_tiff_folder: "your_path_to/data_folder/"
+  saving_name: "derotated_image_stack"
+
+
+channel_names: [
+    "camera",
+    "scanimage_frameclock",
+    "scanimage_lineclock",
+    "photodiode2",
+    "PI_rotON",
+    "PI_rotticks",
+]
+
+rotation_increment: 0.2
+adjust_increment: True
+rot_deg: 360
+
+debugging_plots: True
+
+frame_rate: 6.74
+
+analog_signals_processing:
+  find_rotation_ticks_peaks:
+    height: 4
+    distance: 20
+  squared_pulse_k: 0
+  inter_rotation_interval_min_len: 1000
+  angle_interpolation_artifact_threshold: 0.15
+
+interpolation:
+  line_use_start: True
+  frame_use_start: True
+
+biased_center: [129, 121]
+delta_center: 7
+init_points: 2
+n_iter: 10

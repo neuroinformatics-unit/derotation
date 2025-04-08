@@ -1,3 +1,13 @@
+"""
+This module contains the ``IncrementalPipeline`` class, which is a child of
+the ``FullPipeline`` class. It is used to derotate the image stack that was
+acquired using the incremental rotation method. The class inherits all the
+attributes and methods from the ``FullPipeline`` class and adds additional
+logic to register the images.
+Methods that are not overwritten from the parent class are not documented
+here.
+"""
+
 import logging
 from pathlib import Path
 from typing import Tuple
@@ -18,24 +28,23 @@ from derotation.analysis.mean_images import calculate_mean_images
 class IncrementalPipeline(FullPipeline):
     """Derotate the image stack that was acquired using the incremental
     rotation method.
+
+    As a child of ``FullPipeline``, it inherits all the attributes and
+    methods from it and adds additional logic to register the images.
+    Here in the constructor we specify the degrees for each incremental
+    rotation and the number of rotations.
     """
 
     ### ------- Methods to overwrite from the parent class ------------ ###
     def __init__(self, *args, **kwargs):
-        """Derotate the image stack that was acquired using the incremental
-        rotation method.
-        As a child of FullPipeline, it inherits all the attributes and
-        methods from it and adds additional logic to register the images.
-        Here in the constructor we specify the degrees for each incremental
-        rotation and the number of rotations.
-        """
+        """Initialize the IncrementalPipeline object."""
         super().__init__(*args, **kwargs)
 
         self.small_rotations = 10
         self.number_of_rotations = self.rot_deg // self.small_rotations
 
     def __call__(self):
-        """Overwrite the __call__ method from the parent class to derotate
+        """Overwrite the ``__call__`` method from the parent class to derotate
         the image stack acquired using the incremental rotation method.
         After processing the analog signals, the image stack is rotated by
         frame and then registered using phase cross correlation.
@@ -153,6 +162,7 @@ class IncrementalPipeline(FullPipeline):
         self, start: np.ndarray, end: np.ndarray
     ):
         """Checks that the number of rotations is as expected.
+
         Raises
         ------
         ValueError
@@ -210,7 +220,7 @@ class IncrementalPipeline(FullPipeline):
 
     def plot_rotation_angles_and_velocity(self):
         """Plots example rotation angles by line and frame for each speed.
-        This plot will be saved in the debug_plots folder.
+        This plot will be saved in the ``debug_plots`` folder.
         Please inspect it to check that the rotation angles are correctly
         calculated.
         """

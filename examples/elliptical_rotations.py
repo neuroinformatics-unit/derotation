@@ -1,21 +1,43 @@
-#  Visualize the acquisition of a movie where the rotation axis is not
-#  aligned with the image plane.
+"""
+Simulate out-of-plane rotation during line-scanning acquisition
+===============================================================
 
+In this tutorial, we simulate how image stacks appear when the scanning
+happens across a plane that is *not aligned* with the imaging plane.
+
+We will:
+    - Generate synthetic 2D frames with circular cell structures.
+    - Simulate line-by-line rotations with varying angles.
+    - Visualise how the appearance of the image is distorted when the rotation
+      plane is tilted or oriented differently.
+    - Display all frames and a max projection.
+
+"""
+
+# %%
+# Imports
+# -------
 from pathlib import Path
-from typing import Tuple
 
 import matplotlib.pyplot as plt
-import numpy as np
 
 from derotation.simulate.line_scanning_microscope import Rotator
 from derotation.simulate.synthetic_data import SyntheticData
+
+# %%
+# Define rotation + plotting functions
+# ------------------------------------
 
 
 def rotate_image_stack(
     plane_angle: float = 0,
     pad: int = 20,
     orientation: float = 0,
-) -> Tuple[np.ndarray, np.ndarray, Rotator, int]:
+):
+    """
+    Create and rotate a synthetic image stack using the specified
+    rotation parameters.
+    """
     s_data = SyntheticData(
         radius=1,
         second_cell=False,
@@ -40,92 +62,76 @@ def rotate_image_stack(
 
 
 def make_plot(
-    image_stack: np.ndarray,
-    rotated_image_stack: np.ndarray,
-    rotator: Rotator,
-    num_frames: int,
-    title: str = "",
-) -> None:
+    rotated_image_stack,
+    title="",
+):
     """
-    Make figure with rotated image stacks frame by frame.
-
-    Parameters
-    ----------
-    image_stack : np.ndarray
-        Original image stack.
-    rotated_image_stack : np.ndarray
-        Rotated image stack.
-    rotator : Rotator
-        Rotator instance containing rotation metadata.
-    num_frames : int
-        Number of frames in the image stack.
-    title : str, optional
-        Title for the saved plot, by default "".
+    Plot all frames of the rotated stack and their associated angles.
     """
-    row_n = 5
-    fig, ax = plt.subplots(row_n, num_frames // row_n + 1, figsize=(40, 25))
+    fig, ax = plt.subplots(figsize=(12, 6))
 
-    ax[0, 0].imshow(image_stack[0], cmap="gray", vmin=0, vmax=255)
-    ax[0, 0].set_title("Original image")
-    ax[0, 0].axis("off")
-
-    for n in range(1, len(rotated_image_stack) + 1):
-        row = n % row_n
-        col = n // row_n
-        ax[row, col].imshow(
-            rotated_image_stack[n - 1], cmap="gray", vmin=0, vmax=255
-        )
-        ax[row, col].set_title(n)
-
-        angles = rotator.angles[n - 1]
-        angle_range = f"{angles.min():.0f}-{angles.max():.0f}"
-        ax[row, col].text(
-            0.5,
-            0.9,
-            angle_range,
-            horizontalalignment="center",
-            verticalalignment="center",
-            transform=ax[row, col].transAxes,
-            color="white",
-        )
-
-    ax[row_n - 1, num_frames // row_n].imshow(
-        rotated_image_stack.max(axis=0), cmap="gray"
-    )
-    ax[row_n - 1, num_frames // row_n].plot(
-        rotated_image_stack.shape[2] / 2,
-        rotated_image_stack.shape[1] / 2,
+    max_proj = rotated_image_stack.max(axis=0)
+    ax.imshow(max_proj, cmap="gray", vmin=0, vmax=255)
+    ax.plot(
+        max_proj.shape[1] / 2,
+        max_proj.shape[0] / 2,
         "rx",
         markersize=10,
     )
-    ax[row_n - 1, num_frames // row_n].set_title("Max projection")
+    ax.set_title("Max projection")
+    ax.axis("off")
 
-    for a in ax.ravel():
-        a.axis("off")
+    plt.tight_layout()
+    plt.suptitle(title, fontsize=14)
+    plt.subplots_adjust(top=0.92)
+    plt.show()
 
-    plt.savefig(f"debug/{title}.png")
 
-
+# %%
+# Create output folder
 Path("debug").mkdir(exist_ok=True)
+
+# %%
+# Example 1 – rotation out of imaging plane
+# -----------------------------------------
+# Here we simulate a 25° tilt in the rotation plane, with no orientation
+# shift. This simulates a case where the imaging scan plane is not aligned
+# with the rotation axis.
 
 image_stack, rotated_image_stack, rotator, num_frames = rotate_image_stack(
     plane_angle=25, pad=20
 )
+
+print("Rotation plane angle: 25°")
+print("Rotation orientation: 0°")
+
 make_plot(
-    image_stack,
     rotated_image_stack,
-    rotator,
-    num_frames,
-    title="rotation_out_of_plane",
+    title="Out-of-plane rotation (25° tilt)",
 )
+
+# %%
+# Example 2 – rotation + in-plane orientation
+# -------------------------------------------
+# Now we also add a 45° orientation to the rotation plane, so it's both tilted
+# and diagonally oriented relative to the image.
 
 image_stack, rotated_image_stack, rotator, num_frames = rotate_image_stack(
     plane_angle=25, pad=20, orientation=45
 )
+
+print("Rotation plane angle: 25°")
+print("Rotation orientation: 45°")
+
 make_plot(
-    image_stack,
     rotated_image_stack,
-    rotator,
-    num_frames,
-    title="rotation_out_of_plane_plus_orientation",
+    title="Tilted + Oriented Rotation Plane (25°, 45°)",
 )
+
+# %%
+# Conclusion
+# ----------
+# This simulation helps us visualise how image distortions appear during
+# line-scanning acquisition when the imaging plane is misaligned with the
+# physical rotation plane. The observed distortions depend on both the *angle*
+# of the rotation plane and its *orientation* in space.

@@ -1,3 +1,23 @@
+"""
+Bayesian optimization to find the best center of rotation.
+It optimizes the center of rotation by running first the entire derotation
+process and then calculating the point to point distance of the most detected
+blob in the mean images, calculated at angle steps of 10 degrees.
+
+Steps in the optimization:
+    - Derotate the movie.
+    - Calculate the mean images.
+    - Calculate the point to point distance of the most detected blob.
+    - Return the negative of the point to point distance as the metric to
+      maximize.
+
+The call to ``ptd_of_most_detected_blob`` can output debugging plots.
+
+The optimization is done using the BayesianOptimization class from the
+``bayes_opt`` library. The results of the optimization are printed to the
+console.
+"""
+
 import logging
 from pathlib import Path
 from typing import Tuple
@@ -12,6 +32,32 @@ from derotation.derotate_by_line import derotate_an_image_array_line_by_line
 
 
 class BO_for_derotation:
+    """
+    Bayesian optimization to find the best center of rotation.
+
+    Parameters
+    ----------
+    movie : np.ndarray
+        The calcium imaging movie to derotate.
+    rot_deg_line : np.ndarray
+        The rotation angles of the rotation plane.
+    rot_deg_frame : np.ndarray
+        The rotation angles of the frames.
+    blank_pixels_value : float
+        The value of the blank pixels.
+    center : Tuple[int, int]
+        The initial center of rotation.
+    delta : int
+        The variation allowed in the boundaries of the center of rotation.
+    init_points : int, optional
+        The number of initial points to evaluate, by default 2
+    n_iter : int, optional
+        The number of iterations to run the optimization, by default 10
+    debug_plots_folder : Path, optional
+        The folder to save the debugging plots, by default
+        Path("./debug_plots")
+    """
+
     def __init__(
         self,
         movie: np.ndarray,
@@ -24,31 +70,7 @@ class BO_for_derotation:
         n_iter: int = 10,
         debug_plots_folder: Path = Path("./debug_plots"),
     ):
-        """Initializes the BO_for_derotation class.
-        Bayesian optimization to find the best center of rotation.
-
-        Parameters
-        ----------
-        movie : np.ndarray
-            The calcium imaging movie to derotate.
-        rot_deg_line : np.ndarray
-            The rotation angles of the rotation plane.
-        rot_deg_frame : np.ndarray
-            The rotation angles of the frames.
-        blank_pixels_value : float
-            The value of the blank pixels.
-        center : Tuple[int, int]
-            The initial center of rotation.
-        delta : int
-            The variation allowed in the boundaries of the center of rotation.
-        init_points : int, optional
-            The number of initial points to evaluate, by default 2
-        n_iter : int, optional
-            The number of iterations to run the optimization, by default 10
-        debug_plots_folder : Path, optional
-            The folder to save the debugging plots, by default
-            Path("./debug_plots")
-        """
+        """Initializes the BO_for_derotation class."""
         self.movie = movie
         self.rot_deg_line = rot_deg_line
         self.rot_deg_frame = rot_deg_frame
@@ -66,6 +88,8 @@ class BO_for_derotation:
         Path(self.subfolder).mkdir(parents=True, exist_ok=True)
 
     def optimize(self):
+        """Optimize the center of rotation."""
+
         def derotate_and_get_metric(
             x: float,
             y: float,

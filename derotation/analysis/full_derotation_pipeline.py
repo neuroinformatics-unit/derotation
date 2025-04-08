@@ -1,3 +1,9 @@
+"""
+``FullPipeline`` is the main pipeline meant to be used for the full rotation
+protocol, which involves rotating the sample by 360 degrees at various speeds
+and directions.
+"""
+
 import copy
 import itertools
 import logging
@@ -27,26 +33,37 @@ from derotation.load_data.custom_data_loaders import (
 
 
 class FullPipeline:
-    """DerotationPipeline is a class that derotates an image stack
+    """
+    ``FullPipeline`` is a class that derotates an image stack
     acquired with a rotating sample under a microscope.
+
+    It is meant to be used for the full rotation protocol, in which
+    the sample is rotated by 360 degrees at various speeds and
+    directions.
+
+    It involves:
+        * processing the analog signals
+        * finding the offset of the image stack
+        * setting the optimal center of rotation
+        * derotating the image stack
+        * masking the images
+        * calculating the mean images
+        * evaluating the quality of the derotation
+        * saving the derotated image stack and the csv file
+
+    In the constructor, it loads the config file, starts the logging
+    process, and loads the data.
+
+    Parameters
+    ----------
+    _config : Union[dict, str]
+        Name of the config file without extension that will be retrieved
+        in the derotation/config folder, or the config dictionary.
     """
 
     ### ----------------- Main pipeline ----------------- ###
     def __init__(self, _config: Union[dict, str]):
-        """DerotationPipeline is a class that derotates an image stack
-        acquired with a rotating sample under a microscope.
-        In the constructor, it loads the config file, starts the logging
-        process, and loads the data.
-        It is meant to be used for the full rotation protocol, in which
-        the sample is rotated by 360 degrees at various speeds and
-        directions.
-
-        Parameters
-        ----------
-        _config : Union[dict, str]
-            Name of the config file without extension that will be retrieved
-            in the derotation/config folder, or the config dictionary.
-        """
+        """Initializes the FullPipeline class."""
         if isinstance(_config, dict):
             self.config = _config
         else:
@@ -58,12 +75,6 @@ class FullPipeline:
     def __call__(self):
         """Execute the steps necessary to derotate the image stack
         from start to finish.
-        It involves:
-        - contrast enhancement
-        - processing the analog signals
-        - rotating the image stack line by line
-        - adding a circular mask to the rotated image stack
-        - saving the masked image stack
         """
         self.process_analog_signals()
 
@@ -89,6 +100,7 @@ class FullPipeline:
     def get_config(self, config_name: str) -> dict:
         """Loads config file from derotation/config folder.
         Please edit it to change the parameters of the analysis.
+
         Parameters
         ----------
         config_name : str
@@ -132,16 +144,18 @@ class FullPipeline:
         What is loaded:
             * various parameters from config file
             * image stack (tif file)
-            * direction and speed of rotation (from randperm file, uses  \
-            custom_data_loaders.read_randomized_stim_table)
-            * analog signals \
-            (from aux file, uses `custom_data_loaders.get_analog_signals`)
+            * direction and speed of rotation (from randperm file, uses
+              ``custom_data_loaders.read_randomized_stim_table``)
+            * analog signals (from aux file, uses
+              ``custom_data_loaders.get_analog_signals``)
 
         Analog signals are four files, measured in "clock_time":
-            * frame clock: on during acquisition of a new frame, off otherwise
-            * line clock: on during acquisition of a new line, off otherwise
-            * full rotation: when the motor is rotating
-            * rotation ticks: peaks at every given increment of rotation
+            * ``frame_clock``: on during acquisition of a new frame, off
+              otherwise
+            * ``line_clock``: on during acquisition of a new line, off
+              otherwise
+            * ``full_rotation``: when the motor is rotating
+            * ``rotation_ticks``: peaks at every given increment of rotation
 
         The data is loaded using the custom_data_loaders module, which are
         specific to the setup used in the lab. Please edit them to load
@@ -158,9 +172,17 @@ class FullPipeline:
         self.num_total_lines = self.num_frames * self.num_lines_per_frame
         self.mask_diameter = copy.deepcopy(self.num_lines_per_frame)
 
-        self.direction, self.speed = read_randomized_stim_table(
-            self.config["paths_read"]["path_to_randperm"]
-        )
+        randperm_filetype = self.config["paths_read"][
+            "path_to_randperm"
+        ].split(".")[-1]
+        if randperm_filetype == "csv":
+            table = pd.read_csv(self.config["paths_read"]["path_to_randperm"])
+            self.speed = table["speed"].to_numpy()
+            self.direction = table["direction"].to_numpy()
+        elif randperm_filetype == "mat":
+            self.direction, self.speed = read_randomized_stim_table(
+                self.config["paths_read"]["path_to_randperm"]
+            )
         logging.info(f"Number of rotations: {len(self.direction)}")
 
         rotation_direction = pd.DataFrame(
@@ -173,15 +195,23 @@ class FullPipeline:
 
         self.number_of_rotations = len(self.direction)
 
-        (
-            self.frame_clock,
-            self.line_clock,
-            self.full_rotation,
-            self.rotation_ticks,
-        ) = get_analog_signals(
-            self.config["paths_read"]["path_to_aux"],
-            self.config["channel_names"],
-        )
+        aux_filetype = self.config["paths_read"]["path_to_aux"].split(".")[-1]
+        if aux_filetype == "bin":
+            (
+                self.frame_clock,
+                self.line_clock,
+                self.full_rotation,
+                self.rotation_ticks,
+            ) = get_analog_signals(
+                self.config["paths_read"]["path_to_aux"],
+                self.config["channel_names"],
+            )
+        if aux_filetype == "npy":
+            aux_data = np.load(self.config["paths_read"]["path_to_aux"])
+            self.frame_clock = aux_data[0]
+            self.line_clock = aux_data[1]
+            self.full_rotation = aux_data[2]
+            self.rotation_ticks = aux_data[3]
 
         self.total_clock_time = len(self.frame_clock)
 
@@ -256,16 +286,16 @@ class FullPipeline:
         rotation ticks) calculates the rotation angles by line and frame.
 
         It involves:
-        - finding rotation ticks peaks
-        - identifying the rotation ticks that correspond to
-        clockwise and counter clockwise rotations
-        - removing various kinds of artifacts that derive from wrong ticks
-        - interpolating the angles between the ticks
-        - calculating the angles by line and frame
+            - finding rotation ticks peaks
+            - identifying the rotation ticks that correspond to
+              clockwise and counter clockwise rotations
+            - removing various kinds of artifacts that derive from wrong ticks
+            - interpolating the angles between the ticks
+            - calculating the angles by line and frame
 
-        If debugging_plots is True, it also plots:
-        - rotation ticks and the rotation on signal
-        - rotation angles by line and frame
+        If debugging_plots is ``True``, it also plots:
+            - rotation ticks and the rotation on signal
+            - rotation angles by line and frame
         """
 
         self.rotation_ticks_peaks = self.find_rotation_peaks()
@@ -386,7 +416,7 @@ class FullPipeline:
         periods that are not plausible given the experimental setup.
         The two surrounding on periods are merged.
 
-        Used the inter_rotation_interval_min_len parameter from the config
+        Used the ``inter_rotation_interval_min_len`` parameter from the config
         file: the minimum length of the time in between two rotations.
         It is important to remove artifacts.
 
@@ -693,6 +723,7 @@ class FullPipeline:
         self, start: np.ndarray, end: np.ndarray
     ):
         """Checks that the number of rotations is as expected.
+
         Raises
         ------
         ValueError
@@ -817,7 +848,7 @@ class FullPipeline:
 
     def plot_rotation_on_and_ticks(self):
         """Plots the rotation ticks and the rotation on signal.
-        This plot will be saved in the debug_plots folder.
+        This plot will be saved in the ``debug_plots`` folder.
         Please inspect it to check that the rotation ticks are correctly
         placed during the times in which the motor is rotating.
         """
@@ -861,19 +892,29 @@ class FullPipeline:
         """Plots example rotation angles by line and frame for each speed.
         The velocity is also plotted on top of the rotation angles.
 
-        This plot will be saved in the debug_plots folder. Please inspect it
-        to check that the rotation angles are correctly calculated.
+        This plot will be saved in the ``debug_plots`` folder. Please inspect
+        it to check that the rotation angles are correctly calculated.
         """
         logging.info("Plotting rotation angles...")
 
-        fig, axs = plt.subplots(2, 2, figsize=(15, 10))
-
         speeds = set(self.speed)
-
+        logging.info(f"Speeds: {speeds}")
+        logging.info(f"len (speeds): {len(speeds)}")
         first_idx_for_each_speed = [
             np.where(self.speed == s)[0][0] for s in speeds
         ]
         first_idx_for_each_speed = sorted(first_idx_for_each_speed)
+
+        n = len(speeds)
+        if n <= 2:
+            n_rows, n_cols = 1, n
+        else:
+            n_rows, n_cols = 2, (n + 1) // 2
+        fig, axs = plt.subplots(
+            n_rows,
+            n_cols,
+            figsize=(15, 7),
+        )
 
         velocity = self.calculate_velocity()
 
@@ -881,7 +922,13 @@ class FullPipeline:
             col = i // 2
             row = i % 2
 
-            ax = axs[col, row]
+            if isinstance(axs, np.ndarray):
+                if axs.ndim == 2:
+                    ax = axs[col, row]
+                elif axs.ndim == 1:
+                    ax = axs[row]
+            else:
+                ax = axs
 
             rotation_starts = self.rot_blocks_idx["start"][id]
             rotation_ends = self.rot_blocks_idx["end"][id]
@@ -948,19 +995,24 @@ class FullPipeline:
         plt.close()
 
     def plot_rotation_speeds(self):
-        fig, ax = plt.subplots(2, 4, figsize=(15, 7))
+        """Plots the velocity of the rotation for each speed.
+        This plot will be saved in the ``debug_plots`` folder.
+        Please inspect it to check that the velocity is correctly calculated.
+        """
 
         unique_speeds = sorted(set(self.speed))
         unique_directions = sorted(set(self.direction))
-
+        fig, axs = plt.subplots(
+            len(unique_speeds), len(unique_directions), figsize=(15, 7)
+        )
         velocity = self.calculate_velocity()
 
         #  row clockwise, column speed
         for i, (direction, speed) in enumerate(
             itertools.product(unique_directions, unique_speeds)
         ):
-            row = i // 4
-            col = i % 4
+            row = i // len(unique_speeds)
+            col = i % len(unique_speeds)
             idx_this_speed = np.where(
                 np.logical_and(
                     self.speed == speed, self.direction == direction
@@ -978,7 +1030,16 @@ class FullPipeline:
                         self.rot_blocks_idx["end"][idx]
                     )
                 ]
-                ax[row, col].plot(
+                #  if axis is two dim
+                if isinstance(axs, np.ndarray):
+                    if axs.ndim == 2:
+                        ax = axs[col, row]
+                    elif axs.ndim == 1:
+                        ax = axs[row]
+                else:
+                    ax = axs
+
+                ax.plot(
                     np.linspace(
                         0,
                         len(this_velocity) * self.sampling_rate,
@@ -988,13 +1049,16 @@ class FullPipeline:
                     label=f"repetition {idx}",
                     color=colors[j],
                 )
-            ax[row, col].set_title(f"Speed: {speed}, direction: {direction}")
-            ax[row, col].spines["top"].set_visible(False)
-            ax[row, col].spines["right"].set_visible(False)
+            ax.set_title(
+                f"Speed: {speed}, direction:"
+                f"{'CW' if direction == 1 else 'CCW'}"
+            )
+            ax.spines["top"].set_visible(False)
+            ax.spines["right"].set_visible(False)
 
             #  set titles of axis
-            ax[row, col].set_xlabel("Time (s)")
-            ax[row, col].set_ylabel("Velocity (°/s)")
+            ax.set_xlabel("Time (s)")
+            ax.set_ylabel("Velocity (°/s)")
 
             #  leave more space between subplots
             plt.subplots_adjust(hspace=0.5, wspace=0.5)
@@ -1006,6 +1070,11 @@ class FullPipeline:
     ### ----------------- Derotation ----------------- ###
 
     def find_optimal_parameters(self):
+        """
+        Finds the optimal parameters for the derotation.
+        It calls the Bayesian Optimization algorithm implemented in
+        ``BO_for_derotation``.
+        """
         logging.info("Finding optimal parameters...")
 
         bo = BO_for_derotation(
@@ -1049,9 +1118,9 @@ class FullPipeline:
                 self.center_of_rotation = tuple(
                     map(float, optimal_center.split(":")[1].split(","))
                 )
-                logging.info("Optimal center of rotation found.")
+                logging.info("Optimal center of rotation read from file.")
         except FileNotFoundError:
-            logging.info("Optimal center of rotation not found.")
+            logging.info("Optimal center of rotation not found, calculating.")
             self.find_optimal_parameters()
 
     def plot_max_projection_with_center(
@@ -1059,7 +1128,7 @@ class FullPipeline:
     ):
         """Plots the maximum projection of the image stack with the center
         of rotation.
-        This plot will be saved in the debug_plots folder.
+        This plot will be saved in the ``debug_plots`` folder.
         Please inspect it to check that the center of rotation is correctly
         placed.
         """
@@ -1086,9 +1155,9 @@ class FullPipeline:
         plt.close()
 
     def derotate_frames_line_by_line(self) -> np.ndarray:
-        """Wrapper for the function `derotate_an_image_array_line_by_line`.
+        """Wrapper for the function ``derotate_an_image_array_line_by_line``.
         Before calling the function, it finds the F0 image offset with
-        `find_image_offset`.
+        ``find_image_offset``.
 
         Returns
         -------
@@ -1103,7 +1172,7 @@ class FullPipeline:
         #  By default rotation_plane_angle and rotation_plane_orientation are 0
         #  they have to be overwritten before calling the function.
         #  To calculate them please use the ellipse fit.
-        rotated_image_stack = derotate_an_image_array_line_by_line(
+        derotated_image_stack = derotate_an_image_array_line_by_line(
             self.image_stack,
             self.rot_deg_line,
             blank_pixels_value=self.offset,
@@ -1121,21 +1190,19 @@ class FullPipeline:
 
         if self.debugging_plots:
             self.plot_max_projection_with_center(
-                rotated_image_stack,
+                derotated_image_stack,
                 name="derotated_max_projection_with_center",
             )
-            self.mean_image_for_each_rotation(rotated_image_stack)
+            self.mean_image_for_each_rotation(derotated_image_stack)
 
-        logging.info("✨ Image stack rotated ✨")
-        return rotated_image_stack
+        logging.info("✨ Image stack derotated ✨")
+        return derotated_image_stack
 
     @staticmethod
     def find_image_offset(img):
         """Find the "F0", also called "image offset" for a given image.
 
-        Explanations
-        ------------
-        What is the image offset?
+        Explanations: What is the image offset?
         The PMT (photo-multiplier tube) adds an arbitrary offset to the
         image that corresponds to 0 photons received. We can use a Gaussian
         Mixture Model to find this offset by assuming that it will be the
@@ -1162,7 +1229,13 @@ class FullPipeline:
         offset = np.min(gm.means_)
         return offset
 
-    def mean_image_for_each_rotation(self, rotated_image_stack):
+    def mean_image_for_each_rotation(self, derotated_image_stack):
+        """Calculates the mean image for each rotation and saves it in the
+        ``debug_plots`` folder.
+        This plot will be saved in the ``debug_plots`` folder.
+        Please inspect it to check that the mean images are correctly
+        calculated.
+        """
         folder = self.debug_plots_folder / "mean_images"
         Path(folder).mkdir(parents=True, exist_ok=True)
         for i, (start, end) in enumerate(
@@ -1171,7 +1244,7 @@ class FullPipeline:
             frame_start = self.clock_to_latest_frame_start(start)
             frame_end = self.clock_to_latest_frame_start(end)
             mean_image = np.mean(
-                rotated_image_stack[frame_start:frame_end], axis=0
+                derotated_image_stack[frame_start:frame_end], axis=0
             )
             fig, ax = plt.subplots(1, 1, figsize=(10, 10))
             ax.imshow(mean_image, cmap="viridis")
@@ -1324,3 +1397,5 @@ class FullPipeline:
             str(self.file_saving_path_with_name) + ".csv",
             index=False,
         )
+
+        self.derotation_output_table = df

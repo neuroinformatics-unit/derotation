@@ -21,11 +21,11 @@ autodoc_mock_imports = []
 sys.path.insert(0, os.path.abspath("../.."))
 
 project = "derotation"
-copyright = "2022, Laura Porta"
+copyright = "2025, University College London"
 author = "Laura Porta"
 try:
     release = setuptools_scm.get_version(root="../..", relative_to=__file__)
-    release = release.split("+")[0]
+    release = release.split(".dev")[0]
 except LookupError:
     # if git is not initialised, still allow local build
     # with a dummy version
@@ -44,10 +44,10 @@ extensions = [
     "myst_parser",
     "numpydoc",
     "numpydoc",
-    "nbsphinx",
     "sphinx_autodoc_typehints",
     "sphinx_design",
     "sphinxarg.ext",
+    'sphinx_gallery.gen_gallery',
 ]
 
 # Configure the myst parser to enable cool markdown features
@@ -107,7 +107,7 @@ exclude_patterns = [
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 html_theme = "pydata_sphinx_theme"
-html_title = "derotation"
+html_title = "Derotation"
 
 # Customize the theme
 html_theme_options = {
@@ -122,11 +122,26 @@ html_theme_options = {
             "icon": "fa-brands fa-github",
             # The type of image to be used (see below for details)
             "type": "fontawesome",
-        }
+            "use_edit_page_button": False,  # Ensure the edit button doesn't interfere
+            "navigation_with_keys": False,  # Disable keyboard navigation between sections
+            "collapse_navigation": False,  # Ensure full page loads rather than AJAX content swap
+        },
+        {
+            # Label for this link
+            "name": "Zulip (chat)",
+            # URL where the link will redirect
+            "url": "https://neuroinformatics.zulipchat.com/#narrow/channel/495735-Derotation",  # required
+            # Icon class (if "type": "fontawesome"), or path to local image (if "type": "local")
+            "icon": "fa-solid fa-comments",
+            # The type of image to be used (see below for details)
+            "type": "fontawesome",
+        },
     ],
     "logo": {
         "text": f"{project} v{release}",
     },
+    "footer_start": ["footer_start"],
+    "footer_end": ["footer_end"],
 }
 
 # Redirect the webpage to another URL
@@ -139,4 +154,34 @@ html_baseurl = f"https://{github_user}.github.io/{project}"
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-# html_static_path = ['_static']
+html_static_path = ['_static']
+html_css_files = [
+    'css/custom.css',
+]
+
+html_favicon = "_static/light-logo-niu.png"
+
+# Configure Sphinx gallery
+sphinx_gallery_conf = {
+    "examples_dirs": ["../../examples"],
+    "filename_pattern": "/*.py",  # which files to execute before inclusion
+    "gallery_dirs": ["examples"],  # output directory
+    "run_stale_examples": True,  # re-run examples on each build
+    # Integration with Binder, see https://sphinx-gallery.github.io/stable/configuration.html#generate-binder-links-for-gallery-notebooks-experimental
+    "binder": {
+        "org": "neuroinformatics-unit",
+        "repo": "derotation",
+        "branch": "gh-pages",
+        "binderhub_url": "https://mybinder.org",
+        "dependencies": ["requirements.txt"],
+    },
+    "reference_url": {"derotation": None},
+    # "default_thumb_file": "source/_static/data_icon.png",  # default thumbnail image
+    "remove_config_comments": True,
+    # do not render config params set as # sphinx_gallery_config [= value]
+}
+
+linkcheck_ignore = [
+    "https://neuroinformatics.zulipchat.com/#narrow/channel/495735-Derotation",
+    "https://www.sciencedirect.com/science/article/pii/S089662731930889X",
+]

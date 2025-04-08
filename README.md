@@ -39,6 +39,7 @@ With `derotation` you can:
 > [!Warning]
 > 🏗️ The package is currently in early development and it requires rotation information coming from a step motor.
 
+## Data Source & Funding
 All microscopy data presented here as an example has been acquired with a 3-photon microscope by [Simon Weiler](https://github.com/simonweiler) in the [Margrie Lab](https://www.sainsburywellcome.org/web/groups/margrie-lab).
 
 This project was sponsored by the [Margrie Lab](https://www.sainsburywellcome.org/web/groups/margrie-lab) in the [Sainsbury Wellcome Centre for Neural Circuits and Behaviour](https://www.sainsburywellcome.org/web/) at University College London.

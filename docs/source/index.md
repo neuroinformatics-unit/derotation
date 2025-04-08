@@ -22,33 +22,19 @@ A gallery of real and synthetic examples using `derotation`.
 ::::
 
 ## Overview
-To address certain neuroscience questions, it might be necessary to image the brain while the head or the body of the animal rotates. In such a case, and even more when the frame rate is low, the acquired movies are distorted by the rotation. These distortions have a peculiar pattern due to the line scanning nature of the microscope, which can be corrected by the derotation package.
-
-```{figure} _static/dark_derotation.gif
-
-On the left the original movie, acquired with a line-scanning microscope during rotation, and on the right the derotated movie obtained with the `derotation` package.
+```{include} ../../README.md
+:start-after: '## Overview'
+:end-before: '> [!Warning]'
 ```
-
-With `derotation` you can:
-- Recover calcium imaging movies by **line-by-line derotation** that can be fed into standard analysis pipelines such as [suite2p](https://github.com/MouseLand/suite2p)
-- Estimate the **center of rotation** using Bayesian optimization
-- Validate improvements to the derotation algorithm and pipelines using synthetic data
-- Verify the quality of the derotation using debugging plotting tools
-- Batch-process multiple datasets with consistent configuration files
 
 :::{admonition} Important
 :class: warning
 The package is currently in early development and it requires rotation information coming from a step motor.
 :::
 
-All microscopy data presented here as an example has been acquired with a 3-photon microscope by Simon Weiler in the Margrie Lab.
-
-This project was sponsored by the Margrie Lab in the Sainsbury Wellcome Centre for Neural Circuits and Behaviour at the University College London.
-
-
-## References
+## Data Source & Funding
 ```{include} ../../README.md
-:start-after: '## References'
+:start-after: '## Data Source & Funding'
 ```
 
 ```{toctree}

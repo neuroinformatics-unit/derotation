@@ -44,6 +44,10 @@ All microscopy data presented here as an example has been acquired with a 3-phot
 
 This project was sponsored by the [Margrie Lab](https://www.sainsburywellcome.org/web/groups/margrie-lab) in the [Sainsbury Wellcome Centre for Neural Circuits and Behaviour](https://www.sainsburywellcome.org/web/) at University College London.
 
+## Citation
+If you use derotation in your work, please cite the following Zenodo DOI:
+>
+
 ## References
 Previous work on derotation of calcium imaging movies:
 - [Velez-Fort et al., 2018, Neuron](https://doi.org/10.1016/j.neuron.2018.02.023)

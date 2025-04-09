@@ -25,7 +25,7 @@ pip install derotation
 > Read the [documentation](https://derotation.neuroinformatics.dev) for more information, including [examples](https://derotation.neuroinformatics.dev/examples/index.html) and [API reference](https://derotation.neuroinformatics.dev/api_index.html).
 
 ## Overview
-To address certain neuroscience questions, it might be necessary to image the brain while the head or the body of the animal rotates. In such a case, and even more when the frame rate is low, the acquired movies are distorted by the rotation. These distortions have a peculiar pattern due to the line scanning nature of the microscope, which can be corrected by the derotation package.
+To address certain neuroscience questions, it might be necessary to image the brain while the head of the animal rotates. In such a case, and even more when the frame rate is low, the acquired movies are distorted by the rotation. These distortions have a peculiar pattern due to the line scanning nature of the microscope, which can be corrected by the derotation package.
 
 ![](_static/dark_derotation.gif)
 
@@ -40,12 +40,18 @@ With `derotation` you can:
 > 🏗️ The package is currently in early development and it requires rotation information coming from a step motor.
 
 ## Data Source & Funding
-All microscopy data presented here as an example has been acquired with a 3-photon microscope by [Simon Weiler](https://github.com/simonweiler) in the [Margrie Lab](https://www.sainsburywellcome.org/web/groups/margrie-lab).
+All microscopy data presented here as an example has been acquired with a 3-photon microscope by [Simon Weiler](https://github.com/simonweiler) in the [Margrie Lab](https://www.sainsburywellcome.org/web/groups/margrie-lab). The 3-photon setup has been built by Mateo Vélez-Fort, Chryssanthi Tsitoura and Rob Campbell.
 
 This project was sponsored by the [Margrie Lab](https://www.sainsburywellcome.org/web/groups/margrie-lab) in the [Sainsbury Wellcome Centre for Neural Circuits and Behaviour](https://www.sainsburywellcome.org/web/) at University College London.
 
 ## References
-This package was inspired by [previous work on derotation](https://github.com/jvoigts/rotating-2p-image-correction) shown in [Voigts & Harnett, 2020, Neuron](https://doi.org/10.1016/j.neuron.2019.10.016).
+Previous work on derotation of calcium imaging movies:
+- [Velez-Fort et al., 2018, Neuron](https://doi.org/10.1016/j.neuron.2018.02.023)
+- [Hennestad et al., 2021, Cell Reports](https://doi.org/10.1016/j.celrep.2021.110134)
+- [Sit & Goard, 2023, Nature Communications](https://doi.org/10.1038/s41467-023-37704-5)
+- [Voigts & Harnett, 2020, Neuron](https://doi.org/10.1016/j.neuron.2019.10.016)
+
+This package was inspired by [previous MATLAB script on derotation](https://github.com/jvoigts/rotating-2p-image-correction).
 
 
 ## Join the Development

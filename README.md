@@ -10,8 +10,6 @@
 
 The derotation package offers a robust solution for reconstructing movies of rotating samples acquired with a line scanning microscope.
 
-![](docs/source/_static/dark_derotation.gif)
-
 ## Quick Install
 
 Install the latest stable release in a conda environment:
@@ -40,7 +38,7 @@ With `derotation` you can:
 > 🏗️ The package is currently in early development and it requires rotation information coming from a step motor.
 
 ## Data Source & Funding
-All microscopy data presented here as an example has been acquired with a 3-photon microscope by [Simon Weiler](https://github.com/simonweiler) in the [Margrie Lab](https://www.sainsburywellcome.org/web/groups/margrie-lab). The 3-photon setup has been built by Mateo Vélez-Fort, Chryssanthi Tsitoura and Rob Campbell.
+All microscopy data presented here as an example has been acquired with a 3-photon microscope by [Simon Weiler](https://github.com/simonweiler) in the [Margrie Lab](https://www.sainsburywellcome.org/web/groups/margrie-lab).
 
 This project was sponsored by the [Margrie Lab](https://www.sainsburywellcome.org/web/groups/margrie-lab) in the [Sainsbury Wellcome Centre for Neural Circuits and Behaviour](https://www.sainsburywellcome.org/web/) at University College London.
 

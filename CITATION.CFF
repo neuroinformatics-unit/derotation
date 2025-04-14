@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+title: derotation
+message: >-
+  If you use derotation in your work, please cite the following Zenodo DOI.
+type: software
+authors:
+  - given-names: Laura
+    family-names: Porta
+    orcid: TODO
+    email: porta.laura@proton.me
+  - given-names: Adam L.
+    family-names: Tyson
+    email: code@adamltyson.com
+  - given-names: Troy W.
+    family-names: Margrie
+    email: t.margrie@ucl.ac.uk
+identifiers:
+  - type: doi
+    value: TODO
+    description: 'A collection of archived snapshots of derotation on Zenodo.'
+repository-code: 'https://github.com/neuroinformatics-unit/derotation'
+url: 'https://derotation.neuroinformatics.dev/'
+abstract: >-
+  Derotate multiphoton calcium imaging movies
+keywords:
+  - neuroscience
+  - calcium-imaging
+  - multiphoton
+  - rotation
+license: BSD-3-Clause

@@ -1,7 +1,7 @@
 [project]
 name = "derotation"
 authors = [{name = "Laura Porta", email= "l.porta@ucl.ac.uk"}]
-description = "Derotate 3-photon calcium imaging videos"
+description = "Derotate multiphoton calcium imaging movies"
 readme = "README.md"
 requires-python = ">=3.10.0"
 dynamic = ["version"]

@@ -19,6 +19,10 @@ def calculate_mean_images(
     ----------
     rotated_image_stack : np.ndarray
         The rotated image stack.
+    rot_deg_frame : np.ndarray
+        The rotation angles for each frame.
+    round_decimals : int, optional
+        The number of decimals to round the angles to, by default 2
 
     Returns
     -------

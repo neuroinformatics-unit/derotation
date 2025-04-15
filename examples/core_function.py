@@ -15,8 +15,8 @@ Inputs:
   per image line
 - rotation_sample.tif: A TIFF stack to be derotated.
 
-The script computes the derotated movie and displays a maximum intensity
-projection for quick visual inspection.
+The script computes the derotated movie and displays the mean image of the
+derotated stack. 
 """
 
 # %%
@@ -95,14 +95,13 @@ derotated_stack = derotate_an_image_array_line_by_line(
 )
 
 # %%
-# Visualize the result using a maximum intensity projection
+# Visualize the result by taking the mean 
 
-print("Computing max projection for visualization...")
-max_proj = np.max(derotated_stack, axis=0)
+mean_image = np.mean(derotated_stack, axis=0)
 
 fig, ax = plt.subplots(figsize=(10, 5))
-ax.imshow(max_proj, cmap="viridis")
-ax.set_title("Maximum Intensity Projection of Derotated Movie")
+ax.imshow(mean_image, cmap="viridis")
+ax.set_title("Mean image of the derotated stack")
 ax.axis("off")
 plt.tight_layout()
 plt.show()

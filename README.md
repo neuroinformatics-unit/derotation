@@ -8,7 +8,10 @@
 
 # Derotation
 
-The derotation package offers a robust solution for reconstructing movies of rotating samples acquired with a line scanning microscope.
+The derotation package offers a robust solution for reconstructing multiphoton movies of rotating samples acquired with a line scanning microscope.
+
+![](docs/source/_static/mean_images_with_incremental.png)
+On the left, the mean image of a 3-photon movie in which the sample was rotating. In the center, the mean image after derotation, and on the left the mean image of the derotated movie after suite2p registration. As you can see, already after derotation the cells are visible and have well defined shapes.
 
 ## Quick Install
 
@@ -24,8 +27,6 @@ pip install derotation
 
 ## Overview
 To address certain neuroscience questions, it might be necessary to image the brain while the head of the animal rotates. In such a case, and even more when the frame rate is low, the acquired movies are distorted by the rotation. These distortions have a peculiar pattern due to the line scanning nature of the microscope, which can be corrected by the derotation package.
-
-![](_static/dark_derotation.gif)
 
 With `derotation` you can:
 - Recover calcium imaging movies by **line-by-line derotation** that can be fed into standard analysis pipelines such as [suite2p](https://github.com/MouseLand/suite2p)

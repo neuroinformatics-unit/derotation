@@ -16,7 +16,7 @@ Inputs:
 - rotation_sample.tif: A TIFF stack to be derotated.
 
 The script computes the derotated movie and displays the mean image of the
-derotated stack. 
+derotated stack.
 """
 
 # %%
@@ -95,7 +95,7 @@ derotated_stack = derotate_an_image_array_line_by_line(
 )
 
 # %%
-# Visualize the result by taking the mean 
+# Visualize the result by taking the mean
 
 mean_image = np.mean(derotated_stack, axis=0)
 

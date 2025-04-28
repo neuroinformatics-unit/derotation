@@ -11,6 +11,9 @@ import traceback
 from pathlib import Path
 
 from derotation.analysis.full_derotation_pipeline import FullPipeline
+from derotation.analysis.incremental_derotation_pipeline import (
+    IncrementalPipeline,
+)
 from derotation.config.load_config import load_config, update_config_paths
 
 
@@ -20,9 +23,12 @@ def derotate(
     path_to_stimulus_randperm: str,
     glob_naming_pattern_tif: str,
     glob_naming_pattern_bin: str,
-) -> float:
+    folder_suffix: str = "full",
+):
     """
-    Run the full derotation pipeline on a single dataset.
+    Run the derotation pipeline on a single dataset. This function is
+    responsible for loading the configuration, updating the paths, the
+    pipeline choice, and running the pipeline.
 
     Parameters
     ----------
@@ -36,11 +42,9 @@ def derotate(
         The glob naming pattern for the tif file.
     glob_naming_pattern_bin : str
         The glob naming pattern for the bin file.
-
-    Returns
-    -------
-    float
-        The metric calculated by the pipeline.
+    folder_suffix : str, optional
+        The suffix to append to the output folder name, by default "full".
+        This is used to differentiate between full and incremental pipelines.
 
     Raises
     ------
@@ -60,16 +64,18 @@ def derotate(
         aux_path=str(bin_path),
         stim_randperm_path=str(path_to_stimulus_randperm),
         output_folder=output_folder,
-        folder_suffix="full",
+        folder_suffix=folder_suffix,
     )
 
     logging.info("Running full derotation pipeline")
 
     # Run the pipeline
     try:
-        derotator = FullPipeline(config)
+        if folder_suffix == "full":
+            derotator = FullPipeline(config)
+        else:
+            derotator = IncrementalPipeline(config)
         derotator()
-        return derotator.metric
     except Exception as e:
         logging.error("Full derotation pipeline failed")
         logging.error(e.args)

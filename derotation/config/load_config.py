@@ -66,9 +66,7 @@ def update_config_paths(
     config["paths_write"]["logs_folder"] = str(
         Path(output_folder) / "derotation" / "logs"
     )
-    config["paths_write"]["derotated_tiff_folder"] = str(
-        Path(output_folder) / "derotation/"
-    )
+    config["paths_write"]["derotated_tiff_folder"] = str(Path(output_folder))
     config["paths_write"]["saving_name"] = (
         f"derotated{f'_{folder_suffix}' if folder_suffix else ''}"
     )

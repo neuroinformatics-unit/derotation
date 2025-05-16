@@ -14,7 +14,6 @@ from typing import Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 
 from derotation.analysis.blob_detection import BlobDetection
 from derotation.analysis.fit_ellipse import (
@@ -40,8 +39,10 @@ class IncrementalPipeline(FullPipeline):
         """Initialize the IncrementalPipeline object."""
         super().__init__(*args, **kwargs)
 
-        self.small_rotations = 10
-        self.number_of_rotations = self.rot_deg // self.small_rotations
+        self.degrees_per_small_rotation = 10
+        self.number_of_rotations = (
+            self.rot_deg // self.degrees_per_small_rotation
+        )
 
     def __call__(self):
         """Overwrite the ``__call__`` method from the parent class to derotate
@@ -59,8 +60,6 @@ class IncrementalPipeline(FullPipeline):
 
         self.save(self.masked_image_volume)
         self.save_csv_with_derotation_data()
-
-        self.center_of_rotation = self.find_center_of_rotation()
 
     def create_signed_rotation_array(self) -> np.ndarray:
         logging.info("Creating signed rotation array...")
@@ -116,7 +115,9 @@ class IncrementalPipeline(FullPipeline):
                 self.rot_blocks_idx["end"],
             )
         ]
-        new_increments = [self.small_rotations / t for t in ticks_per_rotation]
+        new_increments = [
+            self.degrees_per_small_rotation / t for t in ticks_per_rotation
+        ]
 
         logging.info(f"New increment example: {new_increments[0]:.3f}")
 
@@ -256,34 +257,6 @@ class IncrementalPipeline(FullPipeline):
         #  We don't need to plot the rotation speeds for incremental
         #  rotation pipeline
         pass
-
-    def save_csv_with_derotation_data(self):
-        """Saves a csv file with the rotation angles by line and frame,
-        and the rotation on signal.
-        It is saved in the saving folder specified in the config file.
-        """
-        df = pd.DataFrame(
-            columns=[
-                "frame",
-                "rotation_angle",
-                "clock",
-            ]
-        )
-
-        df["frame"] = np.arange(self.num_frames)
-        df["rotation_angle"] = self.rot_deg_frame[: self.num_frames]
-        df["clock"] = self.frame_start[: self.num_frames]
-
-        Path(self.config["paths_write"]["derotated_tiff_folder"]).mkdir(
-            parents=True, exist_ok=True
-        )
-
-        df.to_csv(
-            self.config["paths_write"]["derotated_tiff_folder"]
-            + self.config["paths_write"]["saving_name"]
-            + ".csv",
-            index=False,
-        )
 
     ### ------- Methods unique to IncrementalPipeline ----------------- ###
 

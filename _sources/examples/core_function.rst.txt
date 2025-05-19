@@ -34,8 +34,8 @@ Inputs:
   per image line
 - rotation_sample.tif: A TIFF stack to be derotated.
 
-The script computes the derotated movie and displays a maximum intensity
-projection for quick visual inspection.
+The script computes the derotated movie and displays the mean image of the
+derotated stack.
 
 .. GENERATED FROM PYTHON SOURCE LINES 23-31
 
@@ -244,26 +244,25 @@ Perform line-by-line derotation
 
  .. code-block:: none
 
-      0%|          | 0/69120 [00:00<?, ?it/s]     46%|████▋     | 32112/69120 [00:00<00:00, 321103.46it/s]     93%|█████████▎| 64223/69120 [00:00<00:00, 105881.40it/s]    100%|██████████| 69120/69120 [00:00<00:00, 123229.11it/s]
+      0%|          | 0/69120 [00:00<?, ?it/s]     46%|████▌     | 31871/69120 [00:00<00:00, 318703.47it/s]     92%|█████████▏| 63742/69120 [00:00<00:00, 106375.75it/s]    100%|██████████| 69120/69120 [00:00<00:00, 120617.79it/s]
 
 
 
 
 .. GENERATED FROM PYTHON SOURCE LINES 98-99
 
-Visualize the result using a maximum intensity projection
+Visualize the result by taking the mean
 
-.. GENERATED FROM PYTHON SOURCE LINES 99-109
+.. GENERATED FROM PYTHON SOURCE LINES 99-108
 
 .. code-block:: Python
 
 
-    print("Computing max projection for visualization...")
-    max_proj = np.max(derotated_stack, axis=0)
+    mean_image = np.mean(derotated_stack, axis=0)
 
     fig, ax = plt.subplots(figsize=(10, 5))
-    ax.imshow(max_proj, cmap="viridis")
-    ax.set_title("Maximum Intensity Projection of Derotated Movie")
+    ax.imshow(mean_image, cmap="viridis")
+    ax.set_title("Mean image of the derotated stack")
     ax.axis("off")
     plt.tight_layout()
     plt.show()
@@ -271,16 +270,10 @@ Visualize the result using a maximum intensity projection
 
 
 .. image-sg:: /examples/images/sphx_glr_core_function_003.png
-   :alt: Maximum Intensity Projection of Derotated Movie
+   :alt: Mean image of the derotated stack
    :srcset: /examples/images/sphx_glr_core_function_003.png
    :class: sphx-glr-single-img
 
-
-.. rst-class:: sphx-glr-script-out
-
- .. code-block:: none
-
-    Computing max projection for visualization...
 
 
 
@@ -288,7 +281,7 @@ Visualize the result using a maximum intensity projection
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 0.956 seconds)
+   **Total running time of the script:** (0 minutes 0.942 seconds)
 
 
 .. _sphx_glr_download_examples_core_function.py:

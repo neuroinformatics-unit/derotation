@@ -43,7 +43,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../../../_static/documentation_options.js?v=92734c54"></script>
+    <script src="../../../_static/documentation_options.js?v=360bc84d"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
@@ -116,7 +116,7 @@
   
   
   
-    <p class="title logo__title">derotation v0.1.2</p>
+    <p class="title logo__title">derotation v0.1.3</p>
   
 </a></div>
     
@@ -405,7 +405,6 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">derotation.analysis.blob_detection</span><span class="w"> </span><span class="kn">import</span> <span class="n">BlobDetection</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">derotation.analysis.fit_ellipse</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -433,8 +432,10 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the IncrementalPipeline object.&quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">small_rotations</span> <span class="o">=</span> <span class="mi">10</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">number_of_rotations</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rot_deg</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">small_rotations</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">degrees_per_small_rotation</span> <span class="o">=</span> <span class="mi">10</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">number_of_rotations</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rot_deg</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">degrees_per_small_rotation</span>
+        <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Overwrite the ``__call__`` method from the parent class to derotate</span>
@@ -452,8 +453,6 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">masked_image_volume</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">save_csv_with_derotation_data</span><span class="p">()</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">center_of_rotation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_center_of_rotation</span><span class="p">()</span>
 
 <div class="viewcode-block" id="IncrementalPipeline.create_signed_rotation_array">
 <a class="viewcode-back" href="../../../api/derotation.analysis.incremental_derotation_pipeline.html#derotation.analysis.incremental_derotation_pipeline.IncrementalPipeline.create_signed_rotation_array">[docs]</a>
@@ -517,7 +516,9 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">rot_blocks_idx</span><span class="p">[</span><span class="s2">&quot;end&quot;</span><span class="p">],</span>
             <span class="p">)</span>
         <span class="p">]</span>
-        <span class="n">new_increments</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">small_rotations</span> <span class="o">/</span> <span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">ticks_per_rotation</span><span class="p">]</span>
+        <span class="n">new_increments</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">degrees_per_small_rotation</span> <span class="o">/</span> <span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">ticks_per_rotation</span>
+        <span class="p">]</span>
 
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;New increment example: </span><span class="si">{</span><span class="n">new_increments</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
@@ -675,37 +676,6 @@
         <span class="c1">#  We don&#39;t need to plot the rotation speeds for incremental</span>
         <span class="c1">#  rotation pipeline</span>
         <span class="k">pass</span></div>
-
-
-<div class="viewcode-block" id="IncrementalPipeline.save_csv_with_derotation_data">
-<a class="viewcode-back" href="../../../api/derotation.analysis.incremental_derotation_pipeline.html#derotation.analysis.incremental_derotation_pipeline.IncrementalPipeline.save_csv_with_derotation_data">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">save_csv_with_derotation_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Saves a csv file with the rotation angles by line and frame,</span>
-<span class="sd">        and the rotation on signal.</span>
-<span class="sd">        It is saved in the saving folder specified in the config file.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
-            <span class="n">columns</span><span class="o">=</span><span class="p">[</span>
-                <span class="s2">&quot;frame&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;rotation_angle&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;clock&quot;</span><span class="p">,</span>
-            <span class="p">]</span>
-        <span class="p">)</span>
-
-        <span class="n">df</span><span class="p">[</span><span class="s2">&quot;frame&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_frames</span><span class="p">)</span>
-        <span class="n">df</span><span class="p">[</span><span class="s2">&quot;rotation_angle&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rot_deg_frame</span><span class="p">[:</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_frames</span><span class="p">]</span>
-        <span class="n">df</span><span class="p">[</span><span class="s2">&quot;clock&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">frame_start</span><span class="p">[:</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_frames</span><span class="p">]</span>
-
-        <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;paths_write&quot;</span><span class="p">][</span><span class="s2">&quot;derotated_tiff_folder&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span>
-            <span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span>
-        <span class="p">)</span>
-
-        <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;paths_write&quot;</span><span class="p">][</span><span class="s2">&quot;derotated_tiff_folder&quot;</span><span class="p">]</span>
-            <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;paths_write&quot;</span><span class="p">][</span><span class="s2">&quot;saving_name&quot;</span><span class="p">]</span>
-            <span class="o">+</span> <span class="s2">&quot;.csv&quot;</span><span class="p">,</span>
-            <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="p">)</span></div>
 
 
     <span class="c1">### ------- Methods unique to IncrementalPipeline ----------------- ###</span>

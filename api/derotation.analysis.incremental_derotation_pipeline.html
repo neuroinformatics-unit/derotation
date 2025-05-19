@@ -44,7 +44,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../_static/documentation_options.js?v=92734c54"></script>
+    <script src="../_static/documentation_options.js?v=360bc84d"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/design-tabs.js?v=f930bc37"></script>
@@ -119,7 +119,7 @@
   
   
   
-    <p class="title logo__title">derotation v0.1.2</p>
+    <p class="title logo__title">derotation v0.1.3</p>
   
 </a></div>
     
@@ -553,7 +553,7 @@ rotation and the number of rotations.</p>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">save</span></code>(masked)</p></td>
 <td><p>Saves the masked image stack in the saving folder specified in the config file.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#derotation.analysis.incremental_derotation_pipeline.IncrementalPipeline.save_csv_with_derotation_data" title="derotation.analysis.incremental_derotation_pipeline.IncrementalPipeline.save_csv_with_derotation_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">save_csv_with_derotation_data</span></code></a>()</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">save_csv_with_derotation_data</span></code>()</p></td>
 <td><p>Saves a csv file with the rotation angles by line and frame, and the rotation on signal.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_optimal_center</span></code>()</p></td>
@@ -688,14 +688,6 @@ Please inspect it to check that the velocity is correctly calculated.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="derotation.analysis.incremental_derotation_pipeline.IncrementalPipeline.save_csv_with_derotation_data">
-<span class="sig-name descname"><span class="pre">save_csv_with_derotation_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/derotation/analysis/incremental_derotation_pipeline.html#IncrementalPipeline.save_csv_with_derotation_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#derotation.analysis.incremental_derotation_pipeline.IncrementalPipeline.save_csv_with_derotation_data" title="Link to this definition">#</a></dt>
-<dd><p>Saves a csv file with the rotation angles by line and frame,
-and the rotation on signal.
-It is saved in the saving folder specified in the config file.</p>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="derotation.analysis.incremental_derotation_pipeline.IncrementalPipeline.find_center_of_rotation">
 <span class="sig-name descname"><span class="pre">find_center_of_rotation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/derotation/analysis/incremental_derotation_pipeline.html#IncrementalPipeline.find_center_of_rotation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#derotation.analysis.incremental_derotation_pipeline.IncrementalPipeline.find_center_of_rotation" title="Link to this definition">#</a></dt>
 <dd><p>Find the center of rotation by fitting an ellipse to the largest
@@ -774,7 +766,6 @@ Step 3: Fit an ellipse to the largest blob centers and get its center.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derotation.analysis.incremental_derotation_pipeline.IncrementalPipeline.check_rotation_number"><code class="docutils literal notranslate"><span class="pre">IncrementalPipeline.check_rotation_number()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derotation.analysis.incremental_derotation_pipeline.IncrementalPipeline.plot_rotation_angles_and_velocity"><code class="docutils literal notranslate"><span class="pre">IncrementalPipeline.plot_rotation_angles_and_velocity()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derotation.analysis.incremental_derotation_pipeline.IncrementalPipeline.plot_rotation_speeds"><code class="docutils literal notranslate"><span class="pre">IncrementalPipeline.plot_rotation_speeds()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derotation.analysis.incremental_derotation_pipeline.IncrementalPipeline.save_csv_with_derotation_data"><code class="docutils literal notranslate"><span class="pre">IncrementalPipeline.save_csv_with_derotation_data()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derotation.analysis.incremental_derotation_pipeline.IncrementalPipeline.find_center_of_rotation"><code class="docutils literal notranslate"><span class="pre">IncrementalPipeline.find_center_of_rotation()</span></code></a></li>
 </ul>
 </li>

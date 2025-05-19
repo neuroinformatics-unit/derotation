@@ -44,7 +44,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../_static/documentation_options.js?v=92734c54"></script>
+    <script src="../_static/documentation_options.js?v=360bc84d"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/design-tabs.js?v=f930bc37"></script>
@@ -119,7 +119,7 @@
   
   
   
-    <p class="title logo__title">derotation v0.1.2</p>
+    <p class="title logo__title">derotation v0.1.3</p>
   
 </a></div>
     
@@ -438,7 +438,11 @@ in steps of 10 degrees. It is used when finding the center of rotation.</p>
 to calculate the shifts using phase cross correlation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>rotated_image_stack</strong> (<em>np.ndarray</em>) – The rotated image stack.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rotated_image_stack</strong> (<em>np.ndarray</em>) – The rotated image stack.</p></li>
+<li><p><strong>rot_deg_frame</strong> (<em>np.ndarray</em>) – The rotation angles for each frame.</p></li>
+<li><p><strong>round_decimals</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of decimals to round the angles to, by default 2</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The mean images for each rotation angle.</p>

@@ -34,7 +34,7 @@ Use {func}`derotation.derotate_by_line.derotate_an_image_array_line_by_line` to 
 
 This is ideal for testing and debugging with synthetic or preprocessed data.
 
-Please refer to the [example on how to use the core function](../examples/core_fucntion.rst) for a demonstration of how to use {func}`derotation.derotate_by_line.derotate_an_image_array_line_by_line`.
+Please refer to the [example on how to use the core function](../examples/core_function.rst) for a demonstration of how to use {func}`derotation.derotate_by_line.derotate_an_image_array_line_by_line`.
 
 ### 2. **Full and Incremental Pipeline Classes**
 
@@ -60,7 +60,7 @@ Both pipelines accept a **configuration dictionary** (see the [configuration gui
 
 You can create custom pipelines by subclassing `FullPipeline` and overriding the relevant methods.
 
-See the [usage example](../examples/pipeline_with_real_data.py) for how to instantiate `FullPipeline`, run it, and inspect its attributes and outputs.
+See the [usage example](../examples/pipeline_with_real_data.rst) for how to instantiate `FullPipeline`, run it, and inspect its attributes and outputs.
 
 ---
 

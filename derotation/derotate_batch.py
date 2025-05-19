@@ -51,7 +51,6 @@ def derotate(
     Exception
         If the pipeline fails.
     """
-    # FULL DEROTATION PIPELINE
     # find tif and bin files
     bin_path = list(dataset_folder.rglob(glob_naming_pattern_bin))[0]
     tif_path = list(dataset_folder.rglob(glob_naming_pattern_tif))[0]
@@ -67,7 +66,7 @@ def derotate(
         folder_suffix=folder_suffix,
     )
 
-    logging.info("Running full derotation pipeline")
+    logging.info(f"Running {folder_suffix} derotation pipeline")
 
     # Run the pipeline
     try:
@@ -77,7 +76,7 @@ def derotate(
             derotator = IncrementalPipeline(config)
         derotator()
     except Exception as e:
-        logging.error("Full derotation pipeline failed")
+        logging.error("Derotation pipeline failed")
         logging.error(e.args)
         logging.error(traceback.format_exc())
         raise e

@@ -36,7 +36,7 @@ import matplotlib.pyplot as plt
 
 from derotation.analysis.full_derotation_pipeline import FullPipeline
 from derotation.config.load_config import load_config, update_config_paths
-from derotation.sample_data import get_data_path
+from derotation.sample_data import fetch_data
 
 # %%
 # Load and update configuration
@@ -47,9 +47,9 @@ current_module_path = Path.cwd()
 config = load_config()
 config = update_config_paths(
     config=config,
-    tif_path=str(get_data_path("rotation_sample.tif")),
-    aux_path=str(get_data_path("analog_signals.npy")),
-    stim_randperm_path=str(get_data_path("stimulus_randperm.csv")),
+    tif_path=str(fetch_data("rotation_sample.tif")),
+    aux_path=str(fetch_data("analog_signals.npy")),
+    stim_randperm_path=str(fetch_data("stimulus_randperm.csv")),
     output_folder=str(current_module_path),
 )
 

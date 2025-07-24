@@ -32,6 +32,7 @@ dependencies = [
     "scikit-learn",
     "scikit-image",
     "bayesian-optimization",
+    "pooch",
 ]
 
 [project.urls]

@@ -41,13 +41,13 @@ derotated stack.
 
 .. code-block:: Python
 
-    from pathlib import Path
 
     import matplotlib.pyplot as plt
     import numpy as np
     import tifffile
 
     from derotation.derotate_by_line import derotate_an_image_array_line_by_line
+    from derotation.sample_data import fetch_data
 
 
 
@@ -56,36 +56,16 @@ derotated stack.
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 32-34
-
-Set up
------------
-
-.. GENERATED FROM PYTHON SOURCE LINES 34-38
-
-.. code-block:: Python
-
-
-    current_module_path = Path.cwd()
-    data_folder = current_module_path / "data"
-
-
-
-
-
-
-
-
-.. GENERATED FROM PYTHON SOURCE LINES 39-40
+.. GENERATED FROM PYTHON SOURCE LINES 32-33
 
 Load per-line rotation angles
 
-.. GENERATED FROM PYTHON SOURCE LINES 40-45
+.. GENERATED FROM PYTHON SOURCE LINES 33-38
 
 .. code-block:: Python
 
 
-    angles_path = data_folder / "angles_per_line.npy"
+    angles_path = fetch_data("angles_per_line.npy")
     print(f"Loading per-line rotation angles from {angles_path}")
     angles_per_line = np.load(angles_path)  # Shape: (height,)
 
@@ -97,21 +77,21 @@ Load per-line rotation angles
 
  .. code-block:: none
 
-    Loading per-line rotation angles from /home/runner/work/derotation/derotation/examples/data/angles_per_line.npy
+    Loading per-line rotation angles from /home/runner/.derotation/data/angles_per_line.npy
 
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 46-47
+.. GENERATED FROM PYTHON SOURCE LINES 39-40
 
 Load the TIFF stack (shape: num_frames × height × width)
 
-.. GENERATED FROM PYTHON SOURCE LINES 47-55
+.. GENERATED FROM PYTHON SOURCE LINES 40-48
 
 .. code-block:: Python
 
 
-    tif_path = data_folder / "rotation_sample.tif"
+    tif_path = fetch_data("rotation_sample.tif")
     print(f"Loading image stack from {tif_path}")
     image_stack = tifffile.imread(tif_path)
 
@@ -126,18 +106,18 @@ Load the TIFF stack (shape: num_frames × height × width)
 
  .. code-block:: none
 
-    Loading image stack from /home/runner/work/derotation/derotation/examples/data/rotation_sample.tif
+    Loading image stack from /home/runner/.derotation/data/rotation_sample.tif
     Image stack shape: (270, 256, 256)
     Angles per line shape: (75471,)
 
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 56-57
+.. GENERATED FROM PYTHON SOURCE LINES 49-50
 
 See the angles
 
-.. GENERATED FROM PYTHON SOURCE LINES 57-68
+.. GENERATED FROM PYTHON SOURCE LINES 50-61
 
 .. code-block:: Python
 
@@ -164,13 +144,13 @@ See the angles
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 69-72
+.. GENERATED FROM PYTHON SOURCE LINES 62-65
 
 Set derotation parameters
 see :meth:`derotation.analysis.full_derotation_pipeline.FullPipeline
 .find_image_offset` for more details on finding the offset value
 
-.. GENERATED FROM PYTHON SOURCE LINES 72-77
+.. GENERATED FROM PYTHON SOURCE LINES 65-70
 
 .. code-block:: Python
 
@@ -192,11 +172,11 @@ see :meth:`derotation.analysis.full_derotation_pipeline.FullPipeline
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 78-79
+.. GENERATED FROM PYTHON SOURCE LINES 71-72
 
 plot first frame with rotation center
 
-.. GENERATED FROM PYTHON SOURCE LINES 79-87
+.. GENERATED FROM PYTHON SOURCE LINES 72-80
 
 .. code-block:: Python
 
@@ -220,11 +200,11 @@ plot first frame with rotation center
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 88-89
+.. GENERATED FROM PYTHON SOURCE LINES 81-82
 
 Perform line-by-line derotation
 
-.. GENERATED FROM PYTHON SOURCE LINES 89-97
+.. GENERATED FROM PYTHON SOURCE LINES 82-90
 
 .. code-block:: Python
 
@@ -244,16 +224,16 @@ Perform line-by-line derotation
 
  .. code-block:: none
 
-      0%|          | 0/69120 [00:00<?, ?it/s]     46%|████▌     | 31871/69120 [00:00<00:00, 318703.47it/s]     92%|█████████▏| 63742/69120 [00:00<00:00, 106375.75it/s]    100%|██████████| 69120/69120 [00:00<00:00, 120617.79it/s]
+      0%|          | 0/69120 [00:00<?, ?it/s]     48%|████▊     | 33016/69120 [00:00<00:00, 330141.42it/s]     96%|█████████▌| 66031/69120 [00:00<00:00, 109203.37it/s]    100%|██████████| 69120/69120 [00:00<00:00, 124882.26it/s]
 
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 98-99
+.. GENERATED FROM PYTHON SOURCE LINES 91-92
 
 Visualize the result by taking the mean
 
-.. GENERATED FROM PYTHON SOURCE LINES 99-108
+.. GENERATED FROM PYTHON SOURCE LINES 92-101
 
 .. code-block:: Python
 
@@ -281,7 +261,7 @@ Visualize the result by taking the mean
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 0.942 seconds)
+   **Total running time of the script:** (0 minutes 0.958 seconds)
 
 
 .. _sphx_glr_download_examples_core_function.py:

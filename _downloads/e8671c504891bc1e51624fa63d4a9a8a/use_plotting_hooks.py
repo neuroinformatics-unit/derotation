@@ -38,22 +38,21 @@ import numpy as np
 
 from derotation.analysis.full_derotation_pipeline import FullPipeline
 from derotation.config.load_config import load_config, update_config_paths
+from derotation.sample_data import fetch_data
 
 # %%
 # Load and configure paths
 # ------------------------
 # We'll use a small example dataset and write output to the current folder.
 
-current_module_path = Path.cwd()
-data_folder = current_module_path / "data"
-output_folder = current_module_path
+output_folder = Path.cwd()
 
 config = load_config()
 config = update_config_paths(
     config=config,
-    tif_path=str(data_folder / "rotation_sample.tif"),
-    aux_path=str(data_folder / "analog_signals.npy"),
-    stim_randperm_path=str(data_folder / "stimulus_randperm.csv"),
+    tif_path=str(fetch_data("rotation_sample.tif")),
+    aux_path=str(fetch_data("analog_signals.npy")),
+    stim_randperm_path=str(fetch_data("stimulus_randperm.csv")),
     output_folder=str(output_folder),
 )
 

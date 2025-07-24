@@ -1,0 +1,12 @@
+﻿derotation.sample\_data
+=======================
+
+.. automodule:: derotation.sample_data
+
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      fetch_data
+   

@@ -6,7 +6,7 @@
 
 Computation times
 =================
-**01:17.523** total execution time for 6 files **from examples**:
+**01:08.094** total execution time for 6 files **from examples**:
 
 .. container::
 
@@ -33,20 +33,20 @@ Computation times
      - Time
      - Mem (MB)
    * - :ref:`sphx_glr_examples_find_center_of_rotation.py` (``find_center_of_rotation.py``)
-     - 00:41.040
+     - 00:35.611
      - 0.0
    * - :ref:`sphx_glr_examples_elliptical_rotations.py` (``elliptical_rotations.py``)
-     - 00:22.522
+     - 00:18.232
      - 0.0
    * - :ref:`sphx_glr_examples_use_plotting_hooks.py` (``use_plotting_hooks.py``)
-     - 00:06.402
+     - 00:06.564
      - 0.0
    * - :ref:`sphx_glr_examples_pipeline_with_real_data.py` (``pipeline_with_real_data.py``)
-     - 00:06.269
+     - 00:06.393
      - 0.0
    * - :ref:`sphx_glr_examples_core_function.py` (``core_function.py``)
-     - 00:00.942
+     - 00:00.958
      - 0.0
    * - :ref:`sphx_glr_examples_rotate_and_derotate_a_square.py` (``rotate_and_derotate_a_square.py``)
-     - 00:00.349
+     - 00:00.336
      - 0.0

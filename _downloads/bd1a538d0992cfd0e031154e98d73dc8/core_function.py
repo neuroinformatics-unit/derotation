@@ -20,32 +20,25 @@ derotated stack.
 """
 
 # %%
-from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import tifffile
 
 from derotation.derotate_by_line import derotate_an_image_array_line_by_line
-
-# %%
-# Set up
-# -----------
-
-current_module_path = Path.cwd()
-data_folder = current_module_path / "data"
+from derotation.sample_data import fetch_data
 
 # %%
 # Load per-line rotation angles
 
-angles_path = data_folder / "angles_per_line.npy"
+angles_path = fetch_data("angles_per_line.npy")
 print(f"Loading per-line rotation angles from {angles_path}")
 angles_per_line = np.load(angles_path)  # Shape: (height,)
 
 # %%
 # Load the TIFF stack (shape: num_frames × height × width)
 
-tif_path = data_folder / "rotation_sample.tif"
+tif_path = fetch_data("rotation_sample.tif")
 print(f"Loading image stack from {tif_path}")
 image_stack = tifffile.imread(tif_path)
 

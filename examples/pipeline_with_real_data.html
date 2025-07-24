@@ -44,7 +44,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../_static/documentation_options.js?v=360bc84d"></script>
+    <script src="../_static/documentation_options.js?v=fd825880"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/design-tabs.js?v=f930bc37"></script>
@@ -119,7 +119,7 @@
   
   
   
-    <p class="title logo__title">derotation v0.1.3</p>
+    <p class="title logo__title">derotation v0.1.4</p>
   
 </a></div>
     
@@ -459,6 +459,7 @@ results saved in the output folder.</p>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">derotation.analysis.full_derotation_pipeline</span><span class="w"> </span><span class="kn">import</span> <a href="../api/derotation.analysis.full_derotation_pipeline.html#derotation.analysis.full_derotation_pipeline.FullPipeline" title="derotation.analysis.full_derotation_pipeline.FullPipeline" class="sphx-glr-backref-module-derotation-analysis-full_derotation_pipeline sphx-glr-backref-type-py-class"><span class="n">FullPipeline</span></a>
 <span class="kn">from</span><span class="w"> </span><span class="nn">derotation.config.load_config</span><span class="w"> </span><span class="kn">import</span> <a href="../api/derotation.config.load_config.html#derotation.config.load_config.load_config" title="derotation.config.load_config.load_config" class="sphx-glr-backref-module-derotation-config-load_config sphx-glr-backref-type-py-function"><span class="n">load_config</span></a><span class="p">,</span> <a href="../api/derotation.config.load_config.html#derotation.config.load_config.update_config_paths" title="derotation.config.load_config.update_config_paths" class="sphx-glr-backref-module-derotation-config-load_config sphx-glr-backref-type-py-function"><span class="n">update_config_paths</span></a>
+<span class="kn">from</span><span class="w"> </span><span class="nn">derotation.sample_data</span><span class="w"> </span><span class="kn">import</span> <a href="../api/derotation.sample_data.html#derotation.sample_data.fetch_data" title="derotation.sample_data.fetch_data" class="sphx-glr-backref-module-derotation-sample_data sphx-glr-backref-type-py-function"><span class="n">fetch_data</span></a>
 </pre></div>
 </div>
 </section>
@@ -466,14 +467,13 @@ results saved in the output folder.</p>
 <h2>Load and update configuration<a class="headerlink" href="#load-and-update-configuration" title="Link to this heading">#</a></h2>
 <p>We define paths relative to the current working directory</p>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">current_module_path</span> <span class="o">=</span> <span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span>
-<span class="n">data_folder</span> <span class="o">=</span> <span class="n">current_module_path</span> <span class="o">/</span> <span class="s2">&quot;data&quot;</span>
 
 <span class="n">config</span> <span class="o">=</span> <a href="../api/derotation.config.load_config.html#derotation.config.load_config.load_config" title="derotation.config.load_config.load_config" class="sphx-glr-backref-module-derotation-config-load_config sphx-glr-backref-type-py-function"><span class="n">load_config</span></a><span class="p">()</span>
 <span class="n">config</span> <span class="o">=</span> <a href="../api/derotation.config.load_config.html#derotation.config.load_config.update_config_paths" title="derotation.config.load_config.update_config_paths" class="sphx-glr-backref-module-derotation-config-load_config sphx-glr-backref-type-py-function"><span class="n">update_config_paths</span></a><span class="p">(</span>
     <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
-    <span class="n">tif_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">data_folder</span> <span class="o">/</span> <span class="s2">&quot;rotation_sample.tif&quot;</span><span class="p">),</span>
-    <span class="n">aux_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">data_folder</span> <span class="o">/</span> <span class="s2">&quot;analog_signals.npy&quot;</span><span class="p">),</span>
-    <span class="n">stim_randperm_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">data_folder</span> <span class="o">/</span> <span class="s2">&quot;stimulus_randperm.csv&quot;</span><span class="p">),</span>
+    <span class="n">tif_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><a href="../api/derotation.sample_data.html#derotation.sample_data.fetch_data" title="derotation.sample_data.fetch_data" class="sphx-glr-backref-module-derotation-sample_data sphx-glr-backref-type-py-function"><span class="n">fetch_data</span></a><span class="p">(</span><span class="s2">&quot;rotation_sample.tif&quot;</span><span class="p">)),</span>
+    <span class="n">aux_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><a href="../api/derotation.sample_data.html#derotation.sample_data.fetch_data" title="derotation.sample_data.fetch_data" class="sphx-glr-backref-module-derotation-sample_data sphx-glr-backref-type-py-function"><span class="n">fetch_data</span></a><span class="p">(</span><span class="s2">&quot;analog_signals.npy&quot;</span><span class="p">)),</span>
+    <span class="n">stim_randperm_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><a href="../api/derotation.sample_data.html#derotation.sample_data.fetch_data" title="derotation.sample_data.fetch_data" class="sphx-glr-backref-module-derotation-sample_data sphx-glr-backref-type-py-function"><span class="n">fetch_data</span></a><span class="p">(</span><span class="s2">&quot;stimulus_randperm.csv&quot;</span><span class="p">)),</span>
     <span class="n">output_folder</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">current_module_path</span><span class="p">),</span>
 <span class="p">)</span>
 </pre></div>
@@ -484,76 +484,74 @@ results saved in the output folder.</p>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><a href="../api/derotation.analysis.full_derotation_pipeline.html#derotation.analysis.full_derotation_pipeline.FullPipeline" title="derotation.analysis.full_derotation_pipeline.FullPipeline" class="sphx-glr-backref-module-derotation-analysis-full_derotation_pipeline sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">pipeline</span></a> <span class="o">=</span> <a href="../api/derotation.analysis.full_derotation_pipeline.html#derotation.analysis.full_derotation_pipeline.FullPipeline" title="derotation.analysis.full_derotation_pipeline.FullPipeline" class="sphx-glr-backref-module-derotation-analysis-full_derotation_pipeline sphx-glr-backref-type-py-class"><span class="n">FullPipeline</span></a><span class="p">(</span><span class="n">config</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>                       INFO     2025-05-19 13:15:15 PM - INFO -  fancylog.py:326
-                                MainProcess fancylog.py:326 -
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>                       INFO     2025-07-24 15:36:25 PM - INFO -  fancylog.py:451
+                                MainProcess fancylog.py:451 -
                                 Starting logging
-2025-05-19 13:15:15 PM INFO     2025-05-19 13:15:15 PM - INFO -  fancylog.py:326
-                                MainProcess fancylog.py:326 -
+2025-07-24 15:36:25 PM INFO     2025-07-24 15:36:25 PM - INFO -  fancylog.py:451
+                                MainProcess fancylog.py:451 -
                                 Starting logging
-                       INFO     2025-05-19 13:15:15 PM - INFO -  fancylog.py:327
-                                MainProcess fancylog.py:327 -
+                       INFO     2025-07-24 15:36:25 PM - INFO -  fancylog.py:452
+                                MainProcess fancylog.py:452 -
                                 Not logging multiple processes
-                       INFO     2025-05-19 13:15:15 PM - INFO -  fancylog.py:327
-                                MainProcess fancylog.py:327 -
+                       INFO     2025-07-24 15:36:25 PM - INFO -  fancylog.py:452
+                                MainProcess fancylog.py:452 -
                                 Not logging multiple processes
-                       INFO     2025-05-19       full_derotation_pipeline.py:164
-                                13:15:15 PM -
+                       INFO     2025-07-24       full_derotation_pipeline.py:164
+                                15:36:25 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
                                 pipeline.py:164
                                 - Loading
                                 data...
-                       INFO     2025-05-19       full_derotation_pipeline.py:164
-                                13:15:15 PM -
+                       INFO     2025-07-24       full_derotation_pipeline.py:164
+                                15:36:25 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
                                 pipeline.py:164
                                 - Loading
                                 data...
-                       INFO     2025-05-19       full_derotation_pipeline.py:165
-                                13:15:15 PM -
+                       INFO     2025-07-24       full_derotation_pipeline.py:165
+                                15:36:25 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
                                 pipeline.py:165
                                 - Loading
-                                /home/runner/wor
-                                k/derotation/der
-                                otation/examples
-                                /data/rotation_s
-                                ample.tif
-                       INFO     2025-05-19       full_derotation_pipeline.py:165
-                                13:15:15 PM -
+                                /home/runner/.de
+                                rotation/data/ro
+                                tation_sample.ti
+                                f
+                       INFO     2025-07-24       full_derotation_pipeline.py:165
+                                15:36:25 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
                                 pipeline.py:165
                                 - Loading
-                                /home/runner/wor
-                                k/derotation/der
-                                otation/examples
-                                /data/rotation_s
-                                ample.tif
-                       INFO     2025-05-19       full_derotation_pipeline.py:186
-                                13:15:15 PM -
+                                /home/runner/.de
+                                rotation/data/ro
+                                tation_sample.ti
+                                f
+                       INFO     2025-07-24       full_derotation_pipeline.py:186
+                                15:36:25 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
                                 pipeline.py:186
                                 - Number of
                                 rotations: 2
-                       INFO     2025-05-19       full_derotation_pipeline.py:186
-                                13:15:15 PM -
+                       INFO     2025-07-24       full_derotation_pipeline.py:186
+                                15:36:25 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
                                 pipeline.py:186
                                 - Number of
                                 rotations: 2
-                       INFO     2025-05-19       full_derotation_pipeline.py:194
-                                13:15:15 PM -
+                       INFO     2025-07-24       full_derotation_pipeline.py:194
+                                15:36:25 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
@@ -564,8 +562,8 @@ results saved in the output folder.</p>
                                 direction
                                 -1           1
                                  1           1
-                       INFO     2025-05-19       full_derotation_pipeline.py:194
-                                13:15:15 PM -
+                       INFO     2025-07-24       full_derotation_pipeline.py:194
+                                15:36:25 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
@@ -576,8 +574,8 @@ results saved in the output folder.</p>
                                 direction
                                 -1           1
                                  1           1
-                       INFO     2025-05-19       full_derotation_pipeline.py:253
-                                13:15:15 PM -
+                       INFO     2025-07-24       full_derotation_pipeline.py:253
+                                15:36:25 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
@@ -585,8 +583,8 @@ results saved in the output folder.</p>
                                 - Deleting
                                 previous debug
                                 plots...
-                       INFO     2025-05-19       full_derotation_pipeline.py:253
-                                13:15:15 PM -
+                       INFO     2025-07-24       full_derotation_pipeline.py:253
+                                15:36:25 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
@@ -594,8 +592,8 @@ results saved in the output folder.</p>
                                 - Deleting
                                 previous debug
                                 plots...
-                       INFO     2025-05-19       full_derotation_pipeline.py:263
-                                13:15:15 PM -
+                       INFO     2025-07-24       full_derotation_pipeline.py:263
+                                15:36:25 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
@@ -603,8 +601,8 @@ results saved in the output folder.</p>
                                 - Dataset
                                 rotation_sample
                                 loaded
-                       INFO     2025-05-19       full_derotation_pipeline.py:263
-                                13:15:15 PM -
+                       INFO     2025-07-24       full_derotation_pipeline.py:263
+                                15:36:25 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
@@ -612,16 +610,16 @@ results saved in the output folder.</p>
                                 - Dataset
                                 rotation_sample
                                 loaded
-                       INFO     2025-05-19       full_derotation_pipeline.py:264
-                                13:15:15 PM -
+                       INFO     2025-07-24       full_derotation_pipeline.py:264
+                                15:36:25 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
                                 pipeline.py:264
                                 - Filename:
                                 derotated
-                       INFO     2025-05-19       full_derotation_pipeline.py:264
-                                13:15:15 PM -
+                       INFO     2025-07-24       full_derotation_pipeline.py:264
+                                15:36:25 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
@@ -664,8 +662,8 @@ Estimated number of full rotations: 2
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><a href="../api/derotation.analysis.full_derotation_pipeline.html#derotation.analysis.full_derotation_pipeline.FullPipeline" title="derotation.analysis.full_derotation_pipeline.FullPipeline" class="sphx-glr-backref-module-derotation-analysis-full_derotation_pipeline sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">pipeline</span></a><span class="p">()</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>                       INFO     2025-05-19       full_derotation_pipeline.py:361
-                                13:15:15 PM -
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>                       INFO     2025-07-24       full_derotation_pipeline.py:361
+                                15:36:25 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
@@ -673,8 +671,8 @@ Estimated number of full rotations: 2
                                 - Finding
                                 rotation ticks
                                 peaks...
-                       INFO     2025-05-19       full_derotation_pipeline.py:361
-                                13:15:15 PM -
+                       INFO     2025-07-24       full_derotation_pipeline.py:361
+                                15:36:25 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
@@ -682,8 +680,8 @@ Estimated number of full rotations: 2
                                 - Finding
                                 rotation ticks
                                 peaks...
-                       INFO     2025-05-19       full_derotation_pipeline.py:436
-                                13:15:15 PM -
+                       INFO     2025-07-24       full_derotation_pipeline.py:436
+                                15:36:25 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
@@ -691,8 +689,8 @@ Estimated number of full rotations: 2
                                 - Cleaning start
                                 and end rotation
                                 signal...
-                       INFO     2025-05-19       full_derotation_pipeline.py:436
-                                13:15:15 PM -
+                       INFO     2025-07-24       full_derotation_pipeline.py:436
+                                15:36:25 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
@@ -700,8 +698,8 @@ Estimated number of full rotations: 2
                                 - Cleaning start
                                 and end rotation
                                 signal...
-                       INFO     2025-05-19       full_derotation_pipeline.py:461
-                                13:15:15 PM -
+                       INFO     2025-07-24       full_derotation_pipeline.py:461
+                                15:36:25 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
@@ -709,8 +707,8 @@ Estimated number of full rotations: 2
                                 - Creating
                                 signed rotation
                                 array...
-                       INFO     2025-05-19       full_derotation_pipeline.py:461
-                                13:15:15 PM -
+                       INFO     2025-07-24       full_derotation_pipeline.py:461
+                                15:36:25 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
@@ -718,8 +716,8 @@ Estimated number of full rotations: 2
                                 - Creating
                                 signed rotation
                                 array...
-                       INFO     2025-05-19       full_derotation_pipeline.py:483
-                                13:15:15 PM -
+                       INFO     2025-07-24       full_derotation_pipeline.py:483
+                                15:36:25 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
@@ -728,8 +726,8 @@ Estimated number of full rotations: 2
                                 outside of the
                                 rotation
                                 period...
-                       INFO     2025-05-19       full_derotation_pipeline.py:483
-                                13:15:15 PM -
+                       INFO     2025-07-24       full_derotation_pipeline.py:483
+                                15:36:25 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
@@ -738,8 +736,8 @@ Estimated number of full rotations: 2
                                 outside of the
                                 rotation
                                 period...
-2025-05-19 13:15:16 PM INFO     2025-05-19       full_derotation_pipeline.py:519
-                                13:15:16 PM -
+                       INFO     2025-07-24       full_derotation_pipeline.py:519
+                                15:36:25 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
@@ -748,8 +746,8 @@ Estimated number of full rotations: 2
                                 1.
                                 Ticks remaining:
                                 3451
-2025-05-19 13:15:16 PM INFO     2025-05-19       full_derotation_pipeline.py:519
-                                13:15:16 PM -
+                       INFO     2025-07-24       full_derotation_pipeline.py:519
+                                15:36:25 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
@@ -758,8 +756,8 @@ Estimated number of full rotations: 2
                                 1.
                                 Ticks remaining:
                                 3451
-                       INFO     2025-05-19       full_derotation_pipeline.py:550
-                                13:15:16 PM -
+                       INFO     2025-07-24       full_derotation_pipeline.py:550
+                                15:36:25 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
@@ -767,8 +765,8 @@ Estimated number of full rotations: 2
                                 - Number of
                                 rotations is as
                                 expected
-                       INFO     2025-05-19       full_derotation_pipeline.py:550
-                                13:15:16 PM -
+                       INFO     2025-07-24       full_derotation_pipeline.py:550
+                                15:36:25 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
@@ -776,8 +774,8 @@ Estimated number of full rotations: 2
                                 - Number of
                                 rotations is as
                                 expected
-                       WARNING  2025-05-19       full_derotation_pipeline.py:597
-                                13:15:16 PM -
+                       WARNING  2025-07-24       full_derotation_pipeline.py:597
+                                15:36:25 PM -
                                 WARNING -
                                 MainProcess
                                 full_derotation_
@@ -788,8 +786,8 @@ Estimated number of full rotations: 2
                                 Expected ticks:
                                 3600.0
                                 Delta: -149.0
-                       WARNING  2025-05-19       full_derotation_pipeline.py:597
-                                13:15:16 PM -
+                       WARNING  2025-07-24       full_derotation_pipeline.py:597
+                                15:36:25 PM -
                                 WARNING -
                                 MainProcess
                                 full_derotation_
@@ -800,40 +798,40 @@ Estimated number of full rotations: 2
                                 Expected ticks:
                                 3600.0
                                 Delta: -149.0
-                       INFO     2025-05-19       full_derotation_pipeline.py:649
-                                13:15:16 PM -
+                       INFO     2025-07-24       full_derotation_pipeline.py:649
+                                15:36:25 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
                                 pipeline.py:649
                                 - New increment
                                 example: 0.209
-                       INFO     2025-05-19       full_derotation_pipeline.py:649
-                                13:15:16 PM -
+                       INFO     2025-07-24       full_derotation_pipeline.py:649
+                                15:36:25 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
                                 pipeline.py:649
                                 - New increment
                                 example: 0.209
-                       INFO     2025-05-19       full_derotation_pipeline.py:662
-                                13:15:16 PM -
+                       INFO     2025-07-24       full_derotation_pipeline.py:662
+                                15:36:25 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
                                 pipeline.py:662
                                 - Interpolating
                                 angles...
-                       INFO     2025-05-19       full_derotation_pipeline.py:662
-                                13:15:16 PM -
+                       INFO     2025-07-24       full_derotation_pipeline.py:662
+                                15:36:25 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
                                 pipeline.py:662
                                 - Interpolating
                                 angles...
-                       INFO     2025-05-19       full_derotation_pipeline.py:702
-                                13:15:16 PM -
+                       INFO     2025-07-24       full_derotation_pipeline.py:702
+                                15:36:25 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
@@ -841,8 +839,8 @@ Estimated number of full rotations: 2
                                 - Cleaning
                                 interpolated
                                 angles...
-                       INFO     2025-05-19       full_derotation_pipeline.py:702
-                                13:15:16 PM -
+                       INFO     2025-07-24       full_derotation_pipeline.py:702
+                                15:36:25 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
@@ -850,8 +848,8 @@ Estimated number of full rotations: 2
                                 - Cleaning
                                 interpolated
                                 angles...
-                       INFO     2025-05-19       full_derotation_pipeline.py:761
-                                13:15:16 PM -
+                       INFO     2025-07-24       full_derotation_pipeline.py:761
+                                15:36:25 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
@@ -859,8 +857,8 @@ Estimated number of full rotations: 2
                                 - Calculating
                                 angles by line
                                 and frame...
-                       INFO     2025-05-19       full_derotation_pipeline.py:761
-                                13:15:16 PM -
+                       INFO     2025-07-24       full_derotation_pipeline.py:761
+                                15:36:25 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
@@ -868,8 +866,8 @@ Estimated number of full rotations: 2
                                 - Calculating
                                 angles by line
                                 and frame...
-                       INFO     2025-05-19       full_derotation_pipeline.py:856
-                                13:15:16 PM -
+                       INFO     2025-07-24       full_derotation_pipeline.py:856
+                                15:36:25 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
@@ -878,8 +876,8 @@ Estimated number of full rotations: 2
                                 rotation ticks
                                 and rotation on
                                 signal...
-                       INFO     2025-05-19       full_derotation_pipeline.py:856
-                                13:15:16 PM -
+                       INFO     2025-07-24       full_derotation_pipeline.py:856
+                                15:36:25 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
@@ -888,8 +886,8 @@ Estimated number of full rotations: 2
                                 rotation ticks
                                 and rotation on
                                 signal...
-                       INFO     2025-05-19       full_derotation_pipeline.py:898
-                                13:15:16 PM -
+2025-07-24 15:36:26 PM INFO     2025-07-24       full_derotation_pipeline.py:898
+                                15:36:26 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
@@ -897,8 +895,8 @@ Estimated number of full rotations: 2
                                 - Plotting
                                 rotation
                                 angles...
-                       INFO     2025-05-19       full_derotation_pipeline.py:898
-                                13:15:16 PM -
+2025-07-24 15:36:26 PM INFO     2025-07-24       full_derotation_pipeline.py:898
+                                15:36:26 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
@@ -906,40 +904,40 @@ Estimated number of full rotations: 2
                                 - Plotting
                                 rotation
                                 angles...
-                       INFO     2025-05-19       full_derotation_pipeline.py:901
-                                13:15:16 PM -
+                       INFO     2025-07-24       full_derotation_pipeline.py:901
+                                15:36:26 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
                                 pipeline.py:901
                                 - Speeds:
                                 {np.int64(200)}
-                       INFO     2025-05-19       full_derotation_pipeline.py:901
-                                13:15:16 PM -
+                       INFO     2025-07-24       full_derotation_pipeline.py:901
+                                15:36:26 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
                                 pipeline.py:901
                                 - Speeds:
                                 {np.int64(200)}
-                       INFO     2025-05-19       full_derotation_pipeline.py:902
-                                13:15:16 PM -
+                       INFO     2025-07-24       full_derotation_pipeline.py:902
+                                15:36:26 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
                                 pipeline.py:902
                                 - len (speeds):
                                 1
-                       INFO     2025-05-19       full_derotation_pipeline.py:902
-                                13:15:16 PM -
+                       INFO     2025-07-24       full_derotation_pipeline.py:902
+                                15:36:26 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
                                 pipeline.py:902
                                 - len (speeds):
                                 1
-2025-05-19 13:15:17 PM INFO     2025-05-19       full_derotation_pipeline.py:348
-                                13:15:17 PM -
+2025-07-24 15:36:27 PM INFO     2025-07-24       full_derotation_pipeline.py:348
+                                15:36:27 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
@@ -947,8 +945,8 @@ Estimated number of full rotations: 2
                                 - ✨ Analog
                                 signals
                                 processed ✨
-2025-05-19 13:15:17 PM INFO     2025-05-19       full_derotation_pipeline.py:348
-                                13:15:17 PM -
+2025-07-24 15:36:27 PM INFO     2025-07-24       full_derotation_pipeline.py:348
+                                15:36:27 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation_
@@ -956,8 +954,8 @@ Estimated number of full rotations: 2
                                 - ✨ Analog
                                 signals
                                 processed ✨
-                       INFO     2025-05-19      full_derotation_pipeline.py:1121
-                                13:15:17 PM -
+                       INFO     2025-07-24      full_derotation_pipeline.py:1121
+                                15:36:27 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation
@@ -966,8 +964,8 @@ Estimated number of full rotations: 2
                                 center of
                                 rotation read
                                 from file.
-                       INFO     2025-05-19      full_derotation_pipeline.py:1121
-                                13:15:17 PM -
+                       INFO     2025-07-24      full_derotation_pipeline.py:1121
+                                15:36:27 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation
@@ -976,8 +974,8 @@ Estimated number of full rotations: 2
                                 center of
                                 rotation read
                                 from file.
-                       INFO     2025-05-19      full_derotation_pipeline.py:1167
-                                13:15:17 PM -
+                       INFO     2025-07-24      full_derotation_pipeline.py:1167
+                                15:36:27 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation
@@ -985,8 +983,8 @@ Estimated number of full rotations: 2
                                 67 - Starting
                                 derotation by
                                 line...
-                       INFO     2025-05-19      full_derotation_pipeline.py:1167
-                                13:15:17 PM -
+                       INFO     2025-07-24      full_derotation_pipeline.py:1167
+                                15:36:27 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation
@@ -994,8 +992,8 @@ Estimated number of full rotations: 2
                                 67 - Starting
                                 derotation by
                                 line...
-                       INFO     2025-05-19      full_derotation_pipeline.py:1135
-                                13:15:17 PM -
+                       INFO     2025-07-24      full_derotation_pipeline.py:1135
+                                15:36:27 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation
@@ -1003,8 +1001,8 @@ Estimated number of full rotations: 2
                                 35 - Plotting
                                 max projection
                                 with center...
-                       INFO     2025-05-19      full_derotation_pipeline.py:1135
-                                13:15:17 PM -
+                       INFO     2025-07-24      full_derotation_pipeline.py:1135
+                                15:36:27 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation
@@ -1014,11 +1012,11 @@ Estimated number of full rotations: 2
                                 with center...
 
   0%|          | 0/69120 [00:00&lt;?, ?it/s]
- 47%|████▋     | 32269/69120 [00:00&lt;00:00, 322674.92it/s]
- 93%|█████████▎| 64537/69120 [00:00&lt;00:00, 105547.81it/s]
-100%|██████████| 69120/69120 [00:00&lt;00:00, 122521.26it/s]
-                       INFO     2025-05-19      full_derotation_pipeline.py:1135
-                                13:15:17 PM -
+ 48%|████▊     | 33028/69120 [00:00&lt;00:00, 330266.14it/s]
+ 96%|█████████▌| 66055/69120 [00:00&lt;00:00, 108430.14it/s]
+100%|██████████| 69120/69120 [00:00&lt;00:00, 124018.58it/s]
+                       INFO     2025-07-24      full_derotation_pipeline.py:1135
+                                15:36:27 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation
@@ -1026,8 +1024,8 @@ Estimated number of full rotations: 2
                                 35 - Plotting
                                 max projection
                                 with center...
-                       INFO     2025-05-19      full_derotation_pipeline.py:1135
-                                13:15:17 PM -
+                       INFO     2025-07-24      full_derotation_pipeline.py:1135
+                                15:36:27 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation
@@ -1035,8 +1033,8 @@ Estimated number of full rotations: 2
                                 35 - Plotting
                                 max projection
                                 with center...
-2025-05-19 13:15:18 PM INFO     2025-05-19      full_derotation_pipeline.py:1198
-                                13:15:18 PM -
+                       INFO     2025-07-24      full_derotation_pipeline.py:1198
+                                15:36:27 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation
@@ -1044,8 +1042,8 @@ Estimated number of full rotations: 2
                                 98 - ✨ Image
                                 stack derotated
                                 ✨
-2025-05-19 13:15:18 PM INFO     2025-05-19      full_derotation_pipeline.py:1198
-                                13:15:18 PM -
+                       INFO     2025-07-24      full_derotation_pipeline.py:1198
+                                15:36:27 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation
@@ -1053,12 +1051,12 @@ Estimated number of full rotations: 2
                                 98 - ✨ Image
                                 stack derotated
                                 ✨
-/opt/hostedtoolcache/Python/3.12.10/x64/lib/python3.12/site-packages/numpy/_core/fromnumeric.py:3860: RuntimeWarning: Mean of empty slice.
+/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/numpy/_core/fromnumeric.py:3860: RuntimeWarning: Mean of empty slice.
   return _methods._mean(a, axis=axis, dtype=dtype,
-/opt/hostedtoolcache/Python/3.12.10/x64/lib/python3.12/site-packages/numpy/_core/_methods.py:137: RuntimeWarning: invalid value encountered in divide
+/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/numpy/_core/_methods.py:136: RuntimeWarning: invalid value encountered in divide
   ret = um.true_divide(
-2025-05-19 13:15:21 PM INFO     2025-05-19      full_derotation_pipeline.py:1338
-                                13:15:21 PM -
+2025-07-24 15:36:31 PM INFO     2025-07-24      full_derotation_pipeline.py:1338
+                                15:36:31 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation
@@ -1069,8 +1067,8 @@ Estimated number of full rotations: 2
                                 erotation/examp
                                 les/derotated.t
                                 if
-2025-05-19 13:15:21 PM INFO     2025-05-19      full_derotation_pipeline.py:1338
-                                13:15:21 PM -
+2025-07-24 15:36:31 PM INFO     2025-07-24      full_derotation_pipeline.py:1338
+                                15:36:31 PM -
                                 INFO -
                                 MainProcess
                                 full_derotation
@@ -1081,8 +1079,8 @@ Estimated number of full rotations: 2
                                 erotation/examp
                                 les/derotated.t
                                 if
-                       WARNING  2025-05-19      full_derotation_pipeline.py:1357
-                                13:15:21 PM -
+                       WARNING  2025-07-24      full_derotation_pipeline.py:1357
+                                15:36:31 PM -
                                 WARNING -
                                 MainProcess
                                 full_derotation
@@ -1093,8 +1091,8 @@ Estimated number of full rotations: 2
                                 higher than the
                                 number of
                                 frames
-                       WARNING  2025-05-19      full_derotation_pipeline.py:1357
-                                13:15:21 PM -
+                       WARNING  2025-07-24      full_derotation_pipeline.py:1357
+                                15:36:31 PM -
                                 WARNING -
                                 MainProcess
                                 full_derotation
@@ -1206,7 +1204,7 @@ Now the cells are aligned, although registration might still be needed</p>
 152    152       -0.000000  1412192        NaN    NaN             NaN
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 6.269 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 6.393 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-examples-pipeline-with-real-data-py">
 <div class="binder-badge docutils container">
 <a class="reference external image-reference" href="https://mybinder.org/v2/gh/neuroinformatics-unit/derotation/gh-pages?filepath=notebooks/examples/pipeline_with_real_data.ipynb"><img alt="Launch binder" src="../_images/binder_badge_logo.svg" style="width: 150px;" />

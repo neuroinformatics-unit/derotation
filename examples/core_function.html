@@ -44,7 +44,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../_static/documentation_options.js?v=360bc84d"></script>
+    <script src="../_static/documentation_options.js?v=fd825880"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/design-tabs.js?v=f930bc37"></script>
@@ -119,7 +119,7 @@
   
   
   
-    <p class="title logo__title">derotation v0.1.3</p>
+    <p class="title logo__title">derotation v0.1.4</p>
   
 </a></div>
     
@@ -230,10 +230,6 @@
     </div>
   
 
-  
-    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
-      <span class="fa-solid fa-outdent"></span>
-    </button>
   
 </div>
 
@@ -433,32 +429,25 @@ acquisition.</p>
 </ul>
 <p>The script computes the derotated movie and displays the mean image of the
 derotated stack.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-
-<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">tifffile</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">derotation.derotate_by_line</span><span class="w"> </span><span class="kn">import</span> <a href="../api/derotation.derotate_by_line.html#derotation.derotate_by_line.derotate_an_image_array_line_by_line" title="derotation.derotate_by_line.derotate_an_image_array_line_by_line" class="sphx-glr-backref-module-derotation-derotate_by_line sphx-glr-backref-type-py-function"><span class="n">derotate_an_image_array_line_by_line</span></a>
-</pre></div>
-</div>
-<section id="set-up">
-<h2>Set up<a class="headerlink" href="#set-up" title="Link to this heading">#</a></h2>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">current_module_path</span> <span class="o">=</span> <span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span>
-<span class="n">data_folder</span> <span class="o">=</span> <span class="n">current_module_path</span> <span class="o">/</span> <span class="s2">&quot;data&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">derotation.sample_data</span><span class="w"> </span><span class="kn">import</span> <a href="../api/derotation.sample_data.html#derotation.sample_data.fetch_data" title="derotation.sample_data.fetch_data" class="sphx-glr-backref-module-derotation-sample_data sphx-glr-backref-type-py-function"><span class="n">fetch_data</span></a>
 </pre></div>
 </div>
 <p>Load per-line rotation angles</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">angles_path</span> <span class="o">=</span> <span class="n">data_folder</span> <span class="o">/</span> <span class="s2">&quot;angles_per_line.npy&quot;</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">angles_path</span> <span class="o">=</span> <a href="../api/derotation.sample_data.html#derotation.sample_data.fetch_data" title="derotation.sample_data.fetch_data" class="sphx-glr-backref-module-derotation-sample_data sphx-glr-backref-type-py-function"><span class="n">fetch_data</span></a><span class="p">(</span><span class="s2">&quot;angles_per_line.npy&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loading per-line rotation angles from </span><span class="si">{</span><span class="n">angles_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 <span class="n">angles_per_line</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">angles_path</span><span class="p">)</span>  <span class="c1"># Shape: (height,)</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Loading per-line rotation angles from /home/runner/work/derotation/derotation/examples/data/angles_per_line.npy
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Loading per-line rotation angles from /home/runner/.derotation/data/angles_per_line.npy
 </pre></div>
 </div>
 <p>Load the TIFF stack (shape: num_frames × height × width)</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">tif_path</span> <span class="o">=</span> <span class="n">data_folder</span> <span class="o">/</span> <span class="s2">&quot;rotation_sample.tif&quot;</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">tif_path</span> <span class="o">=</span> <a href="../api/derotation.sample_data.html#derotation.sample_data.fetch_data" title="derotation.sample_data.fetch_data" class="sphx-glr-backref-module-derotation-sample_data sphx-glr-backref-type-py-function"><span class="n">fetch_data</span></a><span class="p">(</span><span class="s2">&quot;rotation_sample.tif&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loading image stack from </span><span class="si">{</span><span class="n">tif_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 <span class="n">image_stack</span> <span class="o">=</span> <span class="n">tifffile</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">tif_path</span><span class="p">)</span>
 
@@ -466,7 +455,7 @@ derotated stack.</p>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Angles per line shape: </span><span class="si">{</span><span class="n">angles_per_line</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Loading image stack from /home/runner/work/derotation/derotation/examples/data/rotation_sample.tif
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Loading image stack from /home/runner/.derotation/data/rotation_sample.tif
 Image stack shape: (270, 256, 256)
 Angles per line shape: (75471,)
 </pre></div>
@@ -515,9 +504,9 @@ see <code class="xref py py-meth docutils literal notranslate"><span class="pre"
 </pre></div>
 </div>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>  0%|          | 0/69120 [00:00&lt;?, ?it/s]
- 46%|████▌     | 31871/69120 [00:00&lt;00:00, 318703.47it/s]
- 92%|█████████▏| 63742/69120 [00:00&lt;00:00, 106375.75it/s]
-100%|██████████| 69120/69120 [00:00&lt;00:00, 120617.79it/s]
+ 48%|████▊     | 33016/69120 [00:00&lt;00:00, 330141.42it/s]
+ 96%|█████████▌| 66031/69120 [00:00&lt;00:00, 109203.37it/s]
+100%|██████████| 69120/69120 [00:00&lt;00:00, 124882.26it/s]
 </pre></div>
 </div>
 <p>Visualize the result by taking the mean</p>
@@ -531,7 +520,7 @@ see <code class="xref py py-meth docutils literal notranslate"><span class="pre"
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
-<img src="../_images/sphx_glr_core_function_003.png" srcset="../_images/sphx_glr_core_function_003.png" alt="Mean image of the derotated stack" class = "sphx-glr-single-img"/><p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.942 seconds)</p>
+<img src="../_images/sphx_glr_core_function_003.png" srcset="../_images/sphx_glr_core_function_003.png" alt="Mean image of the derotated stack" class = "sphx-glr-single-img"/><p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.958 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-examples-core-function-py">
 <div class="binder-badge docutils container">
 <a class="reference external image-reference" href="https://mybinder.org/v2/gh/neuroinformatics-unit/derotation/gh-pages?filepath=notebooks/examples/core_function.ipynb"><img alt="Launch binder" src="../_images/binder_badge_logo.svg" style="width: 150px;" />
@@ -548,7 +537,6 @@ see <code class="xref py py-meth docutils literal notranslate"><span class="pre"
 </div>
 </div>
 <p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
-</section>
 </section>
 
 
@@ -585,24 +573,6 @@ see <code class="xref py py-meth docutils literal notranslate"><span class="pre"
             </div>
             
             
-              
-                <dialog id="pst-secondary-sidebar-modal"></dialog>
-                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
-
-
-  <div class="sidebar-secondary-item">
-<div
-    id="pst-page-navigation-heading-2"
-    class="page-toc tocsection onthispage">
-    <i class="fa-solid fa-list"></i> On this page
-  </div>
-  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
-    <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#set-up">Set up</a></li>
-</ul>
-  </nav></div>
-
-</div></div>
               
             
           </div>

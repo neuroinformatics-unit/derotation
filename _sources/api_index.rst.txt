@@ -22,6 +22,7 @@ This section contains automatically generated documentation for the
    derotation.derotate_by_line
    derotation.load_data.custom_data_loaders
    derotation.plotting_hooks.for_derotation
+   derotation.sample_data
    derotation.simulate.line_scanning_microscope
    derotation.simulate.synthetic_data
 
@@ -43,5 +44,6 @@ This section contains automatically generated documentation for the
    derotation.derotate_by_line
    derotation.load_data.custom_data_loaders
    derotation.plotting_hooks.for_derotation
+   derotation.sample_data
    derotation.simulate.line_scanning_microscope
    derotation.simulate.synthetic_data

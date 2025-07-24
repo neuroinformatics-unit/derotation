@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>derotation.derotate_batch &#8212; Derotation</title>
+    <title>derotation.sample_data &#8212; Derotation</title>
   
   
   
@@ -47,8 +47,8 @@
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/design-tabs.js?v=f930bc37"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/derotation/derotate_batch';</script>
-    <link rel="canonical" href="https://derotation.neuroinformatics.dev/_modules/derotation/derotate_batch.html" />
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/derotation/sample_data';</script>
+    <link rel="canonical" href="https://derotation.neuroinformatics.dev/_modules/derotation/sample_data.html" />
     <link rel="icon" href="../../_static/light-logo-niu.png"/>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -371,7 +371,7 @@
     
     <li class="breadcrumb-item"><a href="../index.html" class="nav-link">Module code</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">derotation.derotate_batch</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">derotation.sample_data</span></li>
   </ul>
 </nav>
 </div>
@@ -388,91 +388,71 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <h1>Source code for derotation.derotate_batch</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">This module contains the function derotate, which is used to run the full</span>
-<span class="sd">derotation pipeline on a single dataset. It can be called externally from the</span>
-<span class="sd">command line or from a script to run multiple datasets in parallel.</span>
-<span class="sd">Configurations are generated based on the provided dataset folder and output</span>
-<span class="sd">folder.</span>
+  <h1>Source code for derotation.sample_data</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Fetch and load sample datasets for derotation examples.</span>
+
+<span class="sd">This module provides functions for fetching sample data used in examples.</span>
+<span class="sd">The data are stored in a remote repository and are downloaded to the user&#39;s</span>
+<span class="sd">local machine the first time they are used.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">traceback</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">derotation.analysis.full_derotation_pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">FullPipeline</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">derotation.analysis.incremental_derotation_pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">IncrementalPipeline</span><span class="p">,</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pooch</span>
+
+<span class="c1"># URL to the remote data repository on GIN</span>
+<span class="n">DATA_URL</span> <span class="o">=</span> <span class="s2">&quot;https://gin.g-node.org/l.porta/derotation_examples/raw/master/&quot;</span>
+
+<span class="c1"># Save data in ~/.derotation/data</span>
+<span class="n">DATA_DIR</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;~&quot;</span><span class="p">,</span> <span class="s2">&quot;.derotation&quot;</span><span class="p">,</span> <span class="s2">&quot;data&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span>
+<span class="n">DATA_DIR</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># File registry with SHA256 checksums for data integrity validation</span>
+<span class="n">REGISTRY</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;angles_per_line.npy&quot;</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">&quot;0a5dab081acdfb47ebd5cdda4094cc622b1ff708c63f6fadc1e7898d30789896&quot;</span>
+    <span class="p">),</span>
+    <span class="s2">&quot;rotation_sample.tif&quot;</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">&quot;ad8aae61cda9495d9006fb37a1f87be8b6dd6477318b1e8a409417cace208f56&quot;</span>
+    <span class="p">),</span>
+    <span class="s2">&quot;analog_signals.npy&quot;</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">&quot;e04437f86d07db8077c256f912e2bcca75794712d66715f301b99cd9a8d66d95&quot;</span>
+    <span class="p">),</span>
+    <span class="s2">&quot;stimulus_randperm.csv&quot;</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">&quot;214617992d786ee210a7d2f22dbe7420997016846a79c673979913a5b77f0a11&quot;</span>
+    <span class="p">),</span>
+<span class="p">}</span>
+
+<span class="c1"># Create a download manager</span>
+<span class="n">SAMPLE_DATA</span> <span class="o">=</span> <span class="n">pooch</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+    <span class="n">path</span><span class="o">=</span><span class="n">DATA_DIR</span><span class="p">,</span>
+    <span class="n">base_url</span><span class="o">=</span><span class="n">DATA_URL</span><span class="p">,</span>
+    <span class="n">registry</span><span class="o">=</span><span class="n">REGISTRY</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">derotation.config.load_config</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_config</span><span class="p">,</span> <span class="n">update_config_paths</span>
 
 
-<div class="viewcode-block" id="derotate">
-<a class="viewcode-back" href="../../api/derotation.derotate_batch.html#derotation.derotate_batch.derotate">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">derotate</span><span class="p">(</span>
-    <span class="n">dataset_folder</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
-    <span class="n">output_folder</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">path_to_stimulus_randperm</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">glob_naming_pattern_tif</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">glob_naming_pattern_bin</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">folder_suffix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;full&quot;</span><span class="p">,</span>
-<span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Run the derotation pipeline on a single dataset. This function is</span>
-<span class="sd">    responsible for loading the configuration, updating the paths, the</span>
-<span class="sd">    pipeline choice, and running the pipeline.</span>
+<div class="viewcode-block" id="fetch_data">
+<a class="viewcode-back" href="../../api/derotation.sample_data.html#derotation.sample_data.fetch_data">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fetch_data</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fetch a sample data file.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    dataset_folder : Path</span>
-<span class="sd">        The path to the dataset folder.</span>
-<span class="sd">    output_folder : str</span>
-<span class="sd">        The path to the output folder in which to save the results.</span>
-<span class="sd">    path_to_stimulus_randperm : str</span>
-<span class="sd">        The path to the stimulus random permutation file.</span>
-<span class="sd">    glob_naming_pattern_tif : str</span>
-<span class="sd">        The glob naming pattern for the tif file.</span>
-<span class="sd">    glob_naming_pattern_bin : str</span>
-<span class="sd">        The glob naming pattern for the bin file.</span>
-<span class="sd">    folder_suffix : str, optional</span>
-<span class="sd">        The suffix to append to the output folder name, by default &quot;full&quot;.</span>
-<span class="sd">        This is used to differentiate between full and incremental pipelines.</span>
+<span class="sd">    filename : str</span>
+<span class="sd">        Name of the file to fetch.</span>
 
-<span class="sd">    Raises</span>
-<span class="sd">    ------</span>
-<span class="sd">    Exception</span>
-<span class="sd">        If the pipeline fails.</span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Path</span>
+<span class="sd">        Path to the downloaded file.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># find tif and bin files</span>
-    <span class="n">bin_path</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">dataset_folder</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="n">glob_naming_pattern_bin</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">tif_path</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">dataset_folder</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="n">glob_naming_pattern_tif</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">filename</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">REGISTRY</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;File &#39;</span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">&#39; not found in registry. &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Available files: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">REGISTRY</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
 
-    <span class="c1"># Load the config template and update paths</span>
-    <span class="n">config</span> <span class="o">=</span> <span class="n">load_config</span><span class="p">()</span>
-    <span class="n">config</span> <span class="o">=</span> <span class="n">update_config_paths</span><span class="p">(</span>
-        <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
-        <span class="n">tif_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">tif_path</span><span class="p">),</span>
-        <span class="n">aux_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">bin_path</span><span class="p">),</span>
-        <span class="n">stim_randperm_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">path_to_stimulus_randperm</span><span class="p">),</span>
-        <span class="n">output_folder</span><span class="o">=</span><span class="n">output_folder</span><span class="p">,</span>
-        <span class="n">folder_suffix</span><span class="o">=</span><span class="n">folder_suffix</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Running </span><span class="si">{</span><span class="n">folder_suffix</span><span class="si">}</span><span class="s2"> derotation pipeline&quot;</span><span class="p">)</span>
-
-    <span class="c1"># Run the pipeline</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">folder_suffix</span> <span class="o">==</span> <span class="s2">&quot;full&quot;</span><span class="p">:</span>
-            <span class="n">derotator</span> <span class="o">=</span> <span class="n">FullPipeline</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">derotator</span> <span class="o">=</span> <span class="n">IncrementalPipeline</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
-        <span class="n">derotator</span><span class="p">()</span>
-    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Derotation pipeline failed&quot;</span><span class="p">)</span>
-        <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
-        <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">())</span>
-        <span class="k">raise</span> <span class="n">e</span></div>
+    <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">SAMPLE_DATA</span><span class="o">.</span><span class="n">fetch</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">progressbar</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span></div>
 
 </pre></div>
 

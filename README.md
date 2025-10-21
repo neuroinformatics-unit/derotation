@@ -35,9 +35,6 @@ With `derotation` you can:
 - Verify the quality of the derotation using debugging plotting tools
 - Batch-process multiple datasets with consistent configuration files
 
-> [!Warning]
-> 🏗️ The package is currently in early development and it requires rotation information coming from a step motor.
-
 ## Data Source & Funding
 All microscopy data presented here as an example has been acquired with a 3-photon microscope by [Simon Weiler](https://github.com/simonweiler) in the [Margrie Lab](https://www.sainsburywellcome.org/web/groups/margrie-lab).
 

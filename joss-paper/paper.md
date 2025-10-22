@@ -10,11 +10,20 @@ tags:
 - line-scanning
 authors:
   - name: Laura Porta
+    orcid: TODO
+    affiliation: "1"
+  - name: Adam L. Tyson
+    orcid: 0000-0003-3225-1130
+    affiliation: "1, 2"
+  - name: Troy W. Margrie
+    orcid: TODO
     affiliation: "1"
 affiliations:
   - name: Sainsbury Wellcome Centre, University College London, UK
     index: 1
-date: 2025-08-12
+  - name: Gatsby Computational Neuroscience Unit, University College London, London, United Kingdom
+    index: 2
+date: TODO
 bibliography: paper.bib
 ---
 
@@ -69,15 +78,19 @@ Upon completion, a pipeline run generates a comprehensive set of outputs: the co
 For further development and testing, `derotation` includes a synthetic data generator that can create challenging synthetic datasets with misaligned centers of rotation and out-of-plane rotations. This feature is particularly useful for validating the robustness of the `derotation` algorithm and for developing new features.
 
 The synthetic data can be generated using the following classes:
-- `Rotator` class: Core class that applies line-by-line rotation to an image stack, simulating a rotating microscope.
+
+- `Rotator` class: Core class that applies line-by-line rotation to an image stack, simulating a rotating microscope.  
 - `SyntheticData` class: Creates fake cell images, assigns rotation angles, and generates synthetic stacks leveraging the `Rotator` class. It is a complete synthetic dataset generator.
 
 ## Documentation and Installation
 `derotation` is available on PyPI and can be installed with `pip install derotation`. It is distributed under a BSD-3-Clause license. Comprehensive documentation, tutorials, and example datasets are available at https://derotation.neuroinformatics.dev. Using Binder, users can run the software in a cloud-based environment with sample data without requiring any local installation.
 
+# Future Directions
+Derotation is currently used to process 3-photon movies acquired during head rotation. Future directions can include further automated pipelines for specific motorised stages and experimental paradigms.
+
 # Acknowledgements
 
 We thank Simon Weiler, Mateo Vélez-Fort, and Chryssanthi Tsitoura for providing three-photon imaging datasets used during development and testing, and for feedback on the package. We also thank Igor Tatarnikov for contributing to the development of the package and the whole Neuroinformatics Unit. This package was inspired by previous work on `derotation` as described in [@voigts_somatic_2020].
-(Add grant information?)
+(TODO: Add grant information.)
 
 # References

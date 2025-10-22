@@ -24,7 +24,6 @@ Line-scanning microscopy, including multi-photon calcium imaging, is a powerful 
 
 derotation is an open-source Python package that algorithmically reconstructs undistorted movies from data acquired during sample rotation. By synchronizing recorded rotation angles with the microscope's line acquisition clock, the software applies a precise, line-by-line inverse transformation to restore the original geometry of the imaged plane. This correction enables reliable quantitative imaging during rapid rotational movements, making it possible to study yaw motion without sacrificing image quality.
 
-![Example of derotation correction. Left: mean image from a rotating sample, distorted by line-scanning during motion. Right: same data after line-by-line derotation, with structures restored to their correct positions.](figure1.png)
 
 # Statement of Need
 
@@ -32,37 +31,63 @@ Any imaging modality that acquires data sequentially, such as multi-photon micro
 
 This problem is particularly acute in systems neuroscience, where researchers increasingly combine two-photon or three-photon calcium imaging with behavioral paradigms involving head rotation to study sensory integration and navigation [1-4]. In such experiments, where head-fixed animals may be passively rotated or actively turn, high-speed angular motion can render imaging data unusable without correction. While individual labs have implemented custom scripts to address this, there has been no validated, open-source, and easy-to-use Python tool available to the broader community.
 
-derotation directly fills this gap by providing a documented, tested, and modular solution for post hoc correction of imaging data acquired during rotation. It empowers researchers to perform quantitative imaging during high-speed rotational movements without requiring modifications to their existing acquisition hardware. The package is especially valuable for imaging modalities with lower frame rates, such as three-photon microscopy, where rotational distortions within a single frame are more pronounced. By providing a robust and accessible tool, derotation lowers the barrier for entry into complex behavioral experiments and improves the reproducibility of a key analysis step in a growing field of research.
+![Schematic of line-scanning microscope distortion. Left: scanning pattern plus sample rotation lead to fan-like artifacts. Right: grid imaged while still (top), while rotating (middle), and after derotation (bottom), showing perfect alignment restoration.](figure1.png)
+
+derotation directly fills this gap by providing a documented, tested, and modular solution for post hoc correction of imaging data acquired during rotation. It empowers researchers to perform quantitative imaging during high-speed rotational movements. The package is especially valuable for imaging modalities with lower frame rates, such as three-photon microscopy, where rotational distortions within a single frame are more pronounced. By providing a robust and accessible tool, derotation lowers the barrier for entry into complex behavioral experiments and improves the reproducibility of a key analysis step in a growing field of research.
+
+![Example of derotation correction. Left: mean image from a rotating sample, distorted by line-scanning during motion. Right: same data after line-by-line derotation, with structures restored to their correct positions.](figure2.png)
 
 # Functionality
 The core of the derotation package is a line-by-line affine transformation. It operates by first establishing a precise mapping between each scanned line in the movie and the rotation angle of the sample at that exact moment in time. It then applies an inverse rotation transform to each line around a specified or estimated center of rotation. Finally, the corrected lines are reassembled into frames, producing a movie that appears as if the sample had remained stationary.
 
+![Line-by-line derotation process. The original frame with deformation is shown on the left. With subsequent iterations, derotation picks a line, rotates it according to the calculated angle, and adds it to the new derotated frame. The final result is shown on the right.](figure3.gif)
+
 ## Data Ingestion and Synchronization
-The package is designed to be flexible with respect to input data formats. The primary input is the raw imaging movie (as a TIFF stack) and timing information. To determine the rotation angle for each line, the software can directly parse raw hardware signals. Through the pipelines described below, processes analog or digital recordings of the microscope's line_clock and frame_clock along with signals from the rotation motor (e.g., rotation_clock ticks). For users who have already pre-processed this information, the package can instead accept a simple NumPy array containing the cumulative rotation angle for each line of the movie.
+The package accepts two types of input formats depending on the processing approach:
+
+**For pipeline workflows (FullPipeline and IncrementalPipeline):**
+These pipelines are designed for experimental setups with synchronized rotation and imaging data. The required inputs are:
+
+- An array of analog signals containing timing and rotation information, typically including:
+  1. **Line clock** – signals the start of a new line (from acquisition software)
+  2. **Frame clock** – signals the start of a new frame (from acquisition software) 
+  3. **Rotation ON signal** – indicates when the rotation system is active
+  4. **Rotation position feedback** – used to compute rotation angles (from a step motor)
+
+- A **CSV file** describing speeds and directions.
+
+**For low-level core function:**
+Advanced users can bypass the pipeline workflows and use the core transformation function directly by providing:
+- The original multi-photon movie (expects only one imaging plane)
+- A pre-computed rotation angle array for each line
+
+This modular design allows users with custom experimental setups to integrate the derotation algorithm into their own analysis scripts while still benefiting from the core transformation logic.
 
 ## Processing Pipelines
 For ease of use, derotation provides two high-level processing workflows tailored to common experimental paradigms. These pipelines handle data loading, parameter validation, processing, and saving outputs, while also generating logs and debugging plots to ensure quality control.
 
-- The FullPipeline is engineered for complex experimental paradigms involving randomized, bi-directional (back-and-forth) rotations. As part of its workflow, it can optionally estimate the center of rotation automatically using Bayesian optimization, which minimizes residual motion in the corrected movie.
+- **FullPipeline** is engineered for experimental paradigms involving randomized, bi-directional (back-and-forth) rotations, which are usually the most common in behavioral experiments to determine response tuning. It assumes that there will be complete 360° rotations of the sample. As part of its workflow, it can optionally estimate the center of rotation automatically using Bayesian optimization, which minimizes residual motion in the corrected movie.
 
--The IncrementalPipeline is optimized for continuous, single-direction rotations. It assumes the center of rotation is known and provided by the user, which allows for faster processing as it bypasses the optimization step.
+- **IncrementalPipeline** is optimized for stepwise, single-direction rotations. This rotation paradigm is useful for calibration of the luminance across rotation angles. It can also provide an alternative, tracking-based estimate of the center of rotation.
 
 Both pipelines are configurable via YAML files or Python dictionaries, promoting reproducible analysis by making it straightforward to document and re-apply the same parameters across multiple datasets.
 
-## Modularity and Outputs
-While the pipelines offer a convenient workflow, the package is modular by design. The core transformation logic is accessible through the derotate_an_image_array_line_by_line function, allowing advanced users to integrate the derotation algorithm into their own custom analysis scripts.
-
 Upon completion, a pipeline run generates a comprehensive set of outputs:
 
-- The primary corrected movie, saved as a TIFF stack.
-- A log file detailing the calculated rotation angles for each line.
-- Diagnostic plots, such as angle-versus-time, to help validate the signal processing.
-- Quality-control metrics and plots to assess the success of the correction.
+- The primary corrected movie, saved as a TIFF stack
+- A CSV file with rotation angles and metadata
+- Debugging plots including analog signal overlays, angle interpolation traces, and center estimation visualizations
+- A text file containing the estimated optimal center of rotation
+- Log files with detailed processing information
+
+The debugging plots are particularly valuable for quality control, helping users assess the success of signal processing and derotation correction. These plots are saved by default in a `debug_plots` folder and include visualizations of analog signal processing, angle interpolation, center estimation, and sample derotated frames.
 
 ## Validation and Extensibility
-The package's effectiveness has been validated on both synthetic datasets, where the ground-truth geometry is known, and on real three-photon recordings from head-rotated mice. In both cases, the corrected images showed restored cellular morphology and were successfully processed by standard downstream analysis pipelines such as Suite2p [@Pachitariu2017] without residual rotational artifacts.
+The package's effectiveness has been validated on both synthetic datasets, where the ground-truth geometry is known, and on real three-photon recordings from head-rotated mice. In both cases, the corrected images showed restored cellular morphology and were successfully processed by standard downstream analysis pipelines such as Suite2p [5].
 
-For further testing and development, the package includes a Rotator class that can generate synthetic distorted movies from a static source image, simulating various experimental conditions (e.g., different frame rates, rotation speeds, or scan patterns). This allows users to explore the parameter space of the problem and validate the correction method on their own terms.
+For further testing and development, the package includes comprehensive synthetic data generation capabilities:
+- **Rotator class**: Applies line-by-line rotation to an image stack, simulating a rotating microscope. It can generate challenging synthetic data including misaligned centers of rotation and out-of-plane rotations.
+- **SyntheticData class**: Creates fake cell images, assigns rotation angles, and generates synthetic stacks. This is especially useful for validating both the incremental and full pipelines under known conditions.
 
 The implementation relies on standard Python scientific libraries, including NumPy, SciPy, and Scikit-optimize, and is distributed under a BSD-3-Clause license. Comprehensive documentation, tutorials, and example datasets are available at https://derotation.neuroinformatics.dev. Using Binder, users can run the software in a cloud-based environment with sample data without requiring any local installation.
 

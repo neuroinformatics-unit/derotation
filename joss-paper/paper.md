@@ -1,5 +1,5 @@
 ---
-title: 'derotation: A Python package for correcting rotation-induced distortions in line-scanning microscopy'
+title: 'Derotation: A Python package for correcting rotation-induced distortions in line-scanning microscopy'
 tags:
 - Python
 - neuroscience
@@ -20,20 +20,20 @@ bibliography: paper.bib
 
 # Summary
 
-Line-scanning microscopy, including multi-photon calcium imaging, is a powerful technique for observing dynamic processes at cellular resolution. However, when the imaged sample rotates during acquisition, the sequential line-by-line scanning process introduces geometric distortions. These artifacts, which manifest as shearing or curving of features, can severely compromise downstream analyses such as motion registration, cell detection, and signal extraction. While several studies have developed custom solutions for this issue [1-4], a general-purpose, accessible software package has been lacking.
+Line-scanning microscopy, including multiphoton calcium imaging, is a powerful technique for observing dynamic processes at cellular resolution. However, when the imaged sample rotates during acquisition, the sequential line-by-line scanning process introduces geometric distortions. These artifacts, which manifest as shearing or curving of features, can severely compromise downstream analyses such as motion registration, cell detection, and signal extraction. While several studies have developed custom solutions for this issue @velez-fort_circuit_2018 @hennestad_mapping_2021 @sit_coregistration_2023 @voigts_somatic_2020, a general-purpose, accessible software package has been lacking.
 
-derotation is an open-source Python package that algorithmically reconstructs movies from data acquired during sample rotation. By leveraging recorded rotation angles and the microscope's line acquisition clock, the software applies a precise, line-by-line inverse transformation to restore the original geometry of the imaged plane. This correction enables reliable quantitative imaging during rapid rotational movements, making it possible to study yaw motion without sacrificing image quality.
+derotation is an open-source Python package that algorithmically reconstructs movies from data acquired during sample rotation. By leveraging recorded rotation angles and the microscope's line acquisition clock, the software applies a precise, line-by-line inverse transformation to restore the original geometry of the imaged plane. This correction enables reliable cell segmentation during rapid rotational movements, making it possible to study yaw motion without sacrificing image quality.
 
 
 # Statement of Need
 
-Any imaging modality that acquires data sequentially, such as multi-photon microscopy, is susceptible to motion artifacts if the sample moves during the acquisition of a single frame. When this motion is rotational, it produces characteristic "fan-like" distortions that corrupt the morphological features of the imaged structures. This significantly complicates, or even prevents, critical downstream processing steps like cell segmentation and automated region-of-interest tracking.
+Any imaging modality that acquires data sequentially, such as line-scanning microscopy, is susceptible to motion artifacts if the sample moves during the acquisition of a single frame. When this motion is rotational, it produces characteristic "fan-like" distortions that corrupt the morphological features of the imaged structures. This significantly complicates, or even prevents, critical downstream processing steps like cell segmentation and automated region-of-interest tracking.
 
 ![Schematic of line-scanning microscope distortion. Left: scanning pattern plus sample rotation lead to fan-like artifacts. Right: grid imaged while still (top), while rotating (middle), and after derotation (bottom), showing perfect alignment restoration.](figure1.png)
 
-This problem is particularly acute in systems neuroscience, where researchers increasingly combine two-photon or three-photon calcium imaging with behavioral paradigms involving head rotation to study sensory integration and navigation [1-4]. In such experiments, where head-fixed animals may be passively rotated or actively turn, high-speed angular motion can render imaging data unusable without correction. The issue is even more acute in imaging modalities with lower frame rates, such as three-photon calcium imaging. While individual labs have implemented custom scripts to address this, there has been no validated, open-source, and easy-to-use Python tool available to the broader community.
+This problem is particularly acute in systems neuroscience, where researchers increasingly combine two-photon or three-photon calcium imaging with behavioral paradigms involving head rotation to study sensory integration and navigation @velez-fort_circuit_2018 @hennestad_mapping_2021 @sit_coregistration_2023 @voigts_somatic_2020. In such experiments, where head-fixed animals may be passively or actively rotated, high-speed angular motion can render imaging data unusable without correction. The issue is even more acute in imaging modalities with lower frame rates, such as three-photon calcium imaging. While individual labs have implemented custom scripts to address this, there has been no validated, open-source, and easy-to-use Python tool available to the broader community.
 
-derotation directly fills this gap by providing a documented, tested, and modular solution for post hoc correction of imaging data acquired during rotation. It empowers researchers to perform quantitative imaging during high-speed rotational movements. By providing a robust and accessible tool, derotation lowers the barrier for entry into complex behavioral experiments and improves the reproducibility of a key analysis step in a growing field of research.
+derotation directly fills this gap by providing a documented, tested, and modular solution for post hoc correction of imaging data acquired during rotation. It enables researchers to perform quantitative imaging during high-speed rotational movements. By providing a robust and accessible tool, derotation lowers the barrier for entry into complex behavioral experiments and improves the reproducibility of a key analysis step in a growing field of research.
 
 ![Example of derotation correction. Left: mean image from a rotating sample, distorted by line-scanning during motion. Right: same data after line-by-line derotation, with structures restored to their correct positions.](figure2.png)
 
@@ -55,21 +55,8 @@ These pipelines are designed for experimental setups with synchronized rotation 
 
 **For low-level core function:**
 Advanced users can bypass the pipeline workflows and use the core transformation function directly by providing:
-- The original multi-photon movie (expects only one imaging plane)
+- The original multiphoton movie (expects only one imaging plane)
 - A pre-computed rotation angle array for each line
-
-Here is an example of how to use the core function:
-```python
-from derotation.derotate_by_line import derotate_an_image_array_line_by_line
-
-image_stack = tifffile.imread("movie.tif")
-angles_per_line = np.load("angles_per_line.npy")
-
-derotated_stack = derotate_an_image_array_line_by_line(
-    image_stack=image_stack,
-    rot_deg_line=angles_per_line,
-)
-```
 
 This modular design allows users with custom experimental setups to integrate the derotation algorithm into their own analysis scripts while still benefiting from the core transformation logic.
 
@@ -82,53 +69,20 @@ For ease of use, derotation provides two high-level processing workflows tailore
 
 Both pipelines are configurable via YAML files or Python dictionaries, promoting reproducible analysis by making it straightforward to document and re-apply the same parameters across multiple datasets.
 
-Here is an example of how to use the full pipeline:
-```python
-from derotation.analysis.full_derotation_pipeline import FullPipeline
-from derotation.config.load_config import load_config, update_config_paths
+Upon completion, a pipeline run generates a comprehensive set of outputs: the corrected movie, a CSV file with rotation angles and metadata for each frame, debugging plots, a text file containing the estimated optimal center of rotation, and log files with detailed processing information.
 
-config = load_config()
-config = update_config_paths(
-    config=config,
-    tif_path="movie.tif",
-    aux_path="analog_signals.npy",
-    stim_randperm_path="stimulus_randperm.csv",
-    output_folder="output/",
-)
-
-pipeline = FullPipeline(config)
-pipeline()
-```
-
-Upon completion, a pipeline run generates a comprehensive set of outputs:
-
-- The primary corrected movie, saved as a TIFF stack
-- A CSV file with rotation angles and metadata for each frame
-- Debugging plots including analog signal overlays, angle interpolation traces, and center estimation visualizations
-- A text file containing the estimated optimal center of rotation
-- Log files with detailed processing information
-
-The debugging plots are particularly valuable for quality control, helping users assess the success of signal processing and derotation correction. These plots are saved by default in a `debug_plots` folder and include visualizations of analog signal processing, angle interpolation, center estimation, and sample derotated frames.
-
-## Validation and Extensibility
-The package's effectiveness has been validated on both synthetic datasets, where the ground-truth geometry is known, and on real three-photon recordings from head-fixed mice. In both cases, the corrected images showed restored cellular morphology and were successfully processed by standard downstream analysis pipelines such as Suite2p [5].
+## Synthetic Data Generation
+For further development and testing, derotation includes a synthetic data generator that can create challenging synthetic datasets with misaligned centers of rotation and out-of-plane rotations. This feature is particularly useful for validating the robustness of the derotation algorithm and for developing new features.
 
 The synthetic data can be generated using the following classes:
-- **Rotator class**: Applies line-by-line rotation to an image stack, simulating a rotating microscope. It can generate challenging synthetic data including misaligned centers of rotation and out-of-plane rotations.
+- **Rotator class**: Core class that applies line-by-line rotation to an image stack, simulating a rotating microscope.
 - **SyntheticData class**: Creates fake cell images, assigns rotation angles, and generates synthetic stacks leveraging the Rotator class. It is a complete synthetic dataset generator.
 
-The implementation relies on standard Python scientific libraries, including NumPy, SciPy, and Scikit-optimize, and is distributed under a BSD-3-Clause license. Comprehensive documentation, tutorials, and example datasets are available at https://derotation.neuroinformatics.dev. Using Binder, users can run the software in a cloud-based environment with sample data without requiring any local installation.
+## Documentation and Installation
+The implementation relies on standard Python scientific libraries, including NumPy, SciPy, and Scikit-optimize, and is distributed under a BSD-3-Clause license. It is available on PyPI and can be installed with `pip install derotation`. Comprehensive documentation, tutorials, and example datasets are available at https://derotation.neuroinformatics.dev. Using Binder, users can run the software in a cloud-based environment with sample data without requiring any local installation.
 
 # Acknowledgements
 
 We thank Simon Weiler for providing three-photon imaging datasets used during development and testing, and the Neuroinformatics Unit at the Sainsbury Wellcome Centre for infrastructure and support.
 
-## References
-Previous work on derotation of calcium imaging movies:
-- 1. [Velez-Fort et al., 2018, Neuron](https://doi.org/10.1016/j.neuron.2018.02.023)
-- 2. [Hennestad et al., 2021, Cell Reports](https://doi.org/10.1016/j.celrep.2021.110134)
-- 3. [Sit & Goard, 2023, Nature Communications](https://doi.org/10.1038/s41467-023-37704-5)
-- 4. [Voigts & Harnett, 2020, Neuron](https://doi.org/10.1016/j.neuron.2019.10.016)
-- 5. [Pachitariu et al., 2016, BioRxiv](https://doi.org/10.1016/j.neuron.2017.07.007)
-
-This package was inspired by [previous MATLAB script on derotation](https://github.com/jvoigts/rotating-2p-image-correction).
+This package was inspired by previous work on derotation as described in @voigts_somatic_2020.

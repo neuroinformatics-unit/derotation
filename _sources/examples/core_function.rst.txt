@@ -30,6 +30,7 @@ allowing correction for sample motion or intentional rotation during
 acquisition.
 
 Inputs:
+
 - angles_per_line.npy: A 1D NumPy array of angles in degrees, with one value
   per image line
 - rotation_sample.tif: A TIFF stack to be derotated.
@@ -37,7 +38,7 @@ Inputs:
 The script computes the derotated movie and displays the mean image of the
 derotated stack.
 
-.. GENERATED FROM PYTHON SOURCE LINES 23-31
+.. GENERATED FROM PYTHON SOURCE LINES 24-32
 
 .. code-block:: Python
 
@@ -56,11 +57,11 @@ derotated stack.
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 32-33
+.. GENERATED FROM PYTHON SOURCE LINES 33-34
 
 Load per-line rotation angles
 
-.. GENERATED FROM PYTHON SOURCE LINES 33-38
+.. GENERATED FROM PYTHON SOURCE LINES 34-39
 
 .. code-block:: Python
 
@@ -82,11 +83,11 @@ Load per-line rotation angles
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 39-40
+.. GENERATED FROM PYTHON SOURCE LINES 40-41
 
 Load the TIFF stack (shape: num_frames × height × width)
 
-.. GENERATED FROM PYTHON SOURCE LINES 40-48
+.. GENERATED FROM PYTHON SOURCE LINES 41-49
 
 .. code-block:: Python
 
@@ -113,11 +114,11 @@ Load the TIFF stack (shape: num_frames × height × width)
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 49-50
+.. GENERATED FROM PYTHON SOURCE LINES 50-51
 
 See the angles
 
-.. GENERATED FROM PYTHON SOURCE LINES 50-61
+.. GENERATED FROM PYTHON SOURCE LINES 51-62
 
 .. code-block:: Python
 
@@ -144,13 +145,13 @@ See the angles
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 62-65
+.. GENERATED FROM PYTHON SOURCE LINES 63-66
 
 Set derotation parameters
 see :meth:`derotation.analysis.full_derotation_pipeline.FullPipeline
 .find_image_offset` for more details on finding the offset value
 
-.. GENERATED FROM PYTHON SOURCE LINES 65-70
+.. GENERATED FROM PYTHON SOURCE LINES 66-71
 
 .. code-block:: Python
 
@@ -172,11 +173,11 @@ see :meth:`derotation.analysis.full_derotation_pipeline.FullPipeline
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 71-72
+.. GENERATED FROM PYTHON SOURCE LINES 72-73
 
 plot first frame with rotation center
 
-.. GENERATED FROM PYTHON SOURCE LINES 72-80
+.. GENERATED FROM PYTHON SOURCE LINES 73-81
 
 .. code-block:: Python
 
@@ -200,11 +201,11 @@ plot first frame with rotation center
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 81-82
+.. GENERATED FROM PYTHON SOURCE LINES 82-83
 
 Perform line-by-line derotation
 
-.. GENERATED FROM PYTHON SOURCE LINES 82-90
+.. GENERATED FROM PYTHON SOURCE LINES 83-91
 
 .. code-block:: Python
 
@@ -224,16 +225,16 @@ Perform line-by-line derotation
 
  .. code-block:: none
 
-      0%|          | 0/69120 [00:00<?, ?it/s]     48%|████▊     | 33016/69120 [00:00<00:00, 330141.42it/s]     96%|█████████▌| 66031/69120 [00:00<00:00, 109203.37it/s]    100%|██████████| 69120/69120 [00:00<00:00, 124882.26it/s]
+      0%|          | 0/69120 [00:00<?, ?it/s]     46%|████▌     | 31885/69120 [00:00<00:00, 318835.10it/s]     92%|█████████▏| 63769/69120 [00:00<00:00, 106622.81it/s]    100%|██████████| 69120/69120 [00:00<00:00, 121071.14it/s]
 
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 91-92
+.. GENERATED FROM PYTHON SOURCE LINES 92-93
 
 Visualize the result by taking the mean
 
-.. GENERATED FROM PYTHON SOURCE LINES 92-101
+.. GENERATED FROM PYTHON SOURCE LINES 93-102
 
 .. code-block:: Python
 
@@ -261,7 +262,7 @@ Visualize the result by taking the mean
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 0.958 seconds)
+   **Total running time of the script:** (0 minutes 0.990 seconds)
 
 
 .. _sphx_glr_download_examples_core_function.py:

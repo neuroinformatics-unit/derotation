@@ -43,7 +43,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../../_static/documentation_options.js?v=fd825880"></script>
+    <script src="../../_static/documentation_options.js?v=59fadc99"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/design-tabs.js?v=f930bc37"></script>
@@ -116,7 +116,7 @@
   
   
   
-    <p class="title logo__title">derotation v0.1.4</p>
+    <p class="title logo__title">derotation v0.1.5</p>
   
 </a></div>
     
@@ -401,7 +401,9 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">pooch</span>
 
 <span class="c1"># URL to the remote data repository on GIN</span>
-<span class="n">DATA_URL</span> <span class="o">=</span> <span class="s2">&quot;https://gin.g-node.org/l.porta/derotation_examples/raw/master/&quot;</span>
+<span class="n">DATA_URL</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">&quot;https://gin.g-node.org/neuroinformatics/derotation_examples/raw/master/&quot;</span>
+<span class="p">)</span>
 
 <span class="c1"># Save data in ~/.derotation/data</span>
 <span class="n">DATA_DIR</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;~&quot;</span><span class="p">,</span> <span class="s2">&quot;.derotation&quot;</span><span class="p">,</span> <span class="s2">&quot;data&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span>
@@ -420,6 +422,18 @@
     <span class="p">),</span>
     <span class="s2">&quot;stimulus_randperm.csv&quot;</span><span class="p">:</span> <span class="p">(</span>
         <span class="s2">&quot;214617992d786ee210a7d2f22dbe7420997016846a79c673979913a5b77f0a11&quot;</span>
+    <span class="p">),</span>
+    <span class="s2">&quot;angles_per_frame.npy&quot;</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">&quot;5ff7cf196ffa9714a8ef7124c70df4fc8b5085ee092198f16019b358103f5fb6&quot;</span>
+    <span class="p">),</span>
+    <span class="s2">&quot;figure3/analog_signals.bin&quot;</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">&quot;1bcf9c9f76020873214b3fcf3263b63c172c1bd0496df555eec57f17866293d9&quot;</span>
+    <span class="p">),</span>
+    <span class="s2">&quot;figure3/rotated_stack.tif&quot;</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">&quot;ac71e3a8bec65949b640104bdd3a3678cd663570a5b29352d1eef83d9ab3dc1e&quot;</span>
+    <span class="p">),</span>
+    <span class="s2">&quot;figure3/stimlus_random_permutations.mat&quot;</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">&quot;7bd5f19996073918f0528588afec305148ad999fa2d83b530d19a2fe17234809&quot;</span>
     <span class="p">),</span>
 <span class="p">}</span>
 

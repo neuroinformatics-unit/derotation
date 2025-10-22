@@ -40,7 +40,6 @@ derotation directly fills this gap by providing a documented, tested, and modula
 # Functionality
 The core of the derotation package is a line-by-line affine transformation. It operates by first establishing a precise mapping between each scanned line in the movie and the rotation angle of the sample at that exact moment in time. It then applies an inverse rotation transform to each line around a specified or estimated center of rotation. Finally, the corrected lines are reassembled into frames, producing a movie that appears as if the sample had remained stationary.
 
-![Line-by-line derotation process. The original frame with deformation is shown on the left. With subsequent iterations, derotation picks a line, rotates it according to the calculated angle, and adds it to the new derotated frame. The final result is shown on the right.](figure3.gif)
 
 ## Data Ingestion and Synchronization
 The package accepts two types of input formats depending on the processing approach:
@@ -49,7 +48,7 @@ The package accepts two types of input formats depending on the processing appro
 These pipelines are designed for experimental setups with synchronized rotation and imaging data. The required inputs are:
 - An array of analog signals containing timing and rotation information, typically including:
   1. **Line clock** – signals the start of a new line (from acquisition software)
-  2. **Frame clock** – signals the start of a new frame (from acquisition software) 
+  2. **Frame clock** – signals the start of a new frame (from acquisition software)
   3. **Rotation ON signal** – indicates when the rotation system is active
   4. **Rotation position feedback** – used to compute rotation angles (from a step motor)
 - A **CSV file** describing speeds and directions.
@@ -58,6 +57,19 @@ These pipelines are designed for experimental setups with synchronized rotation 
 Advanced users can bypass the pipeline workflows and use the core transformation function directly by providing:
 - The original multi-photon movie (expects only one imaging plane)
 - A pre-computed rotation angle array for each line
+
+Here is an example of how to use the core function:
+```python
+from derotation.derotate_by_line import derotate_an_image_array_line_by_line
+
+image_stack = tifffile.imread("movie.tif")
+angles_per_line = np.load("angles_per_line.npy")
+
+derotated_stack = derotate_an_image_array_line_by_line(
+    image_stack=image_stack,
+    rot_deg_line=angles_per_line,
+)
+```
 
 This modular design allows users with custom experimental setups to integrate the derotation algorithm into their own analysis scripts while still benefiting from the core transformation logic.
 
@@ -69,6 +81,24 @@ For ease of use, derotation provides two high-level processing workflows tailore
 - **IncrementalPipeline** is optimized for stepwise, single-direction rotations. This rotation paradigm is useful for calibration of the luminance across rotation angles. It can also provide an alternative estimate of the center of rotation, fitting the trajectory of a cell across rotation angles.
 
 Both pipelines are configurable via YAML files or Python dictionaries, promoting reproducible analysis by making it straightforward to document and re-apply the same parameters across multiple datasets.
+
+Here is an example of how to use the full pipeline:
+```python
+from derotation.analysis.full_derotation_pipeline import FullPipeline
+from derotation.config.load_config import load_config, update_config_paths
+
+config = load_config()
+config = update_config_paths(
+    config=config,
+    tif_path="movie.tif",
+    aux_path="analog_signals.npy",
+    stim_randperm_path="stimulus_randperm.csv",
+    output_folder="output/",
+)
+
+pipeline = FullPipeline(config)
+pipeline()
+```
 
 Upon completion, a pipeline run generates a comprehensive set of outputs:
 
@@ -83,7 +113,7 @@ The debugging plots are particularly valuable for quality control, helping users
 ## Validation and Extensibility
 The package's effectiveness has been validated on both synthetic datasets, where the ground-truth geometry is known, and on real three-photon recordings from head-fixed mice. In both cases, the corrected images showed restored cellular morphology and were successfully processed by standard downstream analysis pipelines such as Suite2p [5].
 
-The sythetic data can be generated using the following classes:
+The synthetic data can be generated using the following classes:
 - **Rotator class**: Applies line-by-line rotation to an image stack, simulating a rotating microscope. It can generate challenging synthetic data including misaligned centers of rotation and out-of-plane rotations.
 - **SyntheticData class**: Creates fake cell images, assigns rotation angles, and generates synthetic stacks leveraging the Rotator class. It is a complete synthetic dataset generator.
 

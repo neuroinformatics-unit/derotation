@@ -32,7 +32,7 @@ bibliography: paper.bib
 
 # Summary
 
-Line-scanning microscopy, including multiphoton calcium imaging, is a powerful technique for observing dynamic processes at cellular resolution. However, when the imaged sample rotates during acquisition, the sequential line-by-line scanning process introduces geometric distortions. These artifacts, which manifest as shearing or curving of features, can severely compromise downstream analyses such as motion registration, cell detection, and signal extraction. While several studies have developed custom solutions for this issue [@velez-fort_circuit_2018] [@hennestad_mapping_2021] [@sit_coregistration_2023] [@voigts_somatic_2020], a general-purpose, accessible software package has been lacking.
+Line-scanning microscopy, including multiphoton calcium imaging, is a powerful technique for observing dynamic processes at cellular resolution. However, when the imaged sample rotates during acquisition (as part of an experimental paradigm), the sequential line-by-line scanning process introduces geometric distortions. These artifacts, which manifest as shearing or curving of features, can severely compromise downstream analyses such as motion registration, cell detection, and signal extraction. While several studies have developed custom solutions for this issue [@velez-fort_circuit_2018], [@hennestad_mapping_2021], [@sit_coregistration_2023], [@voigts_somatic_2020], a general-purpose, accessible software package has been lacking.
 
 `derotation` is an open-source Python package that algorithmically reconstructs movies from data acquired during sample rotation. By leveraging recorded rotation angles and the microscope's line acquisition clock, the software applies a precise, line-by-line inverse transformation to restore the original geometry of the imaged plane. This correction enables reliable cell segmentation during rapid rotational movements, making it possible to study yaw motion without sacrificing image quality (Figure 1).
 
@@ -42,9 +42,9 @@ Line-scanning microscopy, including multiphoton calcium imaging, is a powerful t
 
 Any imaging modality that acquires data sequentially, such as line-scanning microscopy, is susceptible to motion artifacts if the sample moves during the acquisition of a single frame. When this motion is rotational, it produces characteristic "fan-like" distortions that corrupt the morphological features of the imaged structures (Figure 2). This significantly complicates, or even prevents, critical downstream processing steps like cell segmentation and automated region-of-interest tracking.
 
-This problem is particularly acute in systems neuroscience, where researchers increasingly combine two-photon or three-photon calcium imaging with behavioral paradigms involving head rotation [@velez-fort_circuit_2018] [@hennestad_mapping_2021] [@sit_coregistration_2023] [@voigts_somatic_2020]. In such experiments, where head-fixed animals may be passively or actively rotated, high-speed angular motion can render imaging data unusable without correction. The issue is even more acute in imaging modalities with lower frame rates, such as three-photon calcium imaging. While individual labs have implemented custom scripts to address this, there has been no validated, open-source, and easy-to-use Python tool available to the broader community.
+This problem is particularly acute in systems neuroscience, where researchers increasingly combine two-photon or three-photon calcium imaging with behavioral paradigms involving head rotation [@velez-fort_circuit_2018], [@hennestad_mapping_2021], [@sit_coregistration_2023], [@voigts_somatic_2020]. In such experiments, where head-fixed animals may be passively or actively rotated, high-speed angular motion can render imaging data unusable without correction. The issue is even more acute in imaging modalities with lower frame rates, such as three-photon calcium imaging. While individual labs have implemented custom scripts to address this, there has been no validated, open-source, and easy-to-use Python tool available to the broader community.
 
-![Schematic of line-scanning microscope distortion. Left: scanning pattern plus sample rotation lead to fan-like artifacts. Right: grid imaged while still (top), while rotating (middle), and after `derotation` (bottom), showing alignment restoration.](figure2.png)
+![Schematic of line-scanning microscope distortion. Left: line scanning pattern plus sample rotation lead to fan-like artifacts when imaging a grid. Right: grid imaged while still (top), while rotating (middle), and after `derotation` (bottom), showing alignment restoration.](figure2.png)
 
 `derotation` directly fills this gap by providing a documented, tested, and modular solution for post hoc correction of imaging data acquired during rotation. It enables researchers to perform quantitative imaging during high-speed rotational movements. By providing a robust and accessible tool, `derotation` lowers the barrier for entry into complex behavioral experiments and improves the reproducibility of a key analysis step in a growing field of research.
 
@@ -54,19 +54,19 @@ The core of the `derotation` package is a line-by-line affine transformation. It
 ## Data Ingestion and Synchronization
 The package accepts two types of input formats depending on the processing approach:
 
-**For pipeline workflows (`FullPipeline` and `IncrementalPipeline`):**
-These pipelines are designed for experimental setups with synchronized rotation and imaging data. The required inputs are:
+**end to end pipelines (`FullPipeline` and `IncrementalPipeline`):**
+Designed to handle data loading, parameter validation, processing, and saving outputs, while also generating logs and debugging plots to ensure quality control.
+
+**low-level core function:**
+Advanced users can bypass the pipeline workflows and use the core line-by-line derotation function directly by providing the original movie and an array of rotation angles for each line.
+
+This modular design allows users with custom experimental setups to integrate the `derotation` algorithm into their own analysis scripts while still benefiting from the line-by-line derotation logic.
+
+## End to end Pipelines
+For ease of use, `derotation` provides two high-level processing workflows tailored to common experimental paradigms. The pipelines are designed for experimental setups with synchronized rotation and imaging data. The required inputs are:
 
 - An array of analog signals containing timing and rotation information, typically including the start of a new line and frame, when the rotation system is active, and the rotation position feedback;
-- A **CSV file** describing speeds and directions.
-
-**For low-level core function:**
-Advanced users can bypass the pipeline workflows and use the core transformation function directly by providing the original movie and an array of rotation angles for each line.
-
-This modular design allows users with custom experimental setups to integrate the `derotation` algorithm into their own analysis scripts while still benefiting from the core transformation logic.
-
-## Processing Pipelines
-For ease of use, `derotation` provides two high-level processing workflows tailored to common experimental paradigms. These pipelines handle data loading, parameter validation, processing, and saving outputs, while also generating logs and debugging plots to ensure quality control.
+- A CSV file describing speeds and directions.
 
 - `FullPipeline` is engineered for experimental paradigms involving randomized, clockwise or counter-clockwise rotations. It assumes that there will be complete 360° rotations of the sample. As part of its workflow, it can optionally estimate the center of rotation automatically using Bayesian optimization, which minimizes residual motion in the corrected movie.
 
@@ -77,13 +77,13 @@ Both pipelines are configurable via YAML files or Python dictionaries, promoting
 Upon completion, a pipeline run generates a comprehensive set of outputs: the corrected movie, a CSV file with rotation angles and metadata for each frame, debugging plots, a text file containing the estimated optimal center of rotation, and log files with detailed processing information.
 
 ## Validation
-The package's effectiveness has been validated on both synthetic datasets, where the ground-truth geometry is known, and on real three-photon recordings from head-fixed mice (Figure 3). In both cases, the corrected images showed restored cellular morphology and were successfully processed by standard downstream analysis pipelines such as Suite2p [@pachitariu_suite2p_2016].
+### Using 3-photon imaging data from head-fixed mice
+The package's effectiveness has been validated on three-photon recordings from head-fixed mice (Figure 3). The corrected images showed restored cellular morphology and were successfully processed by standard downstream analysis pipelines such as Suite2p [@pachitariu_suite2p_2016]. In Figure 3, it is possible to compare the $\Delta F/F_0$ of two ROIs in the case of line-by-line derotation (as implemented in `derotation`) and frame-by-frame derotation (using `scipy.ndimage.affine_transform`). The line-by-line derotation restores the $\Delta F/F_0$ to its original value during rotation times, reducing the dips into negative values that are present in the frame-by-frame derotation.
 
-### Collection of 3-photon imaging data from head-fixed mice
-The package has been directly tested on 3-photon imaging data obtained from cortical layer 6 callosal-projecting neurons epxressing the calcium indicator GCaMP7f in the mouse visual cortex (see Figure 3). More specifically, wild type C57/B6 mice were injected with retro AAV-hSyn-Cre ($1 × 10^{14}$ units per ml) in the left and with AAV2/1.syn.FLEX.GCaMP7f ($1.8 × 10^{13}$ units per ml) in the right primary visual cortex. A cranial window was implanted over the right hemisphere, and then a headplate was cemented onto the skull of the animal. After 4 weeks of viral expression and recovery, animals were head-fixed on a rotation platform driven by a direct-drive motor (U-651, Physik Instrumente). 360 degree clockwise and counter-clockwise rotations with different speed profiles (50, 100, 150, 200 deg/s) were performed while simultaneuolsy imaging awake neuronal activity using a 25x objective (XLPLN25XWMP2, NA 1.05, 25, Olympus). Imaging was conducted at 7 Hz with 256x256 pixels. For detailed description of the 3-photon power source and imaging please see [@cloves_vivo_2024].
+![Example of `derotation` correction on 3-photon imaging data from head-fixed mice. Left: mean image of a 3-photon movie derotated line-by-line. Red circles represent the ROIs selected for the plots on the right. Right: Two segments of$\Delta F/F_0$ at different time points of two ROIs.In blue frame-by-frame derotation, and in pink line-by-line derotation. Gray line represents the rotation on times.](figure3.png)
 
 ### Synthetic Data Generation
-For further development and testing, `derotation` includes a synthetic data generator that can create challenging synthetic datasets with misaligned centers of rotation and out-of-plane rotations. This feature is particularly useful for validating the robustness of the `derotation` algorithm and for developing new features.
+`derotation` includes a synthetic data generator that can create challenging synthetic datasets with misaligned centers of rotation and out-of-plane rotations. This feature is particularly useful for validating the robustness of the `derotation` algorithm and for developing new features.
 
 The synthetic data can be generated using the following classes:
 
@@ -94,7 +94,10 @@ The synthetic data can be generated using the following classes:
 `derotation` is available on PyPI and can be installed with `pip install derotation`. It is distributed under a BSD-3-Clause license. Comprehensive documentation, tutorials, and example datasets are available at https://derotation.neuroinformatics.dev. Using Binder, users can run the software in a cloud-based environment with sample data without requiring any local installation.
 
 # Future Directions
-Derotation is currently used to process 3-photon movies acquired during head rotation. Future directions can include further automated pipelines for specific motorised stages and experimental paradigms.
+Derotation is currently used to process 3-photon movies acquired during head rotation. Future directions include further automated pipelines for specific motorised stages and experimental paradigms.
+
+# Methodological appendix
+The package has been directly tested on 3-photon imaging data obtained from cortical layer 6 callosal-projecting neurons epxressing the calcium indicator GCaMP7f in the mouse visual cortex (see Figure 3). More specifically, wild type C57/B6 mice were injected with retro AAV-hSyn-Cre ($1 × 10^{14}$ units per ml) in the left and with AAV2/1.syn.FLEX.GCaMP7f ($1.8 × 10^{13}$ units per ml) in the right primary visual cortex. A cranial window was implanted over the right hemisphere, and then a headplate was cemented onto the skull of the animal. After 4 weeks of viral expression and recovery, animals were head-fixed on a rotation platform driven by a direct-drive motor (U-651, Physik Instrumente). 360 degree clockwise and counter-clockwise rotations with different speed profiles (50, 100, 150, 200 deg/s) were performed while imaging awake neuronal activity using a 25x objective (XLPLN25XWMP2, NA 1.05, 25, Olympus). Imaging was conducted at 7 Hz with 256x256 pixels. For detailed description of the 3-photon power source and imaging please see [@cloves_vivo_2024].
 
 # Acknowledgements
 

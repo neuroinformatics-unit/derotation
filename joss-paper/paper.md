@@ -36,7 +36,7 @@ Line-scanning microscopy, including multiphoton calcium imaging of neural popula
 
 `derotation` is an open-source Python package that algorithmically reconstructs image frames from data acquired during sample rotation around an axis orthogonal to the imaging plane. By leveraging recorded rotation angles and the microscope's line acquisition clock, the software applies a precise, line-by-line inverse transformation to restore the expected geometry of the imaged plane. This correction enables reliable cell segmentation during rapid rotational movements, making it possible to study yaw motion without sacrificing image quality (Figure 1).
 
-![Example of `derotation` correction. On the left, the average of a series of images acquired using 3-photon microscopy of layer 6 mouse cortical neurons labeled with GCaMP7f during passive rotation. Center, the mean image after derotation, and on the left the mean image of the derotated movie after suite2p registration [@pachitariu_suite2p_2016]. As you can see,following derotation the cells are visible and have well defined shapes.](figure1.png)
+![Example of `derotation` correction. On the left, the average of a series of images acquired using 3-photon microscopy of layer 6 mouse cortical neurons labeled with GCaMP7f during passive rotation. Center, the mean image after derotation, and on the left the mean image of the derotated movie after suite2p registration [@pachitariu_suite2p_2016]. As you can see, following derotation the cells are visible and have well defined shapes.](figure1.png)
 
 # Statement of Need
 
@@ -51,21 +51,13 @@ This problem is particularly acute in systems neuroscience, where researchers in
 # Functionality
 The core of the `derotation` package is a line-by-line affine transformation. It operates by first establishing a precise mapping between each scanned line in the movie and the rotation angle of the sample at that exact moment in time. It then applies an inverse rotation transform to each line around a specified or estimated center of rotation. Finally, the corrected lines are reassembled into frames, producing a movie that appears as if the sample had remained stationary.
 
-## Data Ingestion and Synchronization
-The package accepts two types of input formats depending on the processing approach:
+## Modular Design
+`derotation` is designed with modularity in mind, catering to both novice users and advanced programmers.
 
-**end to end pipelines (`FullPipeline` and `IncrementalPipeline`):**
-Designed to handle data loading, parameter validation, processing, and saving outputs, while also generating logs and debugging plots to ensure quality control.
-
-**low-level core function:**
-Advanced users can bypass the pipeline workflows and use the core line-by-line derotation function directly by providing the original movie and an array of rotation angles for each line.
-
-This modular design allows users with custom experimental setups to integrate the `derotation` algorithm into their own analysis scripts while still benefiting from the line-by-line derotation logic.
-
-## End to end Pipelines
+### End to end Pipelines
 For ease of use, `derotation` provides two high-level processing workflows tailored to common experimental paradigms. The pipelines are designed for experimental setups with synchronized rotation and imaging data. The required inputs are:
 
-- An array of analog signals containing timing and rotation information, typically including the start of a new line and frame, when the rotation system is active, and the rotation position feedback;
+- Arrays of analog signals containing timing and rotation information, typically including the start of a new line, the start of a new frame, when the rotation system is active, the rotation position feedback;
 - A CSV file describing speeds and directions.
 
 - `FullPipeline` is engineered for experimental paradigms involving randomized, clockwise or counter-clockwise rotations. It assumes that there will be complete 360° rotations of the sample. As part of its workflow, it can optionally estimate the center of rotation automatically using Bayesian optimization, which minimizes residual motion in the corrected movie.
@@ -76,9 +68,14 @@ Both pipelines are configurable via YAML files or Python dictionaries, promoting
 
 Upon completion, a pipeline run generates a comprehensive set of outputs: the corrected movie, a CSV file with rotation angles and metadata for each frame, debugging plots, a text file containing the estimated optimal center of rotation, and log files with detailed processing information.
 
+### Low-level core function
+Advanced users can bypass pipeline workflows and use the core line-by-line derotation function directly by providing the original movie and an array of rotation angles for each line.
+
+This modular design allows users with custom experimental setups to integrate the `derotation` algorithm into their own analysis scripts while still benefiting from the line-by-line derotation logic.
+
 ## Validation
 ### Using 3-photon imaging data from head-fixed mice
-The package's effectiveness has been validated on three-photon recordings of deep cortical neurons expressing the calcium indicator GCaMP7f in head-fixed mice (Figure 3). The corrected images showed restored cellular morphology and were successfully processed by standard downstream signal analysis pipelines such as Suite2p [@pachitariu_suite2p_2016]. In Figure 3, it is possible to compare the chnage in fluorescence ($\Delta F/F_0$) of two ROIs in the case of line-by-line derotation (as implemented in `derotation`) and frame-by-frame derotation (using `scipy.ndimage.affine_transform`). The line-by-line derotation restores the $\Delta F/F_0$ to its original value during rotation times, reducing the dips into negative values that are present in the frame-by-frame derotation.
+The package's effectiveness has been validated on three-photon recordings of deep cortical neurons expressing the calcium indicator GCaMP7f in head-fixed mice (Figure 3). The corrected images showed restored cellular morphology and were successfully processed by standard downstream signal analysis pipelines such as Suite2p [@pachitariu_suite2p_2016]. In Figure 3, it is possible to compare the change in fluorescence ($\Delta F/F_0$) of two regions of interest (ROIs) in the case of line-by-line derotation (as implemented in `derotation`) and frame-by-frame derotation (using `scipy.ndimage.affine_transform`). The line-by-line derotation restores the $\Delta F/F_0$ to its original value during rotation times, reducing the dips into negative values that are present in the frame-by-frame derotation.
 
 ![Figure 3. Validation on 3-photon data. Left: mean image after line‑by‑line derotation. Red circle marks the ROI used for the plots on the right. Top right: sample $\Delta F/F_0$ timecourse for the selected ROI (pink = line‑by‑line derotation; gray = frame‑by‑frame affine correction; shaded vertical bars = rotation intervals). Bottom right: mean $\Delta F/F_0$ aligned to rotation periods for clockwise and counterclockwise rotations. Line‑by‑line derotation preserves the ROI signal during rotations and removes the artificial dips introduced by frame‑by‑frame correction. Clockwise and counterclockwise traces show a roughly mirror‑symmetric, angle‑dependent modulation of measured fluorescence with the frame-by-frame correction.](figure3.png)
 
@@ -91,7 +88,7 @@ The synthetic data can be generated using the following classes:
 - `SyntheticData` class: Creates fake cell images, assigns rotation angles, and generates synthetic stacks leveraging the `Rotator` class. It is a complete synthetic dataset generator.
 
 ## Documentation and Installation
-`derotation` is available on PyPI and can be installed with `pip install derotation`. It is distributed under a BSD-3-Clause license. Comprehensive documentation, tutorials, and example datasets are available at https://derotation.neuroinformatics.dev. Using Binder, users can run the software in a cloud-based environment with sample data without requiring any local installation.
+`derotation` is available on PyPI and can be installed with `pip install derotation`. It is distributed under a BSD-3-Clause license. Comprehensive documentation, tutorials, and example datasets are available at https://derotation.neuroinformatics.dev. Using Binder, users can run the software in a cloud-based environment with sample data without requiring any local installation. Data and code to reproduce the figures in this paper are available at https://github.com/neuroinformatics-unit/derotation/joss-paper and https://gin.g-node.org/l.porta/derotation_examples.
 
 # Future Directions
 Derotation is currently used to process 3-photon movies acquired during head rotation. Future directions include further automated pipelines for specific motorised stages and experimental paradigms.

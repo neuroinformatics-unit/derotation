@@ -35,11 +35,11 @@ With `derotation` you can:
 - Verify the quality of the derotation using debugging plotting tools
 - Batch-process multiple datasets with consistent configuration files
 
-> [!Warning]
-> 🏗️ The package is currently in early development and it requires rotation information coming from a step motor.
-
 ## Data Source & Funding
-All microscopy data presented here as an example has been acquired with a 3-photon microscope by [Simon Weiler](https://github.com/simonweiler) in the [Margrie Lab](https://www.sainsburywellcome.org/web/groups/margrie-lab).
+
+Sample data used for examples and figures can be found [on Gin](https://gin.g-node.org/neuroinformatics/derotation_examples).
+
+All microscopy data has been acquired with a 3-photon microscope by [Simon Weiler](https://github.com/simonweiler) in the [Margrie Lab](https://www.sainsburywellcome.org/web/groups/margrie-lab) as described by [Cloves and Margrie](https://doi.org/10.1364/BOE.544383).
 
 This project was sponsored by the [Margrie Lab](https://www.sainsburywellcome.org/web/groups/margrie-lab) in the [Sainsbury Wellcome Centre for Neural Circuits and Behaviour](https://www.sainsburywellcome.org/web/) at University College London.
 

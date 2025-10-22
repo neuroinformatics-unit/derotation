@@ -10,7 +10,9 @@ from pathlib import Path
 import pooch
 
 # URL to the remote data repository on GIN
-DATA_URL = "https://gin.g-node.org/l.porta/derotation_examples/raw/master/"
+DATA_URL = (
+    "https://gin.g-node.org/neuroinformatics/derotation_examples/raw/master/"
+)
 
 # Save data in ~/.derotation/data
 DATA_DIR = Path("~", ".derotation", "data").expanduser()
@@ -29,6 +31,18 @@ REGISTRY = {
     ),
     "stimulus_randperm.csv": (
         "214617992d786ee210a7d2f22dbe7420997016846a79c673979913a5b77f0a11"
+    ),
+    "angles_per_frame.npy": (
+        "5ff7cf196ffa9714a8ef7124c70df4fc8b5085ee092198f16019b358103f5fb6"
+    ),
+    "figure3/analog_signals.bin": (
+        "1bcf9c9f76020873214b3fcf3263b63c172c1bd0496df555eec57f17866293d9"
+    ),
+    "figure3/rotated_stack.tif": (
+        "ac71e3a8bec65949b640104bdd3a3678cd663570a5b29352d1eef83d9ab3dc1e"
+    ),
+    "figure3/stimlus_random_permutations.mat": (
+        "7bd5f19996073918f0528588afec305148ad999fa2d83b530d19a2fe17234809"
     ),
 }
 

@@ -29,13 +29,8 @@ A gallery of real and synthetic examples using `derotation`.
 ## Overview
 ```{include} ../../README.md
 :start-after: '## Overview'
-:end-before: '> [!Warning]'
+:end-before: '## Data Source & Funding'
 ```
-
-:::{admonition} Important
-:class: warning
-The package is currently in early development and it requires rotation information coming from a step motor.
-:::
 
 ## Data Source & Funding
 ```{include} ../../README.md

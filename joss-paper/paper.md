@@ -17,14 +17,14 @@ authors:
     affiliation: "1"
   - name: Adam L. Tyson
     orcid: 0000-0003-3225-1130
-    affiliation: "1, 2"
+    affiliation: "2"
   - name: Troy W. Margrie
     orcid: 0000-0002-5526-4578
     affiliation: "1"
 affiliations:
-  - name: Sainsbury Wellcome Centre, University College London, UK
+  - name: The Sainsbury Wellcome Centre for Neural Circuits and Behaviour, University College London, 25 Howland Street, London W1T 4JG, UK
     index: 1
-  - name: Gatsby Computational Neuroscience Unit, University College London, London, United Kingdom
+  - name: Neuroinformatics Unit, Sainsbury Wellcome Centre & Gatsby Computational Neuroscience Unit, University College London, London W1T 4JG, UK
     index: 2
 date: TODO
 bibliography: paper.bib
@@ -80,7 +80,7 @@ Upon completion, a pipeline run generates a comprehensive set of outputs: the co
 ### Using 3-photon imaging data from head-fixed mice
 The package's effectiveness has been validated on three-photon recordings of deep cortical neurons expressing the calcium indicator GCaMP7f in head-fixed mice (Figure 3). The corrected images showed restored cellular morphology and were successfully processed by standard downstream signal analysis pipelines such as Suite2p [@pachitariu_suite2p_2016]. In Figure 3, it is possible to compare the chnage in fluorescence ($\Delta F/F_0$) of two ROIs in the case of line-by-line derotation (as implemented in `derotation`) and frame-by-frame derotation (using `scipy.ndimage.affine_transform`). The line-by-line derotation restores the $\Delta F/F_0$ to its original value during rotation times, reducing the dips into negative values that are present in the frame-by-frame derotation.
 
-![Example of `derotation` correction 3-photon imaging data from head-fixed mice. Left: mean image of a 3-photon movie derotated line-by-line. Red circles represent the ROIs selected for the plots on the right. Right: Two segments of $\Delta F/F_0$ at different time points of two ROIs.In blue frame-by-frame derotation, and in pink line-by-line derotation. Gray line represents the rotation on times.](figure3.png)
+![Figure 3. Validation on 3-photon data. Left: mean image after line‑by‑line derotation. Red circle marks the ROI used for the plots on the right. Top right: sample $\Delta F/F_0$ timecourse for the selected ROI (pink = line‑by‑line derotation; gray = frame‑by‑frame affine correction; shaded vertical bars = rotation intervals). Bottom right: mean $\Delta F/F_0$ aligned to rotation periods for clockwise and counterclockwise rotations. Line‑by‑line derotation preserves the ROI signal during rotations and removes the artificial dips introduced by frame‑by‑frame correction. Clockwise and counterclockwise traces show a roughly mirror‑symmetric, angle‑dependent modulation of measured fluorescence with the frame-by-frame correction.](figure3.png)
 
 ### Synthetic Data Generation
 `derotation` includes a synthetic data generator that can create challenging synthetic datasets with misaligned centers of rotation and out-of-plane rotations. This feature is particularly useful for validating the robustness of the `derotation` algorithm and for developing new features.

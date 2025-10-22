@@ -10,7 +10,7 @@ from pathlib import Path
 import pooch
 
 # URL to the remote data repository on GIN
-DATA_URL = "https://gin.g-node.org/l.porta/derotation_examples/raw/master/"
+DATA_URL = "https://gin.g-node.org/neuroinformatics/derotation_examples/raw/master/"
 
 # Save data in ~/.derotation/data
 DATA_DIR = Path("~", ".derotation", "data").expanduser()

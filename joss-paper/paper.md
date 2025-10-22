@@ -10,16 +10,16 @@ tags:
 - line-scanning
 authors:
   - name: Laura Porta
-    orcid: TODO
+    orcid: 0009-0004-4816-321X
     affiliation: "1"
   - name: Simon Weiler
-    orcid: https://orcid.org/0000-0003-4731-8369
+    orcid: 0000-0003-4731-8369
     affiliation: "1"
   - name: Adam L. Tyson
     orcid: 0000-0003-3225-1130
     affiliation: "1, 2"
   - name: Troy W. Margrie
-    orcid: TODO
+    orcid: 0000-0002-5526-4578
     affiliation: "1"
 affiliations:
   - name: Sainsbury Wellcome Centre, University College London, UK

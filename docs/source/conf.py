@@ -162,6 +162,9 @@ html_css_files = [
 
 html_favicon = "_static/light-logo-niu.png"
 
+# Copy .binder directory to built docs for Binder integration
+html_extra_path = ['../../.binder']
+
 # Configure Sphinx gallery
 sphinx_gallery_conf = {
     "examples_dirs": ["../../examples"],

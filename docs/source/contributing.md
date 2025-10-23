@@ -124,7 +124,42 @@ Any existing builds will be removed, and documentation will be built and output
 to the `build` folder. To read the built documentation in a browser, navigate to the `build`
 folder and open the `index.html` file.
 
+### Testing Binder integration
 
+The documentation includes interactive Jupyter notebooks that can be launched via Binder.
+To test Binder integration with your local changes before deployment:
+
+1. Build the documentation locally as described above:
+   ```
+   make clean api_index.rst html
+   ```
+
+2. Create a test branch containing only the built documentation:
+   ```bash
+   # From the repository root
+   git checkout --orphan test-binder
+   git rm -rf .
+   cp -r docs/build/html/* .
+   cp -r docs/build/html/.* . 2>/dev/null || true
+   git add -A
+   git commit -m "Test Binder build"
+   git push -f origin test-binder
+   ```
+
+3. Test your changes with Binder using this URL pattern:
+   ```
+   https://mybinder.org/v2/gh/neuroinformatics-unit/derotation/test-binder?labpath=notebooks/examples/NOTEBOOK_NAME.ipynb
+   ```
+   Replace `NOTEBOOK_NAME` with the actual notebook filename (e.g., `use_plotting_hooks`).
+
+4. After testing, clean up by deleting the test branch:
+   ```bash
+   git checkout main  # or your working branch
+   git branch -D test-binder
+   git push origin --delete test-binder
+   ```
+
+The first Binder build will take several minutes. Once complete, verify that the notebooks run correctly and use the expected version of the package.
 
 ### Editing the documentation
 

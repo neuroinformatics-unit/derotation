@@ -78,7 +78,7 @@ The following inputs are required:
 
 - A **CSV file** describing speeds and directions of rotation in the following format:
 
-  ```csv
+  ```text
   speed,direction
   200,-1
   200,1
@@ -171,5 +171,3 @@ You can find different examples on how to use the Rotator and SyntheticData clas
 - [Use the Rotator to create elliptically rotated data](../examples/elliptical_rotations.rst)
 - [Find center of rotation with synthetic data](../examples/find_center_of_rotation.rst)
 - [Simple rotation and derotation of an image stack](../examples/rotate_and_derotate_a_square.rst)
-
----

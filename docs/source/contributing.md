@@ -134,9 +134,8 @@ To test Binder integration with your local changes before deployment:
    make clean api_index.rst html
    ```
 
-2. Create a test branch containing only the built documentation:
+2. Create a test branch **from the repository root** containing only the built documentation:
    ```bash
-   # From the repository root
    git checkout --orphan test-binder
    git rm -rf .
    cp -r docs/build/html/* .

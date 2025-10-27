@@ -158,7 +158,7 @@ To test Binder integration with your local changes before deployment:
    git push origin --delete test-binder
    ```
 
-The first Binder build will take several minutes. Once complete, verify that the notebooks run correctly and use the expected version of the package.
+The first Binder build will take several minutes. Once complete, verify that the notebooks run correctly and use the expected version of the package. Currently, the latest released version from PyPI will be used - you can check this by running `!pip show derotation` inside a new jupyter notebook cell.
 
 ### Editing the documentation
 

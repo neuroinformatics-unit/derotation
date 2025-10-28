@@ -7,8 +7,8 @@ A Python package for reconstructing movies of rotating samples acquired with a l
 On the left, the mean image of a 3-photon movie in which the head of the animal was rotating. In the center, the mean image after derotation, and on the left the mean image of the derotated movie after suite2p registration. As you can see, already after derotation the cells are visible and have well defined shapes.
 ```
 
-::::{grid} 1 2 2 2
-:gutter: 2
+::::{grid} 2
+:gutter: 4
 
 :::{grid-item-card} 📘 User guide
 :link: user_guide/index

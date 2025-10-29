@@ -44,7 +44,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="_static/documentation_options.js?v=59fadc99"></script>
+    <script src="_static/documentation_options.js?v=6e0256f3"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/design-tabs.js?v=f930bc37"></script>
@@ -119,7 +119,7 @@
   
   
   
-    <p class="title logo__title">derotation v0.1.5</p>
+    <p class="title logo__title">derotation v0.1.6</p>
   
 </a></div>
     
@@ -493,17 +493,55 @@ please don’t hesitate to make a contribution.</p>
 <h3>Working with the documentation<a class="headerlink" href="#working-with-the-documentation" title="Link to this heading">#</a></h3>
 <p>The documentation is found in the <code class="docutils literal notranslate"><span class="pre">docs/source</span></code> folder, where the structure mirrors the rendered website.</p>
 <p>Dependencies for building the documentation locally can be found at <code class="docutils literal notranslate"><span class="pre">docs/requirements.txt</span></code>.
-To install these, change directory to the <code class="docutils literal notranslate"><span class="pre">docs</span></code> folder in your terminal and type:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">r</span> <span class="n">requirements</span><span class="o">.</span><span class="n">txt</span>
+To install these, from the root folder run:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">r</span> <span class="n">docs</span><span class="o">/</span><span class="n">requirements</span><span class="o">.</span><span class="n">txt</span>
 </pre></div>
 </div>
-<p>The command to build the documentation is:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">clean</span> <span class="n">api_index</span><span class="o">.</span><span class="n">rst</span> <span class="n">html</span>
+<p>From the docs folder, build the documentation with <code class="docutils literal notranslate"><span class="pre">make</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="n">docs</span>
+<span class="n">make</span> <span class="n">clean</span> <span class="n">api_index</span><span class="o">.</span><span class="n">rst</span> <span class="n">html</span>
 </pre></div>
 </div>
 <p>Any existing builds will be removed, and documentation will be built and output
 to the <code class="docutils literal notranslate"><span class="pre">build</span></code> folder. To read the built documentation in a browser, navigate to the <code class="docutils literal notranslate"><span class="pre">build</span></code>
 folder and open the <code class="docutils literal notranslate"><span class="pre">index.html</span></code> file.</p>
+</section>
+<section id="testing-binder-integration">
+<h3>Testing Binder integration<a class="headerlink" href="#testing-binder-integration" title="Link to this heading">#</a></h3>
+<p>The documentation includes interactive Jupyter notebooks that can be launched via Binder.
+To test Binder integration with your local changes before deployment:</p>
+<ol class="arabic">
+<li><p>Build the documentation locally as described above:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">clean</span> <span class="n">api_index</span><span class="o">.</span><span class="n">rst</span> <span class="n">html</span>
+</pre></div>
+</div>
+</li>
+<li><p>Create a test branch <strong>from the repository root</strong> containing only the built documentation:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>checkout<span class="w"> </span>--orphan<span class="w"> </span>test-binder
+git<span class="w"> </span>rm<span class="w"> </span>-rf<span class="w"> </span>.
+cp<span class="w"> </span>-r<span class="w"> </span>docs/build/html/*<span class="w"> </span>.
+cp<span class="w"> </span>-r<span class="w"> </span>docs/build/html/.*<span class="w"> </span>.<span class="w"> </span><span class="m">2</span>&gt;/dev/null<span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">true</span>
+git<span class="w"> </span>add<span class="w"> </span>-A
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;Test Binder build&quot;</span>
+git<span class="w"> </span>push<span class="w"> </span>-f<span class="w"> </span>origin<span class="w"> </span>test-binder
+</pre></div>
+</div>
+</li>
+<li><p>Test your changes with Binder using this URL pattern:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>https://mybinder.org/v2/gh/neuroinformatics-unit/derotation/test-binder?labpath=notebooks/examples/NOTEBOOK_NAME.ipynb
+</pre></div>
+</div>
+<p>Replace <code class="docutils literal notranslate"><span class="pre">NOTEBOOK_NAME</span></code> with the actual notebook filename (e.g., <code class="docutils literal notranslate"><span class="pre">use_plotting_hooks</span></code>).</p>
+</li>
+<li><p>After testing, clean up by deleting the test branch:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>checkout<span class="w"> </span>main<span class="w">  </span><span class="c1"># or your working branch</span>
+git<span class="w"> </span>branch<span class="w"> </span>-D<span class="w"> </span>test-binder
+git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>--delete<span class="w"> </span>test-binder
+</pre></div>
+</div>
+</li>
+</ol>
+<p>The first Binder build will take several minutes. Once complete, verify that the notebooks run correctly and use the expected version of the package. Currently, the latest released version from PyPI will be used - you can check this by running <code class="docutils literal notranslate"><span class="pre">!pip</span> <span class="pre">show</span> <span class="pre">derotation</span></code> inside a new jupyter notebook cell.</p>
 </section>
 <section id="editing-the-documentation">
 <h3>Editing the documentation<a class="headerlink" href="#editing-the-documentation" title="Link to this heading">#</a></h3>
@@ -575,6 +613,7 @@ Most content is found under <code class="docutils literal notranslate"><span cla
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#formatting-and-pre-commit-hooks">Formatting and pre-commit hooks</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#contributing-documentation">Contributing documentation</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#working-with-the-documentation">Working with the documentation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#testing-binder-integration">Testing Binder integration</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#editing-the-documentation">Editing the documentation</a></li>
 </ul>
 </li>

@@ -116,6 +116,10 @@ for i in range(num_frames):
     ax[1, i].axis("off")
 
 plt.tight_layout()
+print("------------------------------------------------")
+print("✅ Success! The square has been rotated and corrected.")
+print("Close the window to end the script.")
+print("------------------------------------------------")
 plt.show()
 
 

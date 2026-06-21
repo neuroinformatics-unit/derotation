@@ -37,7 +37,7 @@ With `derotation` you can:
 
 ## Data Source & Funding
 
-Sample data used for examples and figures can be found [on Gin](https://gin.g-node.org/neuroinformatics/derotation_examples).
+Sample data used for examples and figures can be found [on GIN](https://gin.g-node.org/neuroinformatics/derotation_examples).
 
 All microscopy data has been acquired with a 3-photon microscope by [Simon Weiler](https://github.com/simonweiler) in the [Margrie Lab](https://www.sainsburywellcome.org/web/groups/margrie-lab) as described by [Cloves and Margrie](https://doi.org/10.1364/BOE.544383).
 

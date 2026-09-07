@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: If you use this software, please cite it as below.
+title: 'Derotation: a Python package for correcting rotation-induced distortions in line-scanning microscopy'
+type: software
+authors:
+- given-names: Laura
+  family-names: Porta
+  orcid: https://orcid.org/0009-0004-4816-321X
+- given-names: Simon
+  family-names: Weiler
+  orcid: https://orcid.org/0000-0003-4731-8369
+- given-names: Adam L.
+  family-names: Tyson
+  orcid: https://orcid.org/0000-0003-3225-1130
+- given-names: Troy W.
+  family-names: Margrie
+  orcid: https://orcid.org/0000-0002-5526-4578
+repository-code: https://github.com/neuroinformatics-unit/derotation
+license: BSD-3-Clause

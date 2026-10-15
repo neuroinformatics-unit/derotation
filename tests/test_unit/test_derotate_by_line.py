@@ -64,3 +64,33 @@ def test_derotate_non_square_image_with_homography():
     )
 
     assert derotated.shape == (num_frames, height, width)
+
+
+def test_derotate_cropped_image_matches_cropped_square_result():
+    """Cropping the frames in x and moving the center by the same amount
+    gives the cropped square result, wherever the cropped frames have data.
+    """
+    rng = np.random.default_rng(0)
+    size, crop = 60, 12
+    num_frames = 2
+    image_stack = rng.integers(1, 255, (num_frames, size, size)).astype(
+        np.float64
+    )
+    rot_deg_line = np.linspace(0, 90, num_frames * size)
+    center = (size // 2, size // 2)
+
+    square = derotate_an_image_array_line_by_line(
+        image_stack, rot_deg_line, center=center, blank_pixels_value=0
+    )
+    cropped = derotate_an_image_array_line_by_line(
+        image_stack[:, :, crop:-crop],
+        rot_deg_line,
+        center=(center[0] - crop, center[1]),
+        blank_pixels_value=0,
+    )
+
+    expected = square[:, :, crop:-crop]
+    assert cropped.shape == expected.shape
+    filled = cropped != 0
+    assert filled.mean() > 0.6
+    assert np.mean(cropped[filled] == expected[filled]) > 0.99

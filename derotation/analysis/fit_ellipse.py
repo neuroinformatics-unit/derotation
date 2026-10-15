@@ -9,7 +9,7 @@ derives the rotation plane angle and orientation from the ellipse fits.
 
 import logging
 from pathlib import Path
-from typing import Tuple
+from typing import Optional, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -20,13 +20,20 @@ from scipy.optimize import OptimizeResult, least_squares
 def fit_ellipse_to_points(
     centers: np.ndarray,
     pixels_in_row: int = 256,
+    num_rows: Optional[int] = None,
 ) -> Tuple[int, int, int, int, int]:
     """Fit an ellipse to the points using least squares optimization.
 
     Parameters
     ----------
     centers : np.ndarray
-        The centers of the largest blob in each image.
+        The centers of the largest blob in each image, as (x, y).
+    pixels_in_row : int, optional
+        The width of the images, which bounds the x of the center,
+        by default 256.
+    num_rows : int, optional
+        The height of the images, which bounds the y of the center.
+        If None, the images are taken to be square, by default None.
 
     Returns
     -------
@@ -34,6 +41,9 @@ def fit_ellipse_to_points(
         The center of the ellipse (center_x, center_y), the semi-major
         axis (a), the semi-minor axis (b), and the rotation angle (theta).
     """
+    if num_rows is None:
+        num_rows = pixels_in_row
+
     # Convert centers to numpy array
     centers = np.array(centers)
     valid_points = centers[
@@ -98,9 +108,9 @@ def fit_ellipse_to_points(
             [0, 0, 1e-3, 1e-3, -np.pi],
             [
                 pixels_in_row,
-                pixels_in_row,
-                pixels_in_row,
-                pixels_in_row,
+                num_rows,
+                max(pixels_in_row, num_rows),
+                max(pixels_in_row, num_rows),
                 np.pi,
             ],
         ),
@@ -185,7 +195,7 @@ def plot_ellipse_fit_and_centers(
     )
 
     # Add some plot formatting
-    ax.set_xlim(0, image_stack.shape[1])
+    ax.set_xlim(0, image_stack.shape[2])
     ax.set_ylim(
         image_stack.shape[1], 0
     )  # Invert y-axis to match image coordinate system

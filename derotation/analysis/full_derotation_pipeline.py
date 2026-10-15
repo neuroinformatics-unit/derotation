@@ -4,7 +4,6 @@ protocol, which involves rotating the sample by 360 degrees at various speeds
 and directions.
 """
 
-import copy
 import itertools
 import logging
 import sys
@@ -169,8 +168,12 @@ class FullPipeline:
 
         self.num_frames = self.image_stack.shape[0]
         self.num_lines_per_frame = self.image_stack.shape[1]
+        self.num_pixels_per_line = self.image_stack.shape[2]
         self.num_total_lines = self.num_frames * self.num_lines_per_frame
-        self.mask_diameter = copy.deepcopy(self.num_lines_per_frame)
+        #  the largest circle that fits in the frame
+        self.mask_diameter = min(
+            self.num_lines_per_frame, self.num_pixels_per_line
+        )
 
         randperm_filetype = self.config["paths_read"][
             "path_to_randperm"
@@ -266,7 +269,7 @@ class FullPipeline:
         #  by default the center of rotation is the center of the image
         if not self.config["biased_center"]:
             self.center_of_rotation = (
-                self.num_lines_per_frame // 2,
+                self.num_pixels_per_line // 2,
                 self.num_lines_per_frame // 2,
             )
         else:
@@ -1279,19 +1282,14 @@ class FullPipeline:
         np.ndarray
             The masked image stack.
         """
-        img_height = image_stack.shape[1]
+        img_height, img_width = image_stack.shape[1:3]
 
-        #  crop the image to match the new size
-        if diameter != img_height:
-            image_stack = image_stack[
-                :,
-                int((img_height - diameter) / 2) : int(
-                    (img_height + diameter) / 2
-                ),
-                int((img_height - diameter) / 2) : int(
-                    (img_height + diameter) / 2
-                ),
-            ]
+        #  crop the image to a centred diameter x diameter square
+        top = (img_height - diameter) // 2
+        left = (img_width - diameter) // 2
+        image_stack = image_stack[
+            :, top : top + diameter, left : left + diameter
+        ]
 
         xx, yy = np.mgrid[:diameter, :diameter]
 
@@ -1305,20 +1303,16 @@ class FullPipeline:
             masked_img_array.append(np.where(mask, img, img_min))
 
         # pad the image to match the original size
-        if diameter != img_height:
-            delta = img_height - diameter
-            masked_img_array = np.pad(
-                masked_img_array,
-                ((0, 0), (int(delta / 2), int(delta / 2)), (0, 0)),
-                "constant",
-                constant_values=img_min,
-            )
-            masked_img_array = np.pad(
-                masked_img_array,
-                ((0, 0), (0, 0), (int(delta / 2), int(delta / 2))),
-                "constant",
-                constant_values=img_min,
-            )
+        masked_img_array = np.pad(
+            masked_img_array,
+            (
+                (0, 0),
+                (top, img_height - diameter - top),
+                (left, img_width - diameter - left),
+            ),
+            "constant",
+            constant_values=img_min,
+        )
 
         return np.array(masked_img_array)
 

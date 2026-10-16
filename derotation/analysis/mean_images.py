@@ -44,16 +44,14 @@ def calculate_mean_images(
 
     mean_images = []
     for i in np.arange(10, 360, 10):
-        try:
-            images = image_stack[rounded_angles == i]
-            mean_image = np.mean(images, axis=0)
-
-            mean_images.append(mean_image)
-        except IndexError as e:
+        images = image_stack[rounded_angles == i]
+        if len(images) == 0:
+            # np.mean of no images is an all-NaN image, not an error
             logging.warning(f"Angle {i} not found in the image stack")
-            logging.warning(e)
-
             example_angles = np.random.choice(rounded_angles, 100)
             logging.info(f"Example angles: {example_angles}")
+            continue
+
+        mean_images.append(np.mean(images, axis=0))
 
     return np.asarray(mean_images)

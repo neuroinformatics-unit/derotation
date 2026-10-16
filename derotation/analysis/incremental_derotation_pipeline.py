@@ -289,9 +289,11 @@ class IncrementalPipeline(FullPipeline):
         )
 
         # Fit an ellipse to the largest blob centers and get its center
+        num_rows, pixels_in_row = self.image_stack.shape[1:3]
         center_x, center_y, a, b, theta = fit_ellipse_to_points(
             coord_first_blob_of_every_image,
-            pixels_in_row=self.num_lines_per_frame,
+            pixels_in_row=pixels_in_row,
+            num_rows=num_rows,
         )
 
         if self.debugging_plots:
@@ -313,7 +315,8 @@ class IncrementalPipeline(FullPipeline):
         )
         logging.info(
             "Variation from the center of the image: "
-            + f"({center_x - 128:.2f}, {center_y - 128:.2f})"
+            + f"({center_x - pixels_in_row / 2:.2f}, "
+            + f"{center_y - num_rows / 2:.2f})"
         )
         logging.info(f"Variation from a perfect circle: {a - b:.2f}")
 

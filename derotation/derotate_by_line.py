@@ -85,12 +85,12 @@ def derotate_an_image_array_line_by_line(
     """
 
     num_lines_per_frame = image_stack.shape[1]
+    num_pixels_per_line = image_stack.shape[2]
 
     if center is None:
-        #  assumes square images
         center = (
-            image_stack.shape[2] // 2,
-            image_stack.shape[1] // 2,
+            num_pixels_per_line // 2,
+            num_lines_per_frame // 2,
         )  # Default center of rotation
     #  Swap x and y and reshape to column vector
     center = np.array(center[::-1]).reshape(2, 1)
@@ -159,7 +159,7 @@ def derotate_an_image_array_line_by_line(
             )
 
             # Line coordinates
-            line_length = num_lines_per_frame
+            line_length = num_pixels_per_line
             x_coords = np.arange(line_length)
             y_coords = np.full_like(x_coords, line_counter)
 
@@ -180,7 +180,7 @@ def derotate_an_image_array_line_by_line(
                 (final_coords[0] >= 0)
                 & (final_coords[0] < num_lines_per_frame)
                 & (final_coords[1] >= 0)
-                & (final_coords[1] < num_lines_per_frame)
+                & (final_coords[1] < num_pixels_per_line)
             )
 
             # Place the rotated line in the output image without interpolation

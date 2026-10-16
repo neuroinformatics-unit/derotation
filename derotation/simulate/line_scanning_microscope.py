@@ -93,6 +93,7 @@ class Rotator:
 
         self.image_stack = image_stack
         self.num_lines_per_frame = image_stack.shape[1]
+        self.num_pixels_per_line = image_stack.shape[2]
 
         self.pre_homography_center = np.array(
             [image_stack.shape[1] // 2, image_stack.shape[2] // 2]
@@ -111,16 +112,16 @@ class Rotator:
             self.ps = 0
 
         self.post_homography_center = np.array(
-            [self.image_size // 2, self.image_size // 2]
+            [self.num_lines_per_frame // 2, self.num_pixels_per_line // 2]
         )
         if center_offset != (0, 0):
             self.post_homography_center += np.array(center_offset)
 
         #  reshape the angles to the shape of the image
         #  stack to ease indexing
-        self.angles = angles[: image_stack.shape[0] * self.image_size].reshape(
-            image_stack.shape[0], self.image_size
-        )
+        self.angles = angles[
+            : image_stack.shape[0] * self.num_lines_per_frame
+        ].reshape(image_stack.shape[0], self.num_lines_per_frame)
 
         if blank_pixel_val is None:
             self.blank_pixel_val = self.get_blank_pixels_value()
@@ -187,7 +188,11 @@ class Rotator:
             ``num_pixels_per_line``).
         """
         rotated_image_stack = np.empty(
-            (self.image_stack.shape[0], self.image_size, self.image_size),
+            (
+                self.image_stack.shape[0],
+                self.num_lines_per_frame,
+                self.num_pixels_per_line,
+            ),
             dtype=np.float64,
         )
 

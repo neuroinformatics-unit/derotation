@@ -14,7 +14,7 @@ from typing import Optional, Tuple
 
 import numpy as np
 import tqdm
-from scipy.ndimage import affine_transform
+from scipy.ndimage import affine_transform, convolve
 
 
 def derotate_an_image_array_line_by_line(
@@ -136,10 +136,17 @@ def derotate_an_image_array_line_by_line(
                 derotated_filled_image[:line_counter] = image_stack[
                     image_counter
                 ][:line_counter]
+                valid_pixels = np.zeros_like(
+                    derotated_filled_image, dtype=bool
+                )
+                valid_pixels[:line_counter] = True
             elif previous_image_completed:
                 derotated_filled_image = (
                     np.ones_like(image_stack[image_counter])
                     * blank_pixels_value
+                )
+                valid_pixels = np.zeros_like(
+                    derotated_filled_image, dtype=bool
                 )
 
             rotation_completed = False
@@ -188,6 +195,10 @@ def derotate_an_image_array_line_by_line(
                 final_coords[0][valid_mask], final_coords[1][valid_mask]
             ] = line[valid_mask]
 
+            valid_pixels[
+                final_coords[0][valid_mask], final_coords[1][valid_mask]
+            ] = True
+
             previous_image_completed = False
 
             if plotting_hook_line_addition is not None:
@@ -214,6 +225,33 @@ def derotate_an_image_array_line_by_line(
                 derotated_filled_image[line_counter + 1 :] = image_stack[
                     image_counter
                 ][line_counter + 1 :]
+                valid_pixels[line_counter + 1 :] = True
+
+            # Interpolate missing pixels from measured neighbours.
+            kernel = np.ones((3, 3), dtype=np.float64)
+            kernel[1, 1] = 0
+
+            valid_float = valid_pixels.astype(np.float64)
+            neighbor_count = convolve(
+                valid_float, kernel, mode="constant", cval=0
+            )
+            neighbor_sum = convolve(
+                derotated_filled_image.astype(np.float64) * valid_float,
+                kernel,
+                mode="constant",
+                cval=0,
+            )
+
+            holes = (~valid_pixels) & (neighbor_count >= 7)
+
+            if np.any(holes):
+                interpolated = neighbor_sum[holes] / neighbor_count[holes]
+                if np.issubdtype(derotated_filled_image.dtype, np.integer):
+                    interpolated = np.rint(interpolated)
+
+                derotated_filled_image[holes] = interpolated.astype(
+                    derotated_filled_image.dtype
+                )
 
             derotated_image_stack[image_counter] = derotated_filled_image
             previous_image_completed = True

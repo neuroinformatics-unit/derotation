@@ -94,3 +94,31 @@ def test_derotate_cropped_image_matches_cropped_square_result():
     filled = cropped != 0
     assert filled.mean() > 0.6
     assert np.mean(cropped[filled] == expected[filled]) > 0.99
+
+def test_derotation_does_not_leave_blank_holes_inside_image():
+    """Derotation should not leave significant blank gaps in the image."""
+    num_frames, size = 180, 256
+    image_stack = np.full(
+        (num_frames, size, size), 255, dtype=np.uint8
+    )
+    rot_deg_line = np.linspace(0, 90, num_frames * size)
+
+    derotated = derotate_an_image_array_line_by_line(
+        image_stack,
+        rot_deg_line,
+        blank_pixels_value=0,
+    )
+
+    rows, cols = np.ogrid[:size, :size]
+    inside = (
+        (rows - (size - 1) / 2) ** 2
+        + (cols - (size - 1) / 2) ** 2
+        <= (size / 2 - 2) ** 2
+    )
+
+    blank_percent = np.array([
+        100 * np.mean(frame[inside] == 0)
+        for frame in derotated
+    ])
+
+    assert blank_percent.max() < 1.0

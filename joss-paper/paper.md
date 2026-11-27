@@ -59,7 +59,7 @@ Several groups have developed rotation correction procedures as part of their ex
 
 `derotation` separates the core algorithm from experiment-specific logic through a layered, object-oriented design. The core function (`derotate_an_image_array_line_by_line`) takes a movie and a per-line angle array and returns the corrected stack, with no dependencies on configuration or I/O, so it can be used directly in any custom workflow.
 
-On top of this core, two pipeline classes (`FullPipeline` and `IncrementalPipeline`) orchestrate the end-to-end processing: data loading, angle interpolation, optional center-of-rotation estimation, derotation, and output saving. Each processing step is implemented as an overridable method, so users can subclass either pipeline to adapt to new experimental setups or data formats. A simulation module generates synthetic test data for systematic regression testing.
+On top of this core, two pipeline classes (`FullPipeline` and `IncrementalPipeline`) orchestrate the end-to-end processing: data loading, angle interpolation, optional center-of-rotation estimation, derotation, and output saving. Each processing step is implemented as an overridable method, so users can subclass either pipeline to adapt to new experimental setups or data formats. A simulation module generates synthetic test data for systematic regression testing. The package builds on SciPy [@virtanen_scipy_2020] for image transforms, signal filtering and the ellipse fit, scikit-image [@van_der_walt_scikit-image_2014] for blob detection, scikit-learn [@pedregosa_scikit-learn_2011] for clustering, and bayesian-optimization [@nogueira_bayesian_2014] for the center-of-rotation search.
 
 # Research Impact Statement
 

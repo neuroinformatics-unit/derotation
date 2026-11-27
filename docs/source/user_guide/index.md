@@ -26,11 +26,9 @@ Explore how to structure config files and set paths for derotation.
 ---
 
 ## Installation
-Install the latest stable release in a conda environment:
-```bash
-conda create -n derotation-env python=3.12
-conda activate derotation-env
-pip install derotation
+```{include} ../../../README.md
+:start-after: '## Quick Install'
+:end-before: '> [!Note]'
 ```
 
 For more details, head over to the topics above!

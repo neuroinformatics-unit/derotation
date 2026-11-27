@@ -22,6 +22,20 @@ conda activate derotation-env
 pip install derotation
 ```
 
+Or without conda, using Python's built-in `venv`:
+```bash
+python3.12 -m venv derotation-env
+source derotation-env/bin/activate
+pip install derotation
+```
+
+or with [uv](https://docs.astral.sh/uv/):
+```bash
+uv venv --python 3.12 derotation-env
+source derotation-env/bin/activate
+uv pip install derotation
+```
+
 > [!Note]
 > Read the [documentation](https://derotation.neuroinformatics.dev) for more information, including [examples](https://derotation.neuroinformatics.dev/examples/index.html) and [API reference](https://derotation.neuroinformatics.dev/api_index.html).
 
